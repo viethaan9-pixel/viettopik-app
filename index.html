@@ -206,7 +206,7 @@ const TYPES={
 };
 // lines: [speaker F|M, text]; "_" = blank line. a: answer index (0-3). ev: evidence line indexes.
 const DAYS={
- 2:{title:"Ngày 2",sub:"20문제",q:[
+ 1:{title:"Ngày 1",sub:"20문제",q:[
  {t:"next",l:[["M","어제 왜 학원에 안 나왔어?"],["F","할머니 생신이라 부모님하고 할머니 댁에 갔다 왔어."],["M","_"]],o:["그래? 안 나와서 걱정했어.","무슨 학원에 다니고 있어?","그래? 할머니 댁에 언제 가?","부모님과 함께 가기로 했거든."],a:0,ev:[1],
   ex:"여자는 학원에 안 온 이유를 말했어요. 남자는 그 말에 반응해야 해요. ③은 이미 갔다 왔는데 「언제 가?」라고 물어서 틀려요.",exv:"Cô ấy giải thích lý do vắng mặt → anh ấy phản ứng: 'Vậy à? Mình đã lo vì cậu không đến.'",w:[["생신","sinh nhật (kính ngữ)"],["댁","nhà (kính ngữ)"],["갔다 오다","đi rồi về"]]},
  {t:"next",l:[["F","우리가 둘러본 가게들 중에 어느 가게의 소파가 괜찮았어요?"],["M","저는 처음에 갔던 가게의 소파들이 제일 나은 것 같아요."],["F","_"]],o:["그럼 거기로 다시 가 볼까요?","아직 한 곳밖에 안 가 봤는데요.","그럼 이 소파를 사는 게 어때요?","집 근처에 있는 소파 가게에서 샀어요."],a:0,ev:[1],
@@ -256,9 +256,9 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
 const circ=["①","②","③","④"];
-let DAY=2, ST={res:{},read:{},ev:{}}, rate=1;
+let DAY=1, ST={res:{},read:{},ev:{}}, rate=1;
 const KEY=()=>"tpk-day"+DAY;
-function load(){ ST={res:{},read:{},ev:{}}; try{const s=JSON.parse(localStorage.getItem(KEY())||"null"); if(s) ST=Object.assign(ST,s);}catch(e){} try{rate=+(localStorage.getItem("tpk-rate")||1)||1}catch(e){} }
+function load(){ ST={res:{},read:{},ev:{}}; try{ if(!localStorage.getItem("tpk-day1")&&localStorage.getItem("tpk-day2")) localStorage.setItem("tpk-day1",localStorage.getItem("tpk-day2")); }catch(e){} try{const s=JSON.parse(localStorage.getItem(KEY())||"null"); if(s) ST=Object.assign(ST,s);}catch(e){} try{rate=+(localStorage.getItem("tpk-rate")||1)||1}catch(e){} }
 function save(){ try{localStorage.setItem(KEY(),JSON.stringify(ST))}catch(e){} }
 const Q=()=>DAYS[DAY].q;
 
@@ -314,7 +314,7 @@ function home(){
   stopAll(); setTitle("TOPIK II 듣기",menu); $("speed").hidden=false; $("speed").textContent=`속도 ${(rate%1?String(rate):rate.toFixed(1))}×`;
   const qs=Q(), done=qs.filter((_,i)=>ST.res[i]!=null).length, ok=qs.filter((_,i)=>ST.res[i]===true).length;
   $("body").innerHTML=`
-   <nav class="days">${Object.keys(DAYS).map(d=>`<button class="day" data-d="${d}" aria-current="${d==DAY}"><b>${DAYS[d].title}</b><span>${DAYS[d].sub}</span></button>`).join("")}<div class="day soon"><b>Ngày 3~</b><span>자료가 오면 추가</span></div></nav>
+   <nav class="days">${Object.keys(DAYS).map(d=>`<button class="day" data-d="${d}" aria-current="${d==DAY}"><b>${DAYS[d].title}</b><span>${DAYS[d].sub}</span></button>`).join("")}<div class="day soon"><b>Ngày 2~</b><span>자료가 오면 추가</span></div></nav>
    <section class="hero"><div class="eyebrow">맞힌 문제 · CÂU ĐÚNG</div><div class="big">${ok}<small> / ${qs.length}</small></div>
      <div style="display:flex;gap:10px;align-items:center;margin-top:10px"><div class="bar"><i style="width:${done/qs.length*100}%"></i></div><span class="eyebrow">${done}문제 풂</span></div></section>
    <div class="howto"><div><b>① 듣고 풀기</b>대본 없이 듣고 답 고르기<br><span>Nghe và chọn</span></div><div><b>② 근거 찾기</b>정답 근거 문장 누르기<br><span>Tìm câu căn cứ</span></div></div>
@@ -487,21 +487,25 @@ const IC={
  read:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h6a4 4 0 0 1 4 4v12a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v12a3 3 0 0 1 3-3h7z"/></svg>',
  vocab:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="14" height="14" rx="2"/><path d="M7 3h12a2 2 0 0 1 2 2v12"/></svg>'
 };
-function wordList(){ const out=[]; Object.keys(DAYS).forEach(d=>DAYS[d].q.forEach((q,i)=>q.w.forEach(w=>out.push({k:w[0],v:w[1],src:`${DAYS[d].title} 듣기 ${i+1}번`})))); return out; }
+// VOCAB[day] = [[ko, vn, note], ...]. A day with no list falls back to that day's listening words.
+const VOCAB={};
+function wordList(d){ d=d||VDAY; if(VOCAB[d]) return VOCAB[d].map(w=>({k:w[0],v:w[1],src:w[2]||""}));
+  const out=[]; (DAYS[d]?DAYS[d].q:[]).forEach((q,i)=>q.w.forEach(w=>out.push({k:w[0],v:w[1],src:`듣기 ${i+1}번`}))); return out; }
+const vDays=()=>[...new Set([...Object.keys(DAYS),...Object.keys(VOCAB)])].map(Number).sort((x,y)=>x-y);
 
 /* ---------- start menu ---------- */
 function menu(){
   stopAll(); setTitle("TOPIK II",null); $("speed").hidden=true;
   const lq=Q(), lok=lq.filter((_,i)=>ST.res[i]===true).length, ldone=lq.filter((_,i)=>ST.res[i]!=null).length;
   const wdone=Object.keys(WS.n3).length+Object.keys(WS.p).length, wok=Object.values(WS.n3).filter(Boolean).length+Object.values(WS.p).filter(Boolean).length;
-  const nw=wordList().length;
+  const nw=vDays().reduce((n,d)=>n+wordList(d).length,0);
   $("body").innerHTML=`
    <section class="hero"><div class="eyebrow">무엇을 공부할까요? · HÔM NAY HỌC GÌ?</div></section>
    <div class="menu">
     <button class="mcard" data-m="listen"><span class="ic">${IC.listen}</span><b>듣기</b><span class="vn">Nghe</span><span class="mm">${DAYS[DAY].title} · ${lq.length}문제<br>${ldone?`맞힌 문제 ${lok} / ${lq.length}`:"아직 시작 전"}</span></button>
-    <button class="mcard" data-m="write"><span class="ic">${IC.write}</span><b>쓰기</b><span class="vn">Viết</span><span class="mm">문장 연습 20 · 51~52번 20<br>${wdone?`맞힌 문제 ${wok} / ${wdone}`:"아직 시작 전"}</span></button>
+    <button class="mcard" data-m="write"><span class="ic">${IC.write}</span><b>쓰기</b><span class="vn">Viết</span><span class="mm">Ngày 1 · 문장 20 · 51~52번 20<br>${wdone?`맞힌 문제 ${wok} / ${wdone}`:"아직 시작 전"}</span></button>
     <button class="mcard" disabled><span class="ic">${IC.read}</span><b>읽기</b><span class="vn">Đọc</span><span class="mm">자료가 오면 추가<br>Sắp có</span></button>
-    <button class="mcard" data-m="vocab"><span class="ic">${IC.vocab}</span><b>단어장</b><span class="vn">Từ vựng</span><span class="mm">단어 ${nw}개<br>누르면 발음을 들어요</span></button>
+    <button class="mcard" data-m="vocab"><span class="ic">${IC.vocab}</span><b>단어장</b><span class="vn">Từ vựng</span><span class="mm">${vDays().map(d=>`Ngày ${d}`).join(" · ")} · ${nw}개<br>누르면 발음을 들어요</span></button>
    </div>`;
   $("body").querySelectorAll(".mcard[data-m]").forEach(b=>b.onclick=()=>({listen:home,write:wHome,vocab:vocab})[b.dataset.m]());
   foot("");
@@ -511,6 +515,7 @@ function menu(){
 function wHome(){
   stopAll(); setTitle("TOPIK II 쓰기",menu); $("speed").hidden=true;
   $("body").innerHTML=`
+   <nav class="days"><button class="day" aria-current="true"><b>Ngày 1</b><span>40문제</span></button><div class="day soon"><b>Ngày 2~</b><span>자료가 오면 추가</span></div></nav>
    <div class="tcard" style="margin-top:4px"><h3>이렇게 공부하세요</h3><div class="vn">Cách học</div>
     <ul><li>먼저 <b>문장 연습</b>으로 문법 형태를 익히세요. 쓰면 바로 채점돼요.</li><li>그다음 <b>51~52번</b>에서 ㉠㉡을 직접 쓰고, 모범 답안과 비교해서 스스로 채점하세요.</li><li>51번은 글의 말투(-습니다 / 해요 / 반말), 52번은 「-다」로 써요.</li></ul>
     <div class="vn" style="margin-top:6px">Luyện câu ngắn trước (chấm tự động) → rồi làm câu 51~52 và tự chấm theo đáp án mẫu.</div></div>
@@ -598,13 +603,15 @@ function wResult(){
 }
 
 /* ---------- vocab ---------- */
-let vHide=false;
+let vHide=false, VDAY=1;
 function vocab(){
   stopAll(); setTitle("단어장",menu); $("speed").hidden=true;
-  const list=wordList();
-  $("body").innerHTML=`<div class="vbar"><span>${list.length}개 · 단어를 누르면 발음이 들려요</span><button class="speed" id="vh">${vHide?"뜻 보이기 · Hiện nghĩa":"뜻 가리기 · Ẩn nghĩa"}</button></div>
+  const list=wordList(VDAY), last=Math.max(...vDays());
+  $("body").innerHTML=`<nav class="days">${vDays().map(d=>`<button class="day" data-d="${d}" aria-current="${d==VDAY}"><b>Ngày ${d}</b><span>${wordList(d).length}개</span></button>`).join("")}<div class="day soon"><b>Ngày ${last+1}~</b><span>자료가 오면 추가</span></div></nav>
+   <div class="vbar"><span>${list.length}개 · 단어를 누르면 발음이 들려요</span><button class="speed" id="vh">${vHide?"뜻 보이기 · Hiện nghĩa":"뜻 가리기 · Ẩn nghĩa"}</button></div>
    <div class="vlist ${vHide?"hide":""}" id="vl">${list.map((w,i)=>`<button class="vrow" data-i="${i}"><b>${esc(w.k)}</b><span class="vn">${esc(w.v)}</span><small>${esc(w.src)}</small></button>`).join("")}</div>`;
   $("vh").onclick=()=>{ vHide=!vHide; vocab(); };
+  $("body").querySelectorAll(".day[data-d]").forEach(b=>b.onclick=()=>{ VDAY=+b.dataset.d; vocab(); });
   $("vl").querySelectorAll(".vrow").forEach(b=>b.onclick=()=>{ b.classList.add("show"); const w=list[+b.dataset.i]; stopAll(); sayLine("F",w.k.replace(/~/g,"")); });
   foot(`<button class="btn sec" id="h">처음으로</button>`); $("h").onclick=menu;
 }
