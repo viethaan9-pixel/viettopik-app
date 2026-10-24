@@ -179,6 +179,24 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .notice .nt{font-weight:800;text-align:center;margin-bottom:8px}
 .pass .ol{padding:6px 0;border-bottom:1px dashed var(--line)} .pass .ol:last-child{border-bottom:0}
 @media (prefers-reduced-motion: reduce){.playbtn.on,.wave.on i{animation:none}}
+
+/* per-section colours */
+:root{--c-listen:#2B4FA8;--c-listen-soft:#DCE4F7;--c-write:#0E7490;--c-write-soft:#D3EEF4;--c-read:#6B3FA0;--c-read-soft:#ECE2F7;--c-vocab:#B4570F;--c-vocab-soft:#FBE7D5;--undone:#AEB5C6}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--c-listen:#7D9DF0;--c-listen-soft:#1F2B4D;--c-write:#5CC8DE;--c-write-soft:#123540;--c-read:#B48CF0;--c-read-soft:#2C1F44;--c-vocab:#F2A35E;--c-vocab-soft:#3D2715;--undone:#4A5470}}
+:root[data-theme="dark"]{--c-listen:#7D9DF0;--c-listen-soft:#1F2B4D;--c-write:#5CC8DE;--c-write-soft:#123540;--c-read:#B48CF0;--c-read-soft:#2C1F44;--c-vocab:#F2A35E;--c-vocab-soft:#3D2715;--undone:#4A5470}
+:root[data-sec="listen"],.mcard[data-m="listen"]{--accent:var(--c-listen);--accent-soft:var(--c-listen-soft)}
+:root[data-sec="write"],.mcard[data-m="write"]{--accent:var(--c-write);--accent-soft:var(--c-write-soft)}
+:root[data-sec="read"],.mcard[data-m="read"]{--accent:var(--c-read);--accent-soft:var(--c-read-soft)}
+:root[data-sec="vocab"],.mcard[data-m="vocab"]{--accent:var(--c-vocab);--accent-soft:var(--c-vocab-soft)}
+.mcard[data-m]{border-color:color-mix(in srgb,var(--accent) 35%,var(--line))}
+.mcard[data-m] b{color:var(--accent)}
+.day[aria-current="true"]{background:var(--accent);border-color:var(--accent)}
+.day[aria-current="true"] b,.day[aria-current="true"] span{color:var(--accent-ink)}
+/* not-yet-solved marks: darker so they stand out */
+.dots i{background:var(--undone)}
+.bar{background:color-mix(in srgb,var(--undone) 55%,var(--line))}
+.day.soon{opacity:1;background:var(--line);border-color:var(--undone)}
+.day.soon b,.day.soon span{color:var(--muted)}
 </style>
 
 </head>
@@ -259,6 +277,7 @@ const SETS=[{k:"next",r:[0,3],label:"1~4"},{k:"act",r:[4,7],label:"5~8"},{k:"nex
 
 /* ---------- state ---------- */
 const $=id=>document.getElementById(id);
+const sec=n=>{ if(n) document.documentElement.dataset.sec=n; else delete document.documentElement.dataset.sec; };
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
 const circ=["①","②","③","④"];
@@ -316,7 +335,7 @@ let BACK=null;
 function setTitle(t,back){ $("title").textContent=t; BACK=typeof back==="function"?back:(back?home:null); $("back").hidden=!BACK; }
 $("back").onclick=()=>{ stopAll(); (BACK||menu)(); };
 
-function home(){
+function home(){ sec("listen");
   stopAll(); setTitle("TOPIK II 듣기",menu); $("speed").hidden=false; $("speed").textContent=`속도 ${(rate%1?String(rate):rate.toFixed(1))}×`;
   const qs=Q(), done=qs.filter((_,i)=>ST.res[i]!=null).length, ok=qs.filter((_,i)=>ST.res[i]===true).length;
   $("body").innerHTML=`
@@ -337,7 +356,7 @@ function home(){
   foot(`<button class="btn pri" id="go">${done&&done<qs.length?"이어서 풀기":"듣기 시작"}</button>`);
   $("go").onclick=()=>{ const left=[...Array(qs.length).keys()].filter(i=>ST.res[i]==null); startRun(left.length?left:[...Array(qs.length).keys()]); };
 }
-function showTips(){
+function showTips(){ sec("listen");
   setTitle("유형별 공략법",true);
   $("body").innerHTML=Object.keys(TYPES).map(k=>{const T=TYPES[k];
     return `<div class="tcard"><span class="chip">${SETS.filter(s=>s.k===k).map(s=>s.label).join(" · ")}번</span><h3 style="margin-top:8px">${T.ko}</h3><div class="vn">${T.vn}</div><ul>${T.tips.map(t=>`<li>${esc(t)}</li>`).join("")}</ul><div class="vn" style="margin-top:8px">${esc(T.tvn)}</div></div>`}).join("");
@@ -349,7 +368,7 @@ let run=[],ri=0,step=0,ord=null,answered=null,runRes={};
 function startRun(ids){ run=ids; ri=0; runRes={}; openQ(); }
 function openQ(){ step=0; answered=null; ord=null; renderQ(); }
 function curQ(){ return Q()[run[ri]]; }
-function renderQ(){
+function renderQ(){ sec("listen");
   stopAll();
   const qi=run[ri], q=curQ(), T=TYPES[q.t];
   setTitle(`${DAYS[DAY].title} · ${qi+1}번`,true); $("speed").hidden=false;
@@ -415,7 +434,7 @@ function stepEvidence(q,qi){
   });
   foot(`<button class="btn sec" id="sh">근거 보기</button>`); $("sh").onclick=()=>reveal(false);
 }
-function result(){
+function result(){ sec("listen");
   setTitle("결과",true);
   const ids=Object.keys(runRes).map(Number), ok=ids.filter(i=>runRes[i]).length;
   const byT={}; ids.forEach(i=>{const t=Q()[i].t; byT[t]=byT[t]||[0,0]; byT[t][1]++; if(runRes[i]) byT[t][0]++;});
@@ -500,7 +519,7 @@ function wordList(d){ d=d||VDAY; if(VOCAB[d]) return VOCAB[d].map(w=>({k:w[0],v:
 const vDays=()=>[...new Set([...Object.keys(DAYS),...Object.keys(VOCAB)])].map(Number).sort((x,y)=>x-y);
 
 /* ---------- start menu ---------- */
-function menu(){
+function menu(){ sec();
   stopAll(); setTitle("TOPIK II",null); $("speed").hidden=true;
   const lq=Q(), lok=lq.filter((_,i)=>ST.res[i]===true).length, ldone=lq.filter((_,i)=>ST.res[i]!=null).length;
   const wdone=Object.keys(WS.n3).length+Object.keys(WS.p).length, wok=Object.values(WS.n3).filter(Boolean).length+Object.values(WS.p).filter(Boolean).length;
@@ -518,7 +537,7 @@ function menu(){
 }
 
 /* ---------- writing views ---------- */
-function wHome(){
+function wHome(){ sec("write");
   stopAll(); setTitle("TOPIK II 쓰기",menu); $("speed").hidden=true;
   $("body").innerHTML=`
    <nav class="days"><button class="day" aria-current="true"><b>Ngày 1</b><span>40문제</span></button><div class="day soon"><b>Ngày 2~</b><span>자료가 오면 추가</span></div></nav>
@@ -541,7 +560,7 @@ function wStart(k,ids){ W={k,ids,i:0,res:{}}; (k==="n3"?renderN3:renderP)(); }
 function wNext(){ const last=W.i===W.ids.length-1; if(last) wResult(); else { W.i++; (W.k==="n3"?renderN3:renderP)(); $("body").scrollTop=0; } }
 function wProg(){ return `<div class="prog"><span>${W.i+1} / ${W.ids.length}</span><div class="bar"><i style="width:${W.i/W.ids.length*100}%"></i></div></div>`; }
 
-function renderN3(){
+function renderN3(){ sec("write");
   const k=W.ids[W.i], q=N3[k], last=W.i===W.ids.length-1;
   setTitle(`쓰기 · 문장 ${k+1}번`,wHome); $("speed").hidden=true;
   const [pre,post]=q.s.split("___");
@@ -571,7 +590,7 @@ function passHtml(q,fill){
   const body=q.l.map(line=>`<p>${esc(line).replace(/\( ?(㉠|㉡) ?\)/g,(m,c)=>{const j=MK.indexOf(c); return fill?`<span class="mk fill">${esc(q.a[j][0])}</span>`:`<span class="mk">( ${c} )</span>`;})}</p>`).join("");
   return `<div class="pass">${q.h?`<div class="ph">${esc(q.h)}</div>`:""}<div class="pb">${body}</div></div>`;
 }
-function renderP(){
+function renderP(){ sec("write");
   const k=W.ids[W.i], q=WP[k], last=W.i===W.ids.length-1, is51=k<10;
   setTitle(`쓰기 · ${q.id}`,wHome); $("speed").hidden=true;
   $("body").innerHTML=`${wProg()}
@@ -597,7 +616,7 @@ function renderP(){
   };
   foot(`<button class="btn pri" id="rv">정답 보기 · Xem đáp án</button>`); $("rv").onclick=reveal;
 }
-function wResult(){
+function wResult(){ sec("write");
   setTitle("쓰기 결과",wHome); $("speed").hidden=true;
   const ids=Object.keys(W.res).map(Number), ok=ids.filter(i=>W.res[i]).length, wrong=ids.filter(i=>!W.res[i]);
   const name=i=>W.k==="n3"?`${i+1}번`:WP[i].id;
@@ -610,7 +629,7 @@ function wResult(){
 
 /* ---------- vocab ---------- */
 let vHide=false, VDAY=1;
-function vocab(){
+function vocab(){ sec("vocab");
   stopAll(); setTitle("단어장",menu); $("speed").hidden=true;
   const list=wordList(VDAY), last=Math.max(...vDays());
   $("body").innerHTML=`<nav class="days">${vDays().map(d=>`<button class="day" data-d="${d}" aria-current="${d==VDAY}"><b>Ngày ${d}</b><span>${wordList(d).length}개</span></button>`).join("")}<div class="day soon"><b>Ngày ${last+1}~</b><span>자료가 오면 추가</span></div></nav>
@@ -685,7 +704,7 @@ const ul=s=>esc(s).replace(/⟦(.+?)⟧/g,'<u class="ul">$1</u>');
 const RSETS=[{r:[0,4],label:"1~5",ko:"유사 표현",vn:"Cách nói tương tự"},{r:[5,9],label:"6~10",ko:"안내문·그래프·기사",vn:"Thông báo · biểu đồ · tin ngắn"},{r:[10,15],label:"11~16",ko:"순서 배열",vn:"Sắp xếp thứ tự"},{r:[16,21],label:"17~22",ko:"빈칸 채우기",vn:"Điền vào chỗ trống"},{r:[22,27],label:"23~28",ko:"긴 글 읽기",vn:"Đọc đoạn văn dài"},{r:[28,29],label:"29~30",ko:"신문 기사 제목",vn:"Tiêu đề báo"}];
 
 /* ---------- reading views ---------- */
-function rHome(){
+function rHome(){ sec("read");
   stopAll(); setTitle("TOPIK II 읽기",menu); $("speed").hidden=true;
   const qs=RQ(), done=qs.filter((_,i)=>RS.res[i]!=null).length, ok=qs.filter((_,i)=>RS.res[i]===true).length;
   $("body").innerHTML=`
@@ -711,7 +730,7 @@ function rBox(q){
   if(q.k==="o") return `<div class="pass"><div class="pb">${q.x.map(l=>`<p class="ol">${esc(l)}</p>`).join("")}</div></div>`;
   return `<div class="pass"><div class="pb"><p>${ul(q.x).replace(/\( \)/g,'<span class="mk">(　　)</span>')}</p></div></div>`;
 }
-function renderR(){
+function renderR(){ sec("read");
   const k=R.ids[R.i], q=RQ()[k], last=R.i===R.ids.length-1, I=RI[q.i];
   setTitle(`${READ[RDAY].title} 읽기 · ${k+1}번`,rHome); $("speed").hidden=true;
   $("body").innerHTML=`<div class="prog"><span>${R.i+1} / ${R.ids.length}</span><div class="bar"><i style="width:${R.i/R.ids.length*100}%"></i></div></div>
@@ -732,7 +751,7 @@ function renderR(){
   chs.forEach(b=>b.onclick=()=>mark(+b.dataset.i));
   foot(`<button class="btn sec" id="skip">잘 모르겠어요</button>`); $("skip").onclick=()=>mark(null);
 }
-function rResult(){
+function rResult(){ sec("read");
   setTitle("읽기 결과",rHome); $("speed").hidden=true;
   const ids=Object.keys(R.res).map(Number), ok=ids.filter(i=>R.res[i]).length, wrong=ids.filter(i=>!R.res[i]);
   const byT={}; ids.forEach(i=>{const s=RSETS.find(s=>i>=s.r[0]&&i<=s.r[1]).ko; byT[s]=byT[s]||[0,0]; byT[s][1]++; if(R.res[i]) byT[s][0]++;});
