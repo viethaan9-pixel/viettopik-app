@@ -199,6 +199,8 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .mcard[data-m] b{color:var(--accent)}
 .day[aria-current="true"]{background:var(--accent);border-color:var(--accent)}
 .day[aria-current="true"] b,.day[aria-current="true"] span{color:var(--accent-ink)}
+.day.lock{background:var(--line);border-color:var(--undone);cursor:not-allowed}
+.day.lock b,.day.lock span{color:var(--muted)}
 /* not-yet-solved marks: darker so they stand out */
 .dots i{background:var(--undone)}
 .bar{background:color-mix(in srgb,var(--undone) 55%,var(--line))}
@@ -336,6 +338,20 @@ const ICON={
 };
 $("speed").onclick=()=>{ rate = rate>=1.1?0.8: rate>=1?1.15:1; rate=Math.round(rate*100)/100; try{localStorage.setItem("tpk-rate",String(rate))}catch(e){} $("speed").textContent=`속도 ${(rate%1?String(rate):rate.toFixed(1))}×`; };
 
+/* ---------- day tabs with lock: Ngày n opens once every question of Ngày n-1 is answered ---------- */
+const LOCK='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:4px"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
+function dayDone(pre,d,n){ try{ const s=JSON.parse(localStorage.getItem(pre+d)||"null"); return !!(s&&s.res&&Object.keys(s.res).length>=n); }catch(e){ return false; } }
+function dayTabs(o){
+  const ks=Object.keys(o.days).map(Number).sort((a,b)=>a-b), next=ks[ks.length-1]+1, open=d=>d===ks[0]||o.done(d-1);
+  const tabs=ks.map(d=>open(d)
+    ? `<button class="day" data-d="${d}" aria-current="${d==o.cur}"><b>${o.days[d].title}</b><span>${o.days[d].sub}</span></button>`
+    : `<button class="day lock" disabled><b>${LOCK}${o.days[d].title}</b><span>Ngày ${d-1} 다 풀면 열려요</span></button>`).join("");
+  const more=o.done(next-1)
+    ? `<div class="day soon"><b>Ngày ${next}</b><span>준비 중 · Sắp có</span></div>`
+    : `<div class="day soon"><b>${LOCK}Ngày ${next}</b><span>Ngày ${next-1} 다 풀면 열려요</span></div>`;
+  return `<nav class="days">${tabs}${more}</nav>`;
+}
+
 /* ---------- views ---------- */
 function foot(h){ $("foot").innerHTML=h; }
 let BACK=null;
@@ -346,7 +362,7 @@ function home(){ sec("listen");
   stopAll(); setTitle("TOPIK II 듣기",menu); $("speed").hidden=false; $("speed").textContent=`속도 ${(rate%1?String(rate):rate.toFixed(1))}×`;
   const qs=Q(), done=qs.filter((_,i)=>ST.res[i]!=null).length, ok=qs.filter((_,i)=>ST.res[i]===true).length;
   $("body").innerHTML=`
-   <nav class="days">${Object.keys(DAYS).map(d=>`<button class="day" data-d="${d}" aria-current="${d==DAY}"><b>${DAYS[d].title}</b><span>${DAYS[d].sub}</span></button>`).join("")}<div class="day soon"><b>Ngày 2~</b><span>자료가 오면 추가</span></div></nav>
+   ${dayTabs({days:DAYS,cur:DAY,done:d=>dayDone("tpk-day",d,DAYS[d]?DAYS[d].q.length:1e9)})}
    <section class="hero"><div class="eyebrow">맞힌 문제 · CÂU ĐÚNG</div><div class="big">${ok}<small> / ${qs.length}</small></div>
      <div style="display:flex;gap:10px;align-items:center;margin-top:10px"><div class="bar"><i style="width:${done/qs.length*100}%"></i></div><span class="eyebrow">${done}문제 풂</span></div></section>
    <div class="howto"><div><b>① 듣고 풀기</b>대본 없이 듣고 답 고르기<br><span>Nghe và chọn</span></div><div><b>② 근거 찾기</b>정답 근거 문장 누르기<br><span>Tìm câu căn cứ</span></div></div>
@@ -547,7 +563,7 @@ function menu(){ sec();
 function wHome(){ sec("write");
   stopAll(); setTitle("TOPIK II 쓰기",menu); $("speed").hidden=true;
   $("body").innerHTML=`
-   <nav class="days"><button class="day" aria-current="true"><b>Ngày 1</b><span>40문제</span></button><div class="day soon"><b>Ngày 2~</b><span>자료가 오면 추가</span></div></nav>
+   ${dayTabs({days:{1:{title:"Ngày 1",sub:"40문제"}},cur:1,done:d=>d===1&&Object.keys(WS.n3).length+Object.keys(WS.p).length>=N3.length+WP.length})}
    <div class="tcard" style="margin-top:4px"><h3>이렇게 공부하세요</h3><div class="vn">Cách học</div>
     <ul><li>먼저 <b>문장 연습</b>으로 문법 형태를 익히세요. 쓰면 바로 채점돼요.</li><li>그다음 <b>51~52번</b>에서 ㉠㉡을 직접 쓰고, 모범 답안과 비교해서 스스로 채점하세요.</li><li>51번은 글의 말투(-습니다 / 해요 / 반말), 52번은 「-다」로 써요.</li></ul>
     <div class="vn" style="margin-top:6px">Luyện câu ngắn trước (chấm tự động) → rồi làm câu 51~52 và tự chấm theo đáp án mẫu.</div></div>
@@ -639,7 +655,7 @@ let vHide=false, VDAY=1;
 function vocab(){ sec("vocab");
   stopAll(); setTitle("단어장",menu); $("speed").hidden=true;
   const list=wordList(VDAY), last=Math.max(...vDays());
-  $("body").innerHTML=`<nav class="days">${vDays().map(d=>`<button class="day" data-d="${d}" aria-current="${d==VDAY}"><b>Ngày ${d}</b><span>${wordList(d).length}개</span></button>`).join("")}<div class="day soon"><b>Ngày ${last+1}~</b><span>자료가 오면 추가</span></div></nav>
+  $("body").innerHTML=`${dayTabs({days:Object.fromEntries(vDays().map(d=>[d,{title:"Ngày "+d,sub:wordList(d).length+"개"}])),cur:VDAY,done:()=>true})}
    <div class="vbar"><span>${list.length}개 · 단어를 누르면 발음이 들려요</span><button class="speed" id="vh">${vHide?"뜻 보이기 · Hiện nghĩa":"뜻 가리기 · Ẩn nghĩa"}</button></div>
    <div class="vlist ${vHide?"hide":""}" id="vl">${list.map((w,i)=>`<button class="vrow" data-i="${i}"><b>${esc(w.k)}</b><span class="vn">${esc(w.v)}</span><small>${esc(w.src)}</small></button>`).join("")}</div>`;
   $("vh").onclick=()=>{ vHide=!vHide; vocab(); };
@@ -715,7 +731,7 @@ function rHome(){ sec("read");
   stopAll(); setTitle("TOPIK II 읽기",menu); $("speed").hidden=true;
   const qs=RQ(), done=qs.filter((_,i)=>RS.res[i]!=null).length, ok=qs.filter((_,i)=>RS.res[i]===true).length;
   $("body").innerHTML=`
-   <nav class="days">${Object.keys(READ).map(d=>`<button class="day" data-d="${d}" aria-current="${d==RDAY}"><b>${READ[d].title}</b><span>${READ[d].sub}</span></button>`).join("")}<div class="day soon"><b>Ngày ${Math.max(...Object.keys(READ).map(Number))+1}~</b><span>자료가 오면 추가</span></div></nav>
+   ${dayTabs({days:READ,cur:RDAY,done:d=>dayDone("tpk-read",d,READ[d]?READ[d].q.length:1e9)})}
    <section class="hero"><div class="eyebrow">맞힌 문제 · CÂU ĐÚNG</div><div class="big">${ok}<small> / ${qs.length}</small></div>
      <div style="display:flex;gap:10px;align-items:center;margin-top:10px"><div class="bar"><i style="width:${done/qs.length*100}%"></i></div><span class="eyebrow">${done}문제 풂</span></div></section>
    <div class="sec"><b>유형별 · Theo dạng</b></div>
