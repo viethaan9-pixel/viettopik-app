@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>TOPIK II 연습</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-title" content="TOPIK II">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;700;800&display=swap">
@@ -180,6 +184,9 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .pass .ol{padding:6px 0;border-bottom:1px dashed var(--line)} .pass .ol:last-child{border-bottom:0}
 @media (prefers-reduced-motion: reduce){.playbtn.on,.wave.on i{animation:none}}
 
+.mlogo{display:flex;align-items:center;gap:14px;padding-block:6px 14px}
+.mlogo img{width:88px;height:88px;border-radius:50%;flex:none;box-shadow:0 6px 18px -10px rgba(0,0,0,.4)}
+.mlogo b{display:block;font-size:22px;font-weight:800;line-height:1.2}
 /* per-section colours */
 :root{--c-listen:#2B4FA8;--c-listen-soft:#DCE4F7;--c-write:#0E7490;--c-write-soft:#D3EEF4;--c-read:#6B3FA0;--c-read-soft:#ECE2F7;--c-vocab:#B4570F;--c-vocab-soft:#FBE7D5;--undone:#AEB5C6}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--c-listen:#7D9DF0;--c-listen-soft:#1F2B4D;--c-write:#5CC8DE;--c-write-soft:#123540;--c-read:#B48CF0;--c-read-soft:#2C1F44;--c-vocab:#F2A35E;--c-vocab-soft:#3D2715;--undone:#4A5470}}
@@ -520,12 +527,12 @@ const vDays=()=>[...new Set([...Object.keys(DAYS),...Object.keys(VOCAB)])].map(N
 
 /* ---------- start menu ---------- */
 function menu(){ sec();
-  stopAll(); setTitle("TOPIK II",null); $("speed").hidden=true;
+  stopAll(); setTitle("",null); $("speed").hidden=true;
   const lq=Q(), lok=lq.filter((_,i)=>ST.res[i]===true).length, ldone=lq.filter((_,i)=>ST.res[i]!=null).length;
   const wdone=Object.keys(WS.n3).length+Object.keys(WS.p).length, wok=Object.values(WS.n3).filter(Boolean).length+Object.values(WS.p).filter(Boolean).length;
   const nw=vDays().reduce((n,d)=>n+wordList(d).length,0);
   $("body").innerHTML=`
-   <section class="hero"><div class="eyebrow">무엇을 공부할까요? · HÔM NAY HỌC GÌ?</div></section>
+   <section class="mlogo"><img src="logo.png" alt=""><div><b>TOPIK II 연습</b><div class="eyebrow">무엇을 공부할까요? · HÔM NAY HỌC GÌ?</div></div></section>
    <div class="menu">
     <button class="mcard" data-m="listen"><span class="ic">${IC.listen}</span><b>듣기</b><span class="vn">Nghe</span><span class="mm">${DAYS[DAY].title} · ${lq.length}문제<br>${ldone?`맞힌 문제 ${lok} / ${lq.length}`:"아직 시작 전"}</span></button>
     <button class="mcard" data-m="write"><span class="ic">${IC.write}</span><b>쓰기</b><span class="vn">Viết</span><span class="mm">Ngày 1 · 문장 20 · 51~52번 20<br>${wdone?`맞힌 문제 ${wok} / ${wdone}`:"아직 시작 전"}</span></button>
