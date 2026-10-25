@@ -212,6 +212,13 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .pc em{display:block;font-style:normal;font-size:11px;font-weight:600;color:var(--good)}
 .pc.part{background:color-mix(in srgb,var(--mark) 35%,var(--surface))}
 .pc.full{background:var(--good-soft)}
+.vset{display:flex;align-items:center;gap:8px;width:100%;margin-top:10px;padding:11px 14px;border-radius:14px;background:var(--surface);border:1.5px solid var(--line);font-size:13.5px;color:var(--muted);text-align:left}
+.vset svg{color:var(--accent);flex:none} .vset b{color:var(--ink)}
+.vrow2{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--line)} .vrow2:last-child{border-bottom:0}
+.vplay{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent)}
+.vname{flex:1;min-width:0;font-size:13.5px;overflow-wrap:anywhere}
+.vpick{flex:none;font-size:12.5px;font-weight:700;padding:6px 10px;border-radius:99px;border:1.5px solid var(--line);color:var(--muted)}
+.vpick.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 /* per-section colours */
 :root{--c-listen:#2B4FA8;--c-listen-soft:#DCE4F7;--c-write:#0E7490;--c-write-soft:#D3EEF4;--c-read:#6B3FA0;--c-read-soft:#ECE2F7;--c-vocab:#B4570F;--c-vocab-soft:#FBE7D5;--undone:#AEB5C6}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--c-listen:#7D9DF0;--c-listen-soft:#1F2B4D;--c-write:#5CC8DE;--c-write-soft:#123540;--c-read:#B48CF0;--c-read-soft:#2C1F44;--c-vocab:#F2A35E;--c-vocab-soft:#3D2715;--undone:#4A5470}}
@@ -383,11 +390,17 @@ const Q=()=>DAYS[DAY].q;
 /* ---------- speech ---------- */
 const canSpeak="speechSynthesis" in window;
 let VF=null,VM=null,playing=false,playToken=0;
+// male/female voice: the student's own choice wins; otherwise guess from voice names
+const VOPT=()=>{ try{ return JSON.parse(localStorage.getItem("tpk-voice")||"null")||{}; }catch(e){ return {}; } };
+let MPITCH=0.92;
+function koVoices(){ return canSpeak?speechSynthesis.getVoices().filter(v=>/^ko/i.test(v.lang)):[]; }
 function pickVoices(){
-  if(!canSpeak) return; const ko=speechSynthesis.getVoices().filter(v=>/^ko/i.test(v.lang));
-  const male=ko.find(v=>/male|남|injoon|minjun|man/i.test(v.name)&&!/female/i.test(v.name));
-  const fem=ko.find(v=>/female|여|yuna|sunhi|heami|woman/i.test(v.name));
-  VF=fem||ko[0]||null; VM=male||ko.find(v=>v!==VF)||ko[0]||null;
+  if(!canSpeak) return; const ko=koVoices(), o=VOPT();
+  const byName=n=>n&&ko.find(v=>v.name===n);
+  const male=ko.find(v=>/\bmale|남|injoon|minjun|minsu|jinho|hyunsu|bongjin|gookmin|seungjin/i.test(v.name)&&!/female/i.test(v.name));
+  const fem=ko.find(v=>/female|여|yuna|sunhi|heami|seoyeon|jimin|sora|woman/i.test(v.name));
+  VF=byName(o.f)||fem||ko[0]||null; VM=byName(o.m)||male||ko.find(v=>v!==VF)||ko[0]||null;
+  MPITCH=typeof o.mp==="number"?o.mp:0.92;
 }
 if(canSpeak){pickVoices(); speechSynthesis.onvoiceschanged=pickVoices;}
 function sayLine(sp,text){
@@ -395,7 +408,7 @@ function sayLine(sp,text){
     if(!canSpeak){res();return;}
     const u=new SpeechSynthesisUtterance(text.replace(/\(.*?\)/g,"")); u.lang="ko-KR"; u.rate=0.95*rate;
     const v=sp==="M"?VM:VF; if(v) u.voice=v;
-    u.pitch = (VF&&VM&&VF!==VM)? 1 : (sp==="M"?0.7:1.25);
+    u.pitch = (VF&&VM&&VF!==VM)? 1 : (sp==="M"?MPITCH:1.08);
     u.onend=res; u.onerror=res; speechSynthesis.speak(u);
     setTimeout(res, 4000+text.length*350/rate);
   });
@@ -442,6 +455,26 @@ let BACK=null;
 function setTitle(t,back){ $("title").textContent=t; BACK=typeof back==="function"?back:(back?home:null); $("back").hidden=!BACK; }
 $("back").onclick=()=>{ stopAll(); (BACK||menu)(); };
 
+function voiceSet(){
+  sec("listen"); stopAll(); pickVoices(); setTitle("목소리 설정",home); $("speed").hidden=true;
+  const ko=koVoices(), o=VOPT();
+  const same=!VF||!VM||VF===VM;
+  const row=(v,i)=>`<div class="vrow2"><button class="vplay" data-i="${i}" aria-label="들어 보기">${ICON.sp}</button><span class="vname">${esc(v.name)}</span>
+     <button class="vpick ${VM===v?"on":""}" data-i="${i}" data-r="m">남자</button><button class="vpick ${VF===v?"on":""}" data-i="${i}" data-r="f">여자</button></div>`;
+  $("body").innerHTML=`<div class="tcard" style="margin-top:4px"><h3>남자·여자 목소리 고르기</h3><div class="vn">Chọn giọng nam / nữ</div>
+    <p class="tip">스피커 버튼을 눌러 들어 보고, 남자 목소리로 쓸 것과 여자 목소리로 쓸 것을 고르세요. 폰마다 들어 있는 목소리가 달라요.<span class="vn" style="display:block">Bấm nút loa để nghe thử rồi chọn giọng nam và giọng nữ. Mỗi máy có giọng khác nhau.</span></p></div>
+   <div class="vlist" style="margin-top:10px">${ko.length?ko.map(row).join(""):`<div class="vrow2"><span class="vname">이 폰에는 한국어 목소리가 없어요. 설정 → 텍스트 음성 변환에서 한국어를 추가해 주세요.</span></div>`}</div>
+   <div class="tcard"><h3>남자 목소리 높낮이</h3><div class="vn">Độ trầm giọng nam</div>
+    <p class="tip">${same?"이 폰은 남자·여자가 같은 목소리라서, 남자 목소리를 조금 낮게 바꿔서 구분해요.":"남자·여자 목소리가 달라서 높낮이는 그대로 써요."}</p>
+    <div class="seg" style="margin-top:8px">${[[1,"그대로"],[0.92,"조금 낮게"],[0.85,"낮게"]].map(([v,l])=>`<button data-mp="${v}" aria-pressed="${Math.abs(MPITCH-v)<.01}">${l}</button>`).join("")}</div>
+    <button class="btn sec" id="vtest" style="height:44px;font-size:14px;width:100%;margin-top:10px">대화로 들어 보기 · Nghe thử hội thoại</button></div>`;
+  const save=patch=>{ try{ localStorage.setItem("tpk-voice",JSON.stringify(Object.assign(VOPT(),patch))); }catch(e){} pickVoices(); voiceSet(); };
+  $("body").querySelectorAll(".vplay").forEach(b=>b.onclick=()=>{ stopAll(); const v=ko[+b.dataset.i]; const u=new SpeechSynthesisUtterance("안녕하세요. 오늘 면접 잘 보세요."); u.lang="ko-KR"; u.voice=v; u.rate=0.95*rate; speechSynthesis.speak(u); });
+  $("body").querySelectorAll(".vpick").forEach(b=>b.onclick=()=>save({[b.dataset.r]:ko[+b.dataset.i].name}));
+  $("body").querySelectorAll("[data-mp]").forEach(b=>b.onclick=()=>save({mp:+b.dataset.mp}));
+  $("vtest").onclick=()=>playLines([["M","수미야, 오늘 면접 있지? 면접 잘 봐."],["F","어쩌지? 벌써부터 너무 떨려서 아무 생각이 안 나."],["M","준비 많이 했으니까 잘할 수 있을 거야."]]);
+  foot(`<button class="btn pri" id="vdone">다 됐어요 · Xong</button>`); $("vdone").onclick=home;
+}
 function home(){ sec("listen");
   stopAll(); setTitle("TOPIK II 듣기",menu); $("speed").hidden=false; $("speed").textContent=`속도 ${(rate%1?String(rate):rate.toFixed(1))}×`;
   const qs=Q(), done=qs.filter((_,i)=>ST.res[i]!=null).length, ok=qs.filter((_,i)=>ST.res[i]===true).length;
@@ -451,6 +484,7 @@ function home(){ sec("listen");
      <div style="display:flex;gap:10px;align-items:center;margin-top:10px"><div class="bar"><i style="width:${done/qs.length*100}%"></i></div><span class="eyebrow">${done}문제 풂</span></div></section>
    <div class="howto"><div><b>① 듣고 풀기</b>대본 없이 듣고 답 고르기<br><span>Nghe và chọn</span></div><div><b>② 근거 찾기</b>정답 근거 문장 누르기<br><span>Tìm câu căn cứ</span></div></div>
    <button class="all" id="startAll" style="margin-top:14px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span><b>1번부터 차례로 풀기</b><span>20문제 · 문제마다 ①② 단계</span></span></button>
+   <button class="vset" id="vset">${ICON.sp}<span><b>목소리 설정</b> · Chọn giọng nam / nữ</span></button>
    <div class="sec"><b>유형별 · Theo dạng</b><button id="tips" style="color:var(--accent);font-weight:700;font-size:13px">유형별 공략법</button></div>
    ${SETS.map((s,i)=>{const ids=[];for(let k=s.r[0];k<=s.r[1];k++)ids.push(k);
      return `<button class="grp" data-s="${i}"><span class="n">${s.label}</span><span class="t"><b>${TYPES[s.k].ko}</b><span class="vn">${TYPES[s.k].vn}</span></span>
@@ -459,6 +493,7 @@ function home(){ sec("listen");
   $("body").querySelectorAll(".day[data-d]").forEach(b=>b.onclick=()=>{DAY=+b.dataset.d;load();home();});
   $("startAll").onclick=()=>startRun([...Array(qs.length).keys()]);
   $("tips").onclick=showTips;
+  $("vset").onclick=voiceSet;
   $("body").querySelectorAll(".grp").forEach(b=>b.onclick=()=>{const s=SETS[+b.dataset.s];const ids=[];for(let k=s.r[0];k<=s.r[1];k++)ids.push(k);startRun(ids);});
   foot(`<button class="btn pri" id="go">${done&&done<qs.length?"이어서 풀기":"듣기 시작"}</button>`);
   $("go").onclick=()=>{ const left=[...Array(qs.length).keys()].filter(i=>ST.res[i]==null); startRun(left.length?left:[...Array(qs.length).keys()]); };
