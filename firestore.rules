@@ -2,7 +2,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     function isTeacher() {
-      return request.auth != null && request.auth.token.email == 'teacher@topikviet.app';
+      return request.auth != null && request.auth.token.email == 'viethaan9@topikviet.app';
     }
     match /users/{uid} {
       allow read: if request.auth != null && (request.auth.uid == uid || isTeacher());
