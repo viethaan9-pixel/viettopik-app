@@ -187,6 +187,31 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .mlogo{display:flex;align-items:center;gap:14px;padding-block:6px 14px}
 .mlogo img{width:88px;height:88px;border-radius:50%;flex:none;box-shadow:0 6px 18px -10px rgba(0,0,0,.4)}
 .mlogo b{display:block;font-size:22px;font-weight:800;line-height:1.2}
+/* account */
+.seg{display:flex;gap:6px;margin:4px 0 12px;padding:4px;border-radius:14px;background:var(--line)}
+.seg button{flex:1;padding:9px 0;border-radius:11px;font-weight:700;font-size:15px;color:var(--muted);display:flex;flex-direction:column;align-items:center;line-height:1.25}
+.seg button small{font-family:var(--f-vn);font-weight:500;font-size:11.5px}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.aform label{display:block;margin-top:10px;font-size:13px;font-weight:700;color:var(--muted)}
+.aform .inp{margin-top:6px}
+.guest{display:flex;flex-direction:column;align-items:center;width:100%;margin-top:18px;padding:10px;border-radius:12px;font-size:13px;color:var(--muted);text-decoration:underline;text-underline-offset:3px}
+.guest small{text-decoration:none;font-family:var(--f-vn);font-size:11.5px;margin-top:2px}
+.ubar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 2px 8px;font-size:13px;color:var(--muted)}
+.ubar span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ubar b{color:var(--ink)}
+.ubar button{flex:none;font-size:12px;font-weight:700;padding:6px 10px;border-radius:99px;background:var(--surface);border:1px solid var(--line)}
+.stu .sh{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:6px}
+.stu .sh b{font-size:16px;display:block}
+.stu .sh small{font-size:12px;color:var(--muted)}
+.lockbtn{flex:none;font-size:12px;font-weight:700;padding:6px 10px;border-radius:99px;border:1.5px solid var(--line);background:var(--bg)}
+.lockbtn.on{border-color:var(--good);color:var(--good);background:var(--good-soft)}
+.prow{display:flex;gap:5px;align-items:stretch;margin-top:5px;overflow-x:auto;scrollbar-width:none}
+.prow .pl{flex:none;width:30px;font-size:12px;font-weight:700;color:var(--muted);display:flex;align-items:center}
+.pc{flex:none;min-width:58px;padding:4px 6px;border-radius:9px;background:var(--line);font-size:12.5px;font-weight:700;text-align:center;line-height:1.3;font-variant-numeric:tabular-nums}
+.pc i{display:block;font-style:normal;font-size:10.5px;font-weight:600;color:var(--muted)}
+.pc em{display:block;font-style:normal;font-size:11px;font-weight:600;color:var(--good)}
+.pc.part{background:color-mix(in srgb,var(--mark) 35%,var(--surface))}
+.pc.full{background:var(--good-soft)}
 /* per-section colours */
 :root{--c-listen:#2B4FA8;--c-listen-soft:#DCE4F7;--c-write:#0E7490;--c-write-soft:#D3EEF4;--c-read:#6B3FA0;--c-read-soft:#ECE2F7;--c-vocab:#B4570F;--c-vocab-soft:#FBE7D5;--undone:#AEB5C6}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--c-listen:#7D9DF0;--c-listen-soft:#1F2B4D;--c-write:#5CC8DE;--c-write-soft:#123540;--c-read:#B48CF0;--c-read-soft:#2C1F44;--c-vocab:#F2A35E;--c-vocab-soft:#3D2715;--undone:#4A5470}}
@@ -221,6 +246,21 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 </div>
 
 <script>
+/* ---------- storage safety + cloud sync hook (runs before anything else) ---------- */
+(function(){
+  let ok=true; try{ localStorage.setItem("__t","1"); localStorage.removeItem("__t"); }catch(e){ ok=false; }
+  if(!ok){ // some in-app browsers block storage: keep progress in memory, cloud sync still saves it
+    const m={}; const st={getItem:k=>Object.prototype.hasOwnProperty.call(m,k)?m[k]:null,setItem:(k,v)=>{m[k]=String(v); if(String(k).startsWith("tpk-")&&window.CLOUD&&CLOUD.schedule) CLOUD.schedule();},removeItem:k=>{delete m[k]},key:i=>Object.keys(m)[i]??null,get length(){return Object.keys(m).length},clear:()=>{for(const k in m) delete m[k]}};
+    try{ Object.defineProperty(window,"localStorage",{value:st,configurable:true}); }catch(e){}
+  } else {
+    try{ const o=Storage.prototype.setItem; Storage.prototype.setItem=function(k,v){ o.call(this,k,v); if(String(k).startsWith("tpk-")&&window.CLOUD&&CLOUD.schedule) CLOUD.schedule(); }; }catch(e){}
+  }
+})();
+function lsKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&k.startsWith("tpk-")) out.push(k); } }catch(e){} return out; }
+function lsSnapshot(){ const p={}; lsKeys().forEach(k=>{ try{ p[k]=localStorage.getItem(k); }catch(e){} }); return p; }
+function lsClear(){ lsKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
+let UNLOCK_ALL=false, GUEST=false;
+const TEACHER_ID="teacher";
 /* ---------- data ---------- */
 // type: next(이어질 말) · act(이어서 할 행동) · same(내용과 같은 것) · main(중심 생각)
 const TYPES={
@@ -386,11 +426,11 @@ $("speed").onclick=()=>{ rate = rate>=1.1?0.8: rate>=1?1.15:1; rate=Math.round(r
 const LOCK='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:4px"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
 function dayDone(pre,d,n){ try{ const s=JSON.parse(localStorage.getItem(pre+d)||"null"); return !!(s&&s.res&&Object.keys(s.res).length>=n); }catch(e){ return false; } }
 function dayTabs(o){
-  const ks=Object.keys(o.days).map(Number).sort((a,b)=>a-b), next=ks[ks.length-1]+1, open=d=>d===ks[0]||o.done(d-1);
+  const ks=Object.keys(o.days).map(Number).sort((a,b)=>a-b), next=ks[ks.length-1]+1, open=d=>d===ks[0]||UNLOCK_ALL||o.done(d-1);
   const tabs=ks.map(d=>open(d)
     ? `<button class="day" data-d="${d}" aria-current="${d==o.cur}"><b>${o.days[d].title}</b><span>${o.days[d].sub}</span></button>`
     : `<button class="day lock" disabled><b>${LOCK}${o.days[d].title}</b><span>Ngày ${d-1} 다 풀면 열려요</span></button>`).join("");
-  const more=o.done(next-1)
+  const more=(UNLOCK_ALL||o.done(next-1))
     ? `<div class="day soon"><b>Ngày ${next}</b><span>준비 중 · Sắp có</span></div>`
     : `<div class="day soon"><b>${LOCK}Ngày ${next}</b><span>Ngày ${next-1} 다 풀면 열려요</span></div>`;
   return `<nav class="days">${tabs}${more}</nav>`;
@@ -616,7 +656,9 @@ function menu(){ sec();
   const wdone=Object.keys(WS.n3).length, wok=Object.values(WS.n3).filter(Boolean).length;
   const nw=vDays().reduce((n,d)=>n+wordList(d).length,0);
   $("body").innerHTML=`
+   ${userBar()}
    <section class="mlogo"><img src="logo.png" alt=""><div><b>TOPIK II 연습</b><div class="eyebrow">무엇을 공부할까요? · HÔM NAY HỌC GÌ?</div></div></section>
+   ${isTeacher()?`<button class="all" id="tview" style="margin-bottom:12px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg><span><b>학생 기록 보기</b><span>선생님 전용 · 학생별 진도와 잠금 해제</span></span></button>`:""}
    <div class="menu">
     <button class="mcard" data-m="listen"><span class="ic">${IC.listen}</span><b>듣기</b><span class="vn">Nghe</span><span class="mm">${DAYS[DAY].title} · ${lq.length}문제<br>${ldone?`맞힌 문제 ${lok} / ${lq.length}`:"아직 시작 전"}</span></button>
     <button class="mcard" data-m="write"><span class="ic">${IC.write}</span><b>쓰기</b><span class="vn">Viết</span><span class="mm">Ngày ${WDAY} · 문장 연습 ${NQ().length}문제<br>${wdone?`맞힌 문제 ${wok} / ${NQ().length}`:"아직 시작 전"}</span></button>
@@ -624,6 +666,7 @@ function menu(){ sec();
     <button class="mcard" data-m="vocab"><span class="ic">${IC.vocab}</span><b>단어장</b><span class="vn">Từ vựng</span><span class="mm">${vDays().map(d=>`Ngày ${d}`).join(" · ")} · ${nw}개<br>누르면 발음을 들어요</span></button>
    </div>`;
   $("body").querySelectorAll(".mcard[data-m]").forEach(b=>b.onclick=()=>({listen:home,write:wHome,read:rHome,vocab:vocab})[b.dataset.m]());
+  bindUserBar(); if($("tview")) $("tview").onclick=teacher;
   foot("");
 }
 
@@ -891,8 +934,160 @@ function rResult(){ sec("read");
   $("h").onclick=rHome; if($("re")) $("re").onclick=()=>rStart(wrong);
 }
 
-load(); wload(); rload(); menu();
+/* ---------- account: login / sign-up / teacher view ---------- */
+const AERR={
+ "auth/invalid-credential":"아이디나 비밀번호가 틀려요. · Sai tên đăng nhập hoặc mật khẩu.",
+ "auth/wrong-password":"아이디나 비밀번호가 틀려요. · Sai tên đăng nhập hoặc mật khẩu.",
+ "auth/user-not-found":"없는 아이디예요. 처음이면 「처음이에요」를 누르세요. · Chưa có tài khoản này.",
+ "auth/invalid-email":"아이디는 영어 소문자·숫자로 3~20자예요. · Tên đăng nhập: 3~20 chữ thường/số.",
+ "auth/email-already-in-use":"이미 있는 아이디예요. 다른 아이디를 쓰세요. · Tên này đã có người dùng.",
+ "auth/weak-password":"비밀번호는 6자 이상이에요. · Mật khẩu ít nhất 6 ký tự.",
+ "auth/network-request-failed":"인터넷 연결을 확인해 주세요. · Kiểm tra kết nối mạng.",
+ "auth/too-many-requests":"잠시 후 다시 해 주세요. · Thử lại sau ít phút."
+};
+const aerr=e=>AERR[e&&e.code]||("문제가 생겼어요. 다시 해 주세요. · Có lỗi, hãy thử lại."+(e&&e.code?` (${e.code})`:""));
+function bootScreen(msg){
+  sec(); setTitle("",null); $("speed").hidden=true; foot("");
+  $("body").innerHTML=`<section class="mlogo" style="justify-content:center;flex-direction:column;text-align:center;padding-top:60px"><img src="logo.png" alt=""><div><b>TOPIK II 연습</b><div class="eyebrow">${msg||"불러오는 중 · Đang tải…"}</div></div></section>`;
+}
+let LOGIN_TAB="in";
+function showLogin(err){
+  sec(); stopAll(); setTitle("",null); $("speed").hidden=true;
+  const up=LOGIN_TAB==="up";
+  $("body").innerHTML=`
+   <section class="mlogo"><img src="logo.png" alt=""><div><b>TOPIK II 연습</b><div class="eyebrow">${up?"처음 오셨군요 · ĐĂNG KÝ":"로그인 · ĐĂNG NHẬP"}</div></div></section>
+   <div class="seg"><button data-t="in" aria-pressed="${!up}">로그인<small>Đăng nhập</small></button><button data-t="up" aria-pressed="${up}">처음이에요<small>Đăng ký</small></button></div>
+   <form id="af" class="aform" autocomplete="on">
+    ${up?`<label>이름 · Họ tên<input id="aname" class="inp" autocomplete="name" placeholder="예: Nguyễn An" maxlength="40"></label>`:""}
+    <label>아이디 · Tên đăng nhập<input id="aid" class="inp" autocomplete="username" autocapitalize="off" spellcheck="false" placeholder="영어 소문자·숫자 (예: an2005)" maxlength="20"></label>
+    <label>비밀번호 · Mật khẩu<input id="apw" class="inp" type="password" autocomplete="${up?"new-password":"current-password"}" placeholder="6자 이상 · ít nhất 6 ký tự"></label>
+    ${up?`<p class="tip">아이디와 비밀번호를 꼭 기억하세요. 다른 폰에서도 이걸로 들어가면 기록이 이어져요.<span class="vn" style="display:block">Hãy nhớ tên đăng nhập và mật khẩu. Đăng nhập trên máy khác vẫn giữ kết quả.</span></p>`:""}
+    <div id="aerr">${err?`<div class="fb no">${esc(err)}</div>`:""}</div>
+   </form>
+   <button class="guest" id="guest">로그인 없이 하기 · Dùng không cần đăng nhập<small>기록이 이 폰에만 저장돼요 · Chỉ lưu trên máy này</small></button>`;
+  $("body").querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{ LOGIN_TAB=b.dataset.t; showLogin(); });
+  const go=async()=>{
+    const id=$("aid").value.trim().toLowerCase(), pw=$("apw").value, name=up?$("aname").value.trim():"";
+    const bad=m=>{ $("aerr").innerHTML=`<div class="fb no">${esc(m)}</div>`; };
+    if(up&&!name) return bad("이름을 써 주세요. · Hãy nhập họ tên.");
+    if(!/^[a-z0-9._-]{3,20}$/.test(id)) return bad(AERR["auth/invalid-email"]);
+    if(pw.length<6) return bad(AERR["auth/weak-password"]);
+    if(!window.CLOUD) return bad(AERR["auth/network-request-failed"]);
+    const btn=$("ago"); btn.disabled=true; btn.textContent="잠시만요… · Chờ chút…";
+    try{ if(up) await CLOUD.signup(id,name,pw); else await CLOUD.login(id,pw); }
+    catch(e){ btn.disabled=false; btn.textContent=up?"가입하기 · Đăng ký":"들어가기 · Vào học"; bad(aerr(e)); }
+  };
+  $("af").onsubmit=e=>{ e.preventDefault(); go(); };
+  $("apw").onkeydown=e=>{ if(e.key==="Enter"&&!e.isComposing){ e.preventDefault(); go(); } };
+  $("guest").onclick=()=>{ GUEST=true; load(); wload(); rload(); menu(); };
+  foot(`<button class="btn pri" id="ago">${up?"가입하기 · Đăng ký":"들어가기 · Vào học"}</button>`); $("ago").onclick=go;
+}
+// called by the cloud module whenever the signed-in user changes
+window.onCloudUser=async u=>{
+  if(!u){ if(!GUEST) showLogin(); return; }
+  GUEST=false; bootScreen("기록을 불러오는 중 · Đang tải kết quả…");
+  try{ await CLOUD.pull(); }catch(e){ console.warn(e); }
+  load(); wload(); rload(); menu();
+};
+function userBar(){
+  if(GUEST) return `<div class="ubar"><span>로그인 안 함 · 이 폰에만 저장</span><button id="ulog">로그인 · Đăng nhập</button></div>`;
+  if(!window.CLOUD||!CLOUD.user) return "";
+  return `<div class="ubar"><span><b>${esc(CLOUD.user.name||CLOUD.user.id)}</b>님 · ${esc(CLOUD.user.id)}${UNLOCK_ALL?" · 🔓":""}</span><button id="ulog">로그아웃 · Đăng xuất</button></div>`;
+}
+function bindUserBar(){
+  const b=$("ulog"); if(!b) return;
+  b.onclick=async()=>{
+    if(GUEST){ GUEST=false; LOGIN_TAB="in"; showLogin(); return; }
+    if(!confirm("로그아웃할까요? · Đăng xuất?")) return;
+    try{ await CLOUD.flush(); }catch(e){}
+    lsClear(); UNLOCK_ALL=false; await CLOUD.logout();
+  };
+}
+const isTeacher=()=>!!(window.CLOUD&&CLOUD.user&&CLOUD.user.id===TEACHER_ID);
+
+/* teacher: every student's progress */
+function sumRes(raw,key,total){ try{ const s=JSON.parse(raw||"null"); const r=(s&&s[key])||{}; const v=Object.values(r); return {n:v.length,ok:v.filter(Boolean).length,total}; }catch(e){ return {n:0,ok:0,total}; } }
+function progCells(p){
+  const L=Object.keys(DAYS).map(d=>["듣기",d,sumRes(p["tpk-day"+d],"res",DAYS[d].q.length)]);
+  const R=Object.keys(READ).map(d=>["읽기",d,sumRes(p["tpk-read"+d],"res",READ[d].q.length)]);
+  const W=Object.keys(WDAYS).map(d=>["쓰기",d,sumRes(p[+d===1?"tpk-write":"tpk-write"+d],"n3",WDAYS[d].length)]);
+  return [L,R,W];
+}
+async function teacher(){
+  sec(); stopAll(); setTitle("학생 기록",menu); $("speed").hidden=true; foot(`<button class="btn sec" id="tr">새로고침 · Tải lại</button>`); $("tr").onclick=teacher;
+  $("body").innerHTML=`<p class="tip">불러오는 중…</p>`;
+  let list=[]; try{ list=await CLOUD.list(); }catch(e){ $("body").innerHTML=`<div class="fb no">학생 기록을 못 불러왔어요. Firestore 보안 규칙을 확인해 주세요. (${esc(e.code||e.message||e)})</div>`; return; }
+  list=list.filter(u=>u.id!==TEACHER_ID).sort((a,b)=>String(a.name||a.id).localeCompare(String(b.name||b.id),"ko"));
+  const when=t=>{ try{ const d=t&&t.toDate?t.toDate():null; return d?`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`:"-"; }catch(e){ return "-"; } };
+  $("body").innerHTML=`<p class="tip" style="margin-top:0">학생 ${list.length}명 · 칸 안의 숫자는 「푼 문제 / 전체」, 아래는 맞힌 개수예요.</p>`+(list.length?list.map(u=>{
+    const p=u.p||{};
+    return `<div class="tcard stu"><div class="sh"><div><b>${esc(u.name||"-")}</b><small>${esc(u.id||"")} · 마지막 ${when(u.updated)}</small></div>
+      <button class="lockbtn ${u.unlockAll?"on":""}" data-uid="${esc(u.uid)}" data-v="${u.unlockAll?0:1}">${u.unlockAll?"🔓 전부 열림":"🔒 잠금 해제"}</button></div>
+      ${progCells(p).map(row=>`<div class="prow"><span class="pl">${row[0][0]}</span>${row.map(([,d,s])=>`<span class="pc ${s.n>=s.total?"full":s.n?"part":""}"><i>Ngày ${d}</i>${s.n}/${s.total}<em>✓${s.ok}</em></span>`).join("")}</div>`).join("")}
+    </div>`;}).join(""):`<div class="tcard">아직 가입한 학생이 없어요.</div>`);
+  $("body").querySelectorAll(".lockbtn").forEach(b=>b.onclick=async()=>{
+    const v=b.dataset.v==="1"; b.disabled=true;
+    try{ await CLOUD.setUnlock(b.dataset.uid,v); teacher(); }catch(e){ b.disabled=false; alert("바꾸지 못했어요: "+(e.code||e.message)); }
+  });
+}
+
+load(); wload(); rload(); bootScreen();
+setTimeout(()=>{ if(!window.CLOUD&&!GUEST) showLogin("로그인 기능을 불러오지 못했어요. 인터넷을 확인하거나 「로그인 없이 하기」로 풀어 주세요. · Không tải được đăng nhập."); },10000);
 </script>
+<script type="module">
+/* ---------- Firebase: accounts + saving progress ---------- */
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import {getFirestore,doc,getDoc,setDoc,collection,getDocs,serverTimestamp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+const app=initializeApp({
+  apiKey:"AIzaSyDGeZpmvBdMvUCBL3CWXsx-tngWmfly7UQ",
+  authDomain:"topikviet-b44f0.firebaseapp.com",
+  projectId:"topikviet-b44f0",
+  storageBucket:"topikviet-b44f0.firebasestorage.app",
+  messagingSenderId:"869050098070",
+  appId:"1:869050098070:web:a8c740e4fd8f53f8dbbdb7"
+});
+const auth=getAuth(app), db=getFirestore(app);
+const DOMAIN="topikviet.app";            // student IDs become <id>@topikviet.app behind the scenes
+const idOf=u=>String(u.email||"").split("@")[0];
+let timer=null, signingUp=false;
+const C=window.CLOUD={
+  user:null, applying:false,
+  async signup(id,name,pw){
+    signingUp=true;
+    try{
+      const c=await createUserWithEmailAndPassword(auth,`${id}@${DOMAIN}`,pw);
+      await setDoc(doc(db,"users",c.user.uid),{id,name,created:serverTimestamp(),updated:serverTimestamp(),p:lsSnapshot(),unlockAll:false});
+      C.user={uid:c.user.uid,id,name};
+    } finally { signingUp=false; }
+    window.onCloudUser(C.user);
+  },
+  login(id,pw){ return signInWithEmailAndPassword(auth,`${id}@${DOMAIN}`,pw); },
+  async logout(){ clearTimeout(timer); C.user=null; await signOut(auth); },
+  async pull(){
+    if(!C.user) return;
+    const r=doc(db,"users",C.user.uid), s=await getDoc(r);
+    if(!s.exists()){ await setDoc(r,{id:C.user.id,name:C.user.id,created:serverTimestamp(),updated:serverTimestamp(),p:lsSnapshot(),unlockAll:false}); C.user.name=C.user.id; UNLOCK_ALL=false; return; }
+    const d=s.data(); C.user.name=d.name||C.user.id; UNLOCK_ALL=!!d.unlockAll;
+    const p=d.p||{};
+    C.applying=true;
+    try{ lsClear(); Object.keys(p).forEach(k=>{ if(k.startsWith("tpk-")&&p[k]!=null) localStorage.setItem(k,p[k]); }); }
+    finally{ C.applying=false; }
+  },
+  schedule(){ if(!C.user||C.applying) return; clearTimeout(timer); timer=setTimeout(()=>C.flush(),1200); },
+  async flush(){ clearTimeout(timer); if(!C.user) return; await setDoc(doc(db,"users",C.user.uid),{p:lsSnapshot(),updated:serverTimestamp()},{merge:true}); },
+  async list(){ const s=await getDocs(collection(db,"users")); return s.docs.map(d=>({uid:d.id,...d.data()})); },
+  setUnlock(uid,v){ return setDoc(doc(db,"users",uid),{unlockAll:!!v},{merge:true}); }
+};
+addEventListener("visibilitychange",()=>{ if(document.visibilityState==="hidden"&&timer) C.flush().catch(()=>{}); });
+addEventListener("pagehide",()=>{ if(timer) C.flush().catch(()=>{}); });
+onAuthStateChanged(auth,u=>{
+  if(signingUp) return;               // signup() finishes the setup itself
+  C.user=u?{uid:u.uid,id:idOf(u),name:""}:null;
+  window.onCloudUser(C.user);
+});
+</script>
+
 
 
 </body>

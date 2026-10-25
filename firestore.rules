@@ -1,0 +1,16 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isTeacher() {
+      return request.auth != null && request.auth.token.email == 'teacher@topikviet.app';
+    }
+    match /users/{uid} {
+      allow read: if request.auth != null && (request.auth.uid == uid || isTeacher());
+      allow create: if request.auth != null && request.auth.uid == uid
+                    && request.resource.data.get('unlockAll', false) == false;
+      allow update: if isTeacher() || (request.auth != null && request.auth.uid == uid
+                    && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['unlockAll']));
+      allow delete: if isTeacher();
+    }
+  }
+}
