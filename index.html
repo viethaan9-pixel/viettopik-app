@@ -271,6 +271,7 @@ function lsKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ co
 function lsSnapshot(){ const p={}; lsKeys().forEach(k=>{ try{ p[k]=localStorage.getItem(k); }catch(e){} }); return p; }
 function lsClear(){ lsKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
 let UNLOCK_ALL=false, GUEST=false;
+const APP_VERSION="10/27 01:50";
 const TEACHER_ID="viethaan9";
 /* ---------- data ---------- */
 // type: next(이어질 말) · act(이어서 할 행동) · same(내용과 같은 것) · main(중심 생각)
@@ -834,6 +835,7 @@ function menu(){ sec();
     <button class="mcard" data-m="vocab"><span class="ic">${IC.vocab}</span><b>단어장</b><span class="vn">Từ vựng</span><span class="mm">${vDays().map(d=>`Ngày ${d}`).join(" · ")} · ${nw}개<br>누르면 발음을 들어요</span></button>
    </div>`;
   $("body").querySelectorAll(".mcard[data-m]").forEach(b=>b.onclick=()=>({listen:home,write:wHome,read:rHome,vocab:vocab})[b.dataset.m]());
+  $("body").insertAdjacentHTML("beforeend",`<p class="note" style="margin-top:18px">버전 ${APP_VERSION}</p>`);
   bindUserBar(); if($("tview")) $("tview").onclick=teacher;
   foot("");
 }
@@ -1253,7 +1255,7 @@ async function teacher(){
   let list=[]; try{ list=await CLOUD.list(); }catch(e){ $("body").innerHTML=`<div class="fb no">학생 기록을 못 불러왔어요. Firestore 보안 규칙을 확인해 주세요. (${esc(e.code||e.message||e)})</div>`; return; }
   list=list.filter(u=>u.id!==TEACHER_ID).sort((a,b)=>String(a.name||a.id).localeCompare(String(b.name||b.id),"ko"));
   const when=t=>{ try{ const d=t&&t.toDate?t.toDate():null; return d?`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`:"-"; }catch(e){ return "-"; } };
-  $("body").innerHTML=`<p class="tip" style="margin-top:0">학생 ${list.length}명 · 칸 안의 숫자는 「푼 문제 / 전체」, 아래는 맞힌 개수예요.</p>`+(list.length?list.map(u=>{
+  $("body").innerHTML=`<p class="tip" style="margin-top:0">버전 ${APP_VERSION} · 학생 ${list.length}명 · 칸 안의 숫자는 「푼 문제 / 전체」, 아래는 맞힌 개수예요.</p>`+(list.length?list.map(u=>{
     const p=u.p||{};
     return `<div class="tcard stu"><div class="sh"><div><b>${esc(u.name||"-")}</b><small>${esc(u.id||"")} · 마지막 ${when(u.updated)}</small></div>
       <button class="lockbtn ${u.unlockAll?"on":""}" data-uid="${esc(u.uid)}" data-v="${u.unlockAll?0:1}">${u.unlockAll?"🔓 전부 열림":"🔒 잠금 해제"}</button></div>
