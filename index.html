@@ -221,6 +221,10 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .vpick.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 .chip.star{background:color-mix(in srgb,var(--mark) 40%,var(--surface));color:var(--ink)}
 .hintbtn{display:block;margin-top:8px;padding:8px 12px;border-radius:12px;border:1.5px dashed var(--accent);color:var(--accent);font-weight:700;font-size:13.5px}
+.contact{display:flex;align-items:center;gap:12px;margin-top:14px;padding:12px 14px;border-radius:14px;background:var(--surface);border:1.5px solid var(--line);color:var(--ink);text-decoration:none}
+.contact svg{flex:none;color:#1877F2}
+.contact b{display:block;font-size:14px}
+.contact small{display:block;font-size:12px;color:var(--muted);font-family:var(--f-vn)}
 /* per-section colours */
 :root{--c-listen:#2B4FA8;--c-listen-soft:#DCE4F7;--c-write:#0E7490;--c-write-soft:#D3EEF4;--c-read:#6B3FA0;--c-read-soft:#ECE2F7;--c-vocab:#B4570F;--c-vocab-soft:#FBE7D5;--undone:#AEB5C6}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--c-listen:#7D9DF0;--c-listen-soft:#1F2B4D;--c-write:#5CC8DE;--c-write-soft:#123540;--c-read:#B48CF0;--c-read-soft:#2C1F44;--c-vocab:#F2A35E;--c-vocab-soft:#3D2715;--undone:#4A5470}}
@@ -824,7 +828,8 @@ function menu(){ sec();
     <button class="mcard" data-m="write"><span class="ic">${IC.write}</span><b>쓰기</b><span class="vn">Viết</span><span class="mm">Ngày ${WDAY} · 문장 연습 ${NQ().length}문제<br>${wdone?`맞힌 문제 ${wok} / ${NQ().length}`:"아직 시작 전"}</span></button>
     <button class="mcard" data-m="read"><span class="ic">${IC.read}</span><b>읽기</b><span class="vn">Đọc</span><span class="mm">${READ[RDAY].title} · ${RQ().length}문제<br>${Object.keys(RS.res).length?`맞힌 문제 ${Object.values(RS.res).filter(Boolean).length} / ${RQ().length}`:"아직 시작 전"}</span></button>
     <button class="mcard" data-m="vocab"><span class="ic">${IC.vocab}</span><b>단어장</b><span class="vn">Từ vựng</span><span class="mm">${vDays().map(d=>`Ngày ${d}`).join(" · ")} · ${nw}개<br>누르면 발음을 들어요</span></button>
-   </div>`;
+   </div>
+   <a class="contact" href="https://www.facebook.com/profile.php?id=61594346458669" target="_blank" rel="noopener"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.8-.8L3 21l1.9-5.2A8.4 8.4 0 0 1 12 3.1a8.4 8.4 0 0 1 9 8.4z"/></svg><span><b>선생님께 문의하기 · Liên hệ giáo viên</b><small>질문이나 틀린 곳이 있으면 Facebook으로 메시지 보내 주세요 · Nhắn tin qua Facebook</small></span></a>`;
   $("body").querySelectorAll(".mcard[data-m]").forEach(b=>b.onclick=()=>({listen:home,write:wHome,read:rHome,vocab:vocab})[b.dataset.m]());
   bindUserBar(); if($("tview")) $("tview").onclick=teacher;
   foot("");
@@ -1144,7 +1149,8 @@ function showLogin(err){
     ${up?`<p class="tip">아이디와 비밀번호를 꼭 기억하세요. 다른 폰에서도 이걸로 들어가면 기록이 이어져요.<span class="vn" style="display:block">Hãy nhớ tên đăng nhập và mật khẩu. Đăng nhập trên máy khác vẫn giữ kết quả.</span></p>`:""}
     <div id="aerr">${err?`<div class="fb no">${esc(err)}</div>`:""}</div>
    </form>
-   <button class="guest" id="guest">로그인 없이 하기 · Dùng không cần đăng nhập<small>기록이 이 폰에만 저장돼요 · Chỉ lưu trên máy này</small></button>`;
+   <button class="guest" id="guest">로그인 없이 하기 · Dùng không cần đăng nhập<small>기록이 이 폰에만 저장돼요 · Chỉ lưu trên máy này</small></button>
+   <a class="contact" href="https://www.facebook.com/profile.php?id=61594346458669" target="_blank" rel="noopener"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.8-.8L3 21l1.9-5.2A8.4 8.4 0 0 1 12 3.1a8.4 8.4 0 0 1 9 8.4z"/></svg><span><b>선생님께 문의하기 · Liên hệ giáo viên</b><small>질문이나 틀린 곳이 있으면 Facebook으로 메시지 보내 주세요 · Nhắn tin qua Facebook</small></span></a>`;
   $("body").querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{ LOGIN_TAB=b.dataset.t; showLogin(); });
   const go=async()=>{
     const id=$("aid").value.trim().toLowerCase(), pw=$("apw").value, name=up?$("aname").value.trim():"";
