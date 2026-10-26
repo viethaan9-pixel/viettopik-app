@@ -221,10 +221,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .vpick.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 .chip.star{background:color-mix(in srgb,var(--mark) 40%,var(--surface));color:var(--ink)}
 .hintbtn{display:block;margin-top:8px;padding:8px 12px;border-radius:12px;border:1.5px dashed var(--accent);color:var(--accent);font-weight:700;font-size:13.5px}
-.contact{display:flex;align-items:center;gap:12px;margin-top:14px;padding:12px 14px;border-radius:14px;background:var(--surface);border:1.5px solid var(--line);color:var(--ink);text-decoration:none}
-.contact svg{flex:none;color:#1877F2}
-.contact b{display:block;font-size:14px}
-.contact small{display:block;font-size:12px;color:var(--muted);font-family:var(--f-vn)}
+.contact{flex:none;margin-left:auto;align-self:flex-start;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:var(--surface);border:1.5px solid var(--line);color:#1877F2}
 /* per-section colours */
 :root{--c-listen:#2B4FA8;--c-listen-soft:#DCE4F7;--c-write:#0E7490;--c-write-soft:#D3EEF4;--c-read:#6B3FA0;--c-read-soft:#ECE2F7;--c-vocab:#B4570F;--c-vocab-soft:#FBE7D5;--undone:#AEB5C6}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--c-listen:#7D9DF0;--c-listen-soft:#1F2B4D;--c-write:#5CC8DE;--c-write-soft:#123540;--c-read:#B48CF0;--c-read-soft:#2C1F44;--c-vocab:#F2A35E;--c-vocab-soft:#3D2715;--undone:#4A5470}}
@@ -821,15 +818,14 @@ function menu(){ sec();
   const nw=vDays().reduce((n,d)=>n+wordList(d).length,0);
   $("body").innerHTML=`
    ${userBar()}
-   <section class="mlogo"><img src="logo.png" alt=""><div><b>TOPIK II 연습</b><div class="eyebrow">무엇을 공부할까요? · HÔM NAY HỌC GÌ?</div></div></section>
+   <section class="mlogo"><img src="logo.png" alt=""><div><b>TOPIK II 연습</b><div class="eyebrow">무엇을 공부할까요? · HÔM NAY HỌC GÌ?</div></div><a class="contact" href="https://www.facebook.com/profile.php?id=61594346458669" target="_blank" rel="noopener" aria-label="선생님께 문의하기 · Liên hệ giáo viên" title="선생님께 문의하기 · Liên hệ giáo viên"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.8-.8L3 21l1.9-5.2A8.4 8.4 0 0 1 12 3.1a8.4 8.4 0 0 1 9 8.4z"/></svg></a></section>
    ${isTeacher()?`<button class="all" id="tview" style="margin-bottom:12px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg><span><b>학생 기록 보기</b><span>선생님 전용 · 학생별 진도와 잠금 해제</span></span></button>`:""}
    <div class="menu">
     <button class="mcard" data-m="listen"><span class="ic">${IC.listen}</span><b>듣기</b><span class="vn">Nghe</span><span class="mm">${DAYS[DAY].title} · ${lq.length}문제<br>${ldone?`맞힌 문제 ${lok} / ${lq.length}`:"아직 시작 전"}</span></button>
     <button class="mcard" data-m="write"><span class="ic">${IC.write}</span><b>쓰기</b><span class="vn">Viết</span><span class="mm">Ngày ${WDAY} · 문장 연습 ${NQ().length}문제<br>${wdone?`맞힌 문제 ${wok} / ${NQ().length}`:"아직 시작 전"}</span></button>
     <button class="mcard" data-m="read"><span class="ic">${IC.read}</span><b>읽기</b><span class="vn">Đọc</span><span class="mm">${READ[RDAY].title} · ${RQ().length}문제<br>${Object.keys(RS.res).length?`맞힌 문제 ${Object.values(RS.res).filter(Boolean).length} / ${RQ().length}`:"아직 시작 전"}</span></button>
     <button class="mcard" data-m="vocab"><span class="ic">${IC.vocab}</span><b>단어장</b><span class="vn">Từ vựng</span><span class="mm">${vDays().map(d=>`Ngày ${d}`).join(" · ")} · ${nw}개<br>누르면 발음을 들어요</span></button>
-   </div>
-   <a class="contact" href="https://www.facebook.com/profile.php?id=61594346458669" target="_blank" rel="noopener"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.8-.8L3 21l1.9-5.2A8.4 8.4 0 0 1 12 3.1a8.4 8.4 0 0 1 9 8.4z"/></svg><span><b>선생님께 문의하기 · Liên hệ giáo viên</b><small>질문이나 틀린 곳이 있으면 Facebook으로 메시지 보내 주세요 · Nhắn tin qua Facebook</small></span></a>`;
+   </div>`;
   $("body").querySelectorAll(".mcard[data-m]").forEach(b=>b.onclick=()=>({listen:home,write:wHome,read:rHome,vocab:vocab})[b.dataset.m]());
   bindUserBar(); if($("tview")) $("tview").onclick=teacher;
   foot("");
@@ -1140,7 +1136,7 @@ function showLogin(err){
   sec(); stopAll(); setTitle("",null); $("speed").hidden=true;
   const up=LOGIN_TAB==="up";
   $("body").innerHTML=`
-   <section class="mlogo"><img src="logo.png" alt=""><div><b>TOPIK II 연습</b><div class="eyebrow">${up?"처음 오셨군요 · ĐĂNG KÝ":"로그인 · ĐĂNG NHẬP"}</div></div></section>
+   <section class="mlogo"><img src="logo.png" alt=""><div><b>TOPIK II 연습</b><div class="eyebrow">${up?"처음 오셨군요 · ĐĂNG KÝ":"로그인 · ĐĂNG NHẬP"}</div></div><a class="contact" href="https://www.facebook.com/profile.php?id=61594346458669" target="_blank" rel="noopener" aria-label="선생님께 문의하기 · Liên hệ giáo viên" title="선생님께 문의하기 · Liên hệ giáo viên"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.8-.8L3 21l1.9-5.2A8.4 8.4 0 0 1 12 3.1a8.4 8.4 0 0 1 9 8.4z"/></svg></a></section>
    <div class="seg"><button data-t="in" aria-pressed="${!up}">로그인<small>Đăng nhập</small></button><button data-t="up" aria-pressed="${up}">처음이에요<small>Đăng ký</small></button></div>
    <form id="af" class="aform" autocomplete="on">
     ${up?`<label>이름 · Họ tên<input id="aname" class="inp" autocomplete="name" placeholder="예: Nguyễn An" maxlength="40"></label>`:""}
@@ -1149,8 +1145,7 @@ function showLogin(err){
     ${up?`<p class="tip">아이디와 비밀번호를 꼭 기억하세요. 다른 폰에서도 이걸로 들어가면 기록이 이어져요.<span class="vn" style="display:block">Hãy nhớ tên đăng nhập và mật khẩu. Đăng nhập trên máy khác vẫn giữ kết quả.</span></p>`:""}
     <div id="aerr">${err?`<div class="fb no">${esc(err)}</div>`:""}</div>
    </form>
-   <button class="guest" id="guest">로그인 없이 하기 · Dùng không cần đăng nhập<small>기록이 이 폰에만 저장돼요 · Chỉ lưu trên máy này</small></button>
-   <a class="contact" href="https://www.facebook.com/profile.php?id=61594346458669" target="_blank" rel="noopener"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.8-.8L3 21l1.9-5.2A8.4 8.4 0 0 1 12 3.1a8.4 8.4 0 0 1 9 8.4z"/></svg><span><b>선생님께 문의하기 · Liên hệ giáo viên</b><small>질문이나 틀린 곳이 있으면 Facebook으로 메시지 보내 주세요 · Nhắn tin qua Facebook</small></span></a>`;
+   <button class="guest" id="guest">로그인 없이 하기 · Dùng không cần đăng nhập<small>기록이 이 폰에만 저장돼요 · Chỉ lưu trên máy này</small></button>`;
   $("body").querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{ LOGIN_TAB=b.dataset.t; showLogin(); });
   const go=async()=>{
     const id=$("aid").value.trim().toLowerCase(), pw=$("apw").value, name=up?$("aname").value.trim():"";
