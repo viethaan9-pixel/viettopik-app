@@ -273,7 +273,7 @@ function lsKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ co
 function lsSnapshot(){ const p={}; lsKeys().forEach(k=>{ try{ p[k]=localStorage.getItem(k); }catch(e){} }); return p; }
 function lsClear(){ lsKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
 let UNLOCK_ALL=false, GUEST=false;
-const APP_VERSION="10/27 03:35";
+const APP_VERSION="10/27 03:45";
 const TEACHER_ID="viethaan9";
 /* ---------- data ---------- */
 // type: next(이어질 말) · act(이어서 할 행동) · same(내용과 같은 것) · main(중심 생각)
@@ -464,6 +464,8 @@ const sec=n=>{ if(n) document.documentElement.dataset.sec=n; else delete documen
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
 const circ=["①","②","③","④"];
+// choices are shuffled every time; renum() rewrites ①~④ inside explanations to match the shuffled order
+const renum=(t,o)=>o?String(t).replace(/[①②③④]+/g,run=>[...run].map(c=>circ[o.indexOf(circ.indexOf(c))]).sort().join("")):t;
 let DAY=1, ST={res:{},read:{},ev:{}}, rate=1;
 const KEY=()=>"tpk-day"+DAY;
 function swapKeys(a,b){ try{ const A=localStorage.getItem(a), B=localStorage.getItem(b); if(B!=null) localStorage.setItem(a,B); else localStorage.removeItem(a); if(A!=null) localStorage.setItem(b,A); else localStorage.removeItem(b); }catch(e){} }
@@ -617,7 +619,7 @@ function renderQ(){ sec("listen");
   [stepListen,stepEvidence][step](q,qi);
 }
 function stepListen(q,qi){
-  if(!ord) ord=[0,1,2,3];
+  if(!ord) ord=shuffle([0,1,2,3]);
   const hasAns=answered!==null;
   $("stage").innerHTML=`
    <div class="player"><button class="playbtn" id="pbtn" aria-label="듣기">${ICON.play}</button><div class="wave" id="wave"><i></i><i></i><i></i><i></i><i></i></div>
@@ -629,7 +631,7 @@ function stepListen(q,qi){
   const mark=pick=>{
     chs.forEach(b=>{b.disabled=true; if(+b.dataset.i===q.a) b.classList.add("ok"); if(pick!==null&&+b.dataset.i===pick&&pick!==q.a) b.classList.add("no");});
     const ok=pick===q.a;
-    $("fb").innerHTML=`<div class="fb ${ok?"ok":"no"}"><b>${ok?"정답이에요":"정답은 "+circ[ord.indexOf(q.a)]}</b>${esc(q.ex)}<span class="vn">${esc(q.exv)}</span></div>`;
+    $("fb").innerHTML=`<div class="fb ${ok?"ok":"no"}"><b>${ok?"정답이에요":"정답은 "+circ[ord.indexOf(q.a)]}</b>${esc(renum(q.ex,ord))}<span class="vn">${esc(renum(q.exv,ord))}</span></div>`;
     foot(`<button class="btn pri" id="nx">② 근거 찾기</button>`); $("nx").onclick=()=>{step=1;renderQ();};
     try{$("fb").scrollIntoView({block:"nearest",behavior:"smooth"})}catch(e){}
   };
@@ -655,7 +657,7 @@ function stepEvidence(q,qi){
   const lns=[...$("script").querySelectorAll(".ln")];
   const reveal=(ok)=>{
     lns.forEach((b,i)=>{ if(q.ev.includes(i)) b.classList.add("ev","hit"); });
-    $("efb").innerHTML=`<div class="fb ${ok?"ok":""}"><b>${ok?"근거를 찾았어요":"근거 문장"}</b>${esc(q.ex)}<span class="vn">${esc(q.exv)}</span></div>`;
+    $("efb").innerHTML=`<div class="fb ${ok?"ok":""}"><b>${ok?"근거를 찾았어요":"근거 문장"}</b>${esc(renum(q.ex,ord))}<span class="vn">${esc(renum(q.exv,ord))}</span></div>`;
     ST.ev[qi]=true; save(); $("steps").querySelector('[data-s="1"]').classList.add("ok");
     const last=ri===run.length-1;
     foot(`<button class="btn pri" id="nx">${last?"결과 보기":"다음 문제"}</button>`);
@@ -1411,18 +1413,19 @@ function rBox(q){
 }
 function renderR(){ sec("read");
   const k=R.ids[R.i], q=RQ()[k], last=R.i===R.ids.length-1, I=RI[q.i];
+  const ro=q.k==="ins"?[0,1,2,3]:shuffle([0,1,2,3]);
   setTitle(`${READ[RDAY].title} 읽기 · ${k+1}번`,rHome); $("speed").hidden=true;
   $("body").innerHTML=`<div class="prog"><span>${R.i+1} / ${R.ids.length}</span><div class="bar"><i style="width:${R.i/R.ids.length*100}%"></i></div></div>
    <div class="qhead"><span class="qno">${String(k+1).padStart(2,"0")}</span><span class="chip">${esc(q.t)}</span></div>
    <div class="instr">${q.who?I.q.replace("어머니",q.who):I.q}<span class="vn">${q.who==="나"?I.v.replace("'người mẹ'","nhân vật 'tôi'"):I.v}</span></div>
    ${rBox(q)}
-   <div class="choices" id="chs">${q.o.map((o,j)=>`<button class="ch" data-i="${j}"><span class="k">${circ[j]}</span><span>${esc(o)}</span></button>`).join("")}</div>
+   <div class="choices" id="chs">${ro.map((j,pos)=>`<button class="ch" data-i="${j}"><span class="k">${circ[pos]}</span><span>${esc(q.o[j])}</span></button>`).join("")}</div>
    <div id="fb"></div>`;
   const chs=[...$("chs").querySelectorAll(".ch")];
   const mark=pick=>{
     const ok=pick===q.a; RS.res[k]=ok; R.res[k]=ok; rsave();
     chs.forEach(b=>{ b.disabled=true; const j=+b.dataset.i; if(j===q.a) b.classList.add("ok"); if(pick!=null&&j===pick&&!ok) b.classList.add("no"); });
-    $("fb").innerHTML=`<div class="fb ${ok?"ok":"no"}"><b>${ok?"정답이에요":"정답은 "+circ[q.a]}</b>${esc(q.ex)}<span class="vn">${esc(q.exv)}</span></div>`;
+    $("fb").innerHTML=`<div class="fb ${ok?"ok":"no"}"><b>${ok?"정답이에요":"정답은 "+circ[ro.indexOf(q.a)]}</b>${esc(renum(q.ex,ro))}<span class="vn">${esc(renum(q.exv,ro))}</span></div>`;
     foot(`<button class="btn pri" id="nx">${last?"결과 보기":"다음 문제"}</button>`);
     $("nx").onclick=()=>{ if(last) rResult(); else { R.i++; renderR(); $("body").scrollTop=0; } };
     try{$("fb").scrollIntoView({block:"nearest",behavior:"smooth"})}catch(e){}
