@@ -219,6 +219,8 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .vname{flex:1;min-width:0;font-size:13.5px;overflow-wrap:anywhere}
 .vpick{flex:none;font-size:12.5px;font-weight:700;padding:6px 10px;border-radius:99px;border:1.5px solid var(--line);color:var(--muted)}
 .vpick.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.chip.star{background:color-mix(in srgb,var(--mark) 40%,var(--surface));color:var(--ink)}
+.hintbtn{display:block;margin-top:8px;padding:8px 12px;border-radius:12px;border:1.5px dashed var(--accent);color:var(--accent);font-weight:700;font-size:13.5px}
 /* per-section colours */
 :root{--c-listen:#2B4FA8;--c-listen-soft:#DCE4F7;--c-write:#0E7490;--c-write-soft:#D3EEF4;--c-read:#6B3FA0;--c-read-soft:#ECE2F7;--c-vocab:#B4570F;--c-vocab-soft:#FBE7D5;--undone:#AEB5C6}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--c-listen:#7D9DF0;--c-listen-soft:#1F2B4D;--c-write:#5CC8DE;--c-write-soft:#123540;--c-read:#B48CF0;--c-read-soft:#2C1F44;--c-vocab:#F2A35E;--c-vocab-soft:#3D2715;--undone:#4A5470}}
@@ -783,25 +785,44 @@ function wStart(k,ids){ W={k,ids,i:0,res:{}}; renderN3(); }
 function wNext(){ const last=W.i===W.ids.length-1; if(last) wResult(); else { W.i++; renderN3(); $("body").scrollTop=0; } }
 function wProg(){ return `<div class="prog"><span>${W.i+1} / ${W.ids.length}</span><div class="bar"><i style="width:${W.i/W.ids.length*100}%"></i></div></div>`; }
 
+// Ngày 1~3: the base word is shown in brackets (review). Ngày 4~: no brackets, "힌트 보기" reveals it; solving without the hint earns ⭐.
+const NOBRACKET_FROM=4;
+const isFree=()=>WDAY>=NOBRACKET_FROM;
 function renderN3(){ sec("write");
-  const k=W.ids[W.i], q=NQ()[k], last=W.i===W.ids.length-1;
+  const k=W.ids[W.i], q=NQ()[k], last=W.i===W.ids.length-1, free=isFree();
+  let hint=!free;
+  if(!WS.h) WS.h={};
   setTitle(`Ngày ${WDAY} 쓰기 · ${k+1}번`,wHome); $("speed").hidden=true;
   const [pre,post]=q.s.split("___");
   $("body").innerHTML=`${wProg()}
-   <div class="qhead"><span class="qno">${String(k+1).padStart(2,"0")}</span><span class="chip">${k<10?"실용문":"설명문"}</span></div>
-   <div class="instr">괄호 안의 말을 알맞게 바꿔 쓰십시오.<span class="vn">Chia từ trong ngoặc cho phù hợp với câu.</span></div>
-   <div class="sent">${esc(pre)}<span class="blank" id="bl">(${esc(q.b)})</span>${esc(post)}</div>
+   <div class="qhead"><span class="qno">${String(k+1).padStart(2,"0")}</span><span class="chip">${k<10?"실용문":"설명문"}</span>${free?`<span class="chip star">⭐ 힌트 없이 도전</span>`:""}</div>
+   <div class="instr">${free?"빈칸에 알맞은 말을 쓰십시오.<span class=\"vn\">Điền từ phù hợp vào chỗ trống.</span>":"괄호 안의 말을 알맞게 바꿔 쓰십시오.<span class=\"vn\">Chia từ trong ngoặc cho phù hợp với câu.</span>"}</div>
+   <div class="sent">${esc(pre)}<span class="blank" id="bl">${free?"(　　　)":`(${esc(q.b)})`}</span>${esc(post)}</div>
+   ${free?`<button class="hintbtn" id="hb">💡 힌트 보기 · Xem gợi ý</button>`:""}
    <input class="inp" id="in" lang="ko" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" placeholder="여기에 쓰세요 · Viết vào đây">
    <div id="fb"></div>`;
   const inp=$("in");
-  const check=give=>{
-    const v=give?"":inp.value.trim(); if(!give&&!v){inp.focus();return;}
-    const ok=!give&&q.a.some(x=>norm(x)===norm(v));
-    WS.n3[k]=ok; WS.n3a[k]=v; wsave(); W.res[k]=ok;
+  if(free) $("hb").onclick=()=>{ hint=true; $("bl").textContent=`(${q.b})`; $("hb").outerHTML=`<div class="tip" style="margin-top:8px">💡 힌트: <b>${esc(q.b)}</b> 를 알맞게 바꿔 쓰세요. · Chia từ <b>${esc(q.b)}</b>.</div>`; inp.focus(); };
+  const done=(ok,v,self)=>{
+    WS.n3[k]=ok; WS.n3a[k]=v; WS.h[k]=hint; wsave(); W.res[k]=ok;
+    const star=ok&&free&&!hint; if($("hb")) $("hb").remove();
     inp.disabled=true; inp.classList.add(ok?"ok":"no");
     const bl=$("bl"); bl.textContent=ok?v:q.a[0]; bl.classList.add(ok?"fill":"miss");
-    $("fb").innerHTML=`<div class="fb ${ok?"ok":"no"}"><b>${ok?"정답이에요":"정답: "+esc(q.a.join(" / "))}</b>${!ok&&v?`내 답: ${esc(v)}<br>`:""}${esc(q.p)}<span class="vn">${esc(q.pv)}</span></div>`;
+    $("fb").innerHTML=`<div class="fb ${ok?"ok":"no"}"><b>${ok?(star?"⭐ 힌트 없이 맞혔어요!":"정답이에요"):"정답: "+esc(q.a.join(" / "))}</b>${self&&ok?`내 답: ${esc(v)} · 모범 답안: ${esc(q.a.join(" / "))}<br>`:""}${!ok&&v?`내 답: ${esc(v)}<br>`:""}${free?`괄호 말: ${esc(q.b)}<br>`:""}${esc(q.p)}<span class="vn">${esc(q.pv)}</span></div>`;
     foot(`<button class="btn pri" id="nx">${last?"결과 보기":"다음 문제"}</button>`); $("nx").onclick=wNext;
+  };
+  const check=give=>{
+    const v=give?"":inp.value.trim(); if(!give&&!v){inp.focus();return;}
+    if(give) return done(false,"",false);
+    if(q.a.some(x=>norm(x)===norm(v))) return done(true,v,false);
+    if(free&&!hint){ // another wording may also be right: let the student compare and decide
+      inp.disabled=true; if($("hb")) $("hb").remove();
+      $("fb").innerHTML=`<div class="fb"><b>모범 답안과 비교해 보세요 · So sánh với đáp án mẫu</b>내 답: <strong>${esc(v)}</strong><br>모범 답안: <strong>${esc(q.a.join(" / "))}</strong> (괄호 말: ${esc(q.b)})<div class="tip" style="margin-top:6px">뜻과 문법이 맞으면 「맞았어요」를 누르세요.<span class="vn" style="display:block">Nếu đúng nghĩa và ngữ pháp thì bấm 「Đúng」.</span></div></div>`;
+      foot(`<button class="btn sec" id="sn">틀렸어요 · Sai</button><button class="btn pri" id="sy">맞았어요 · Đúng</button>`);
+      $("sn").onclick=()=>{ inp.disabled=false; done(false,v,true); }; $("sy").onclick=()=>{ inp.disabled=false; done(true,v,true); };
+      return;
+    }
+    done(false,v,false);
   };
   inp.onkeydown=e=>{ if(e.key==="Enter"&&!e.isComposing){ e.preventDefault(); check(false);} };
   foot(`<button class="btn sec" id="skip">모르겠어요</button><button class="btn pri" id="ck">확인</button>`);
@@ -812,7 +833,8 @@ function wResult(){ sec("write");
   setTitle("쓰기 결과",wHome); $("speed").hidden=true;
   const ids=Object.keys(W.res).map(Number), ok=ids.filter(i=>W.res[i]).length, wrong=ids.filter(i=>!W.res[i]);
   const name=i=>`${i+1}번`;
-  $("body").innerHTML=`<div class="done"><div class="eyebrow">Ngày ${WDAY} 쓰기 · KẾT QUẢ</div><div class="big">${ok} / ${ids.length}</div>
+  const stars=isFree()?ids.filter(i=>W.res[i]&&!(WS.h||{})[i]).length:0;
+  $("body").innerHTML=`<div class="done"><div class="eyebrow">Ngày ${WDAY} 쓰기 · KẾT QUẢ</div><div class="big">${ok} / ${ids.length}</div>${isFree()?`<div class="chip star" style="font-size:13px">⭐ 힌트 없이 맞힌 문제 ${stars}개</div>`:""}
     <div style="color:var(--muted);font-size:14px">${wrong.length?`틀린 문제: ${wrong.map(name).join(", ")}`:"모두 맞았어요!"}</div></div>
     ${W.k==="n3"&&wrong.length?`<div class="tcard"><h3>틀린 문장 정답</h3><ul>${wrong.map(i=>`<li>${i+1}번 · ${esc(NQ()[i].b)} → <b>${esc(NQ()[i].a[0])}</b> <span class="vn">${esc(NQ()[i].p)}</span></li>`).join("")}</ul></div>`:""}`;
   foot(`<button class="btn sec" id="h">쓰기 처음으로</button>${wrong.length?`<button class="btn pri" id="re">틀린 ${wrong.length}문제 다시</button>`:""}`);
@@ -1098,7 +1120,9 @@ function sumRes(raw,key,total){ try{ const s=JSON.parse(raw||"null"); const r=(s
 function progCells(p){
   const L=Object.keys(DAYS).map(d=>["듣기",d,sumRes(p["tpk-day"+d],"res",DAYS[d].q.length)]);
   const R=Object.keys(READ).map(d=>["읽기",d,sumRes(p["tpk-read"+d],"res",READ[d].q.length)]);
-  const W=Object.keys(WDAYS).map(d=>["쓰기",d,sumRes(p[+d===1?"tpk-write":"tpk-write"+d],"n3",WDAYS[d].length)]);
+  const W=Object.keys(WDAYS).map(d=>{ const raw=p[+d===1?"tpk-write":"tpk-write"+d], s=sumRes(raw,"n3",WDAYS[d].length);
+    if(+d>=NOBRACKET_FROM){ try{ const o=JSON.parse(raw||"null")||{}; s.star=Object.keys(o.n3||{}).filter(i=>o.n3[i]&&!(o.h||{})[i]).length; }catch(e){} }
+    return ["쓰기",d,s]; });
   return [L,R,W];
 }
 async function teacher(){
@@ -1111,7 +1135,7 @@ async function teacher(){
     const p=u.p||{};
     return `<div class="tcard stu"><div class="sh"><div><b>${esc(u.name||"-")}</b><small>${esc(u.id||"")} · 마지막 ${when(u.updated)}</small></div>
       <button class="lockbtn ${u.unlockAll?"on":""}" data-uid="${esc(u.uid)}" data-v="${u.unlockAll?0:1}">${u.unlockAll?"🔓 전부 열림":"🔒 잠금 해제"}</button></div>
-      ${progCells(p).map(row=>`<div class="prow"><span class="pl">${row[0][0]}</span>${row.map(([,d,s])=>`<span class="pc ${s.n>=s.total?"full":s.n?"part":""}"><i>Ngày ${d}</i>${s.n}/${s.total}<em>✓${s.ok}</em></span>`).join("")}</div>`).join("")}
+      ${progCells(p).map(row=>`<div class="prow"><span class="pl">${row[0][0]}</span>${row.map(([,d,s])=>`<span class="pc ${s.n>=s.total?"full":s.n?"part":""}"><i>Ngày ${d}</i>${s.n}/${s.total}<em>✓${s.ok}${s.star!=null?` ⭐${s.star}`:""}</em></span>`).join("")}</div>`).join("")}
     </div>`;}).join(""):`<div class="tcard">아직 가입한 학생이 없어요.</div>`);
   $("body").querySelectorAll(".lockbtn").forEach(b=>b.onclick=async()=>{
     const v=b.dataset.v==="1"; b.disabled=true;
