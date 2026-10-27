@@ -293,7 +293,7 @@ function lsKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ co
 function lsSnapshot(){ const p={}; lsKeys().forEach(k=>{ try{ p[k]=localStorage.getItem(k); }catch(e){} }); return p; }
 function lsClear(){ lsKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
 let UNLOCK_ALL=false, GUEST=false;
-const APP_VERSION="10/27 읽기1 20문제";
+const APP_VERSION="10/27 2과목 잠금";
 const TEACHER_ID="viethaan9";
 /* ---------- data ---------- */
 // type: next(이어질 말) · act(이어서 할 행동) · same(내용과 같은 것) · main(중심 생각)
@@ -572,19 +572,43 @@ const ICON={
 };
 $("speed").onclick=()=>{ rate = rate>=1.1?0.8: rate>=1?1.15:1; rate=Math.round(rate*100)/100; try{localStorage.setItem("tpk-rate",String(rate))}catch(e){} $("speed").textContent=`속도 ${(rate%1?String(rate):rate.toFixed(1))}×`; };
 
-/* ---------- day tabs with lock: Ngày n opens once every question of Ngày n-1 is answered ---------- */
+/* ---------- day tabs with lock ----------
+   Ngày n opens when 2 of the 3 subjects (듣기·읽기·쓰기) of Ngày n-1 are fully done
+   (if Ngày n-1 has fewer subjects, all of them). */
 const LOCK='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:4px"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
 function dayDone(pre,d,n){ try{ const s=JSON.parse(localStorage.getItem(pre+d)||"null"); return !!(s&&s.res&&Object.keys(s.res).length>=n); }catch(e){ return false; } }
+function subjDone(d){ // [available subjects, finished subjects] for Ngày d
+  const S=[];
+  if(DAYS[d]) S.push(dayDone("tpk-day",d,DAYS[d].q.length));
+  if(READ[d]) S.push(dayDone("tpk-read",d,READ[d].q.length));
+  if(WDAYS[d]) S.push(wDayDone(d));
+  return [S.length,S.filter(Boolean).length];
+}
+const prevOk=d=>{ if(d<=1) return true; const [n,k]=subjDone(d-1); return k>=Math.min(2,n); };
+const freeAll=()=>UNLOCK_ALL||isTeacher();
+function dayState(d){ if(d<=1||freeAll()) return "open"; return prevOk(d)?"open":"prev"; }
 function dayTabs(o){
-  const ks=Object.keys(o.days).map(Number).sort((a,b)=>a-b), next=ks[ks.length-1]+1, open=d=>d===ks[0]||UNLOCK_ALL||o.done(d-1)||o.done(d);
-  const tabs=ks.map(d=>open(d)
-    ? `<button class="day" data-d="${d}" aria-current="${d==o.cur}"><b>${o.days[d].title}</b><span>${o.days[d].sub}</span></button>`
-    : `<button class="day lock" disabled title="Ngày ${d-1} 다 풀면 열려요"><b>${LOCK}${o.days[d].title}</b><span>잠김 · Khóa</span></button>`).join("");
-  const more=(UNLOCK_ALL||o.done(next-1))
-    ? `<div class="day soon"><b>Ngày ${next}</b><span>준비 중 · Sắp có</span></div>`
-    : `<div class="day soon"><b>${LOCK}Ngày ${next}</b><span>준비 중</span></div>`;
+  const ks=Object.keys(o.days).map(Number).sort((a,b)=>a-b), next=ks[ks.length-1]+1;
+  const tabs=ks.map(d=>{ const st=o.done(d)?"open":dayState(d);
+    if(st==="open") return `<button class="day" data-d="${d}" aria-current="${d==o.cur}"><b>${o.days[d].title}</b><span>${o.days[d].sub}</span></button>`;
+    return `<button class="day lock" data-why="${d}" title="Ngày ${d-1}에서 두 과목을 다 풀면 열려요"><b>${LOCK}${o.days[d].title}</b><span>잠김 · Khóa</span></button>`; }).join("");
+  const more=`<div class="day soon"><b>${dayState(next)==="open"?"":LOCK}Ngày ${next}</b><span>준비 중 · Sắp có</span></div>`;
   return `<nav class="days">${tabs}${more}</nav>`;
 }
+// what is still needed to open Ngày d (shown when a locked tab is tapped)
+function whyLocked(d){
+  const p=d-1, L=[];
+  if(DAYS[p]) L.push(["듣기 · Nghe",dayDone("tpk-day",p,DAYS[p].q.length)]);
+  if(READ[p]) L.push(["읽기 · Đọc",dayDone("tpk-read",p,READ[p].q.length)]);
+  if(WDAYS[p]) L.push(["쓰기 · Viết",wDayDone(p)]);
+  const need=Math.min(2,L.length);
+  return `<div class="fb no" style="margin-top:10px"><b>🔒 Ngày ${d}는 아직 잠겨 있어요 · Ngày ${d} chưa mở</b>
+    Ngày ${p}에서 ${need===L.length&&need<2?"아래 과목을":`${L.length}과목 중 ${need}과목을`} 끝까지 다 풀어야 열려요.<span class="vn">Phải làm xong hết ${need}/${L.length} môn của Ngày ${p} thì mới mở được.</span>
+    <div style="margin-top:8px">${L.map(([n,ok])=>`${ok?"✅":"⬜"} ${n}`).join("<br>")}</div></div>`;
+}
+document.addEventListener("click",e=>{
+  const w=e.target.closest(".day[data-why]"); if(w){ const box=$("lockmsg")||Object.assign(document.createElement("div"),{id:"lockmsg"}); box.innerHTML=whyLocked(+w.dataset.why); w.closest("nav").after(box); box.scrollIntoView({block:"nearest",behavior:"smooth"}); }
+});
 
 /* ---------- views ---------- */
 function foot(h){ $("foot").innerHTML=h; }
