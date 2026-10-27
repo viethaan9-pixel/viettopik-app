@@ -4,12 +4,21 @@ service cloud.firestore {
     function isTeacher() {
       return request.auth != null && request.auth.token.email == 'viethaan9@topikviet.app';
     }
+    // teacher's settings (the password that opens Ngày 6~). Only the teacher can read or change it.
+    match /config/{doc} {
+      allow read, write: if isTeacher();
+    }
     match /users/{uid} {
       allow read: if request.auth != null && (request.auth.uid == uid || isTeacher());
       allow create: if request.auth != null && request.auth.uid == uid
-                    && request.resource.data.get('unlockAll', false) == false;
+                    && request.resource.data.get('unlockAll', false) == false
+                    && !('gate6' in request.resource.data);
+      // a student may change their own record, but not unlockAll,
+      // and gate6 only when it equals the teacher's password
       allow update: if isTeacher() || (request.auth != null && request.auth.uid == uid
-                    && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['unlockAll']));
+                    && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['unlockAll'])
+                    && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['gate6'])
+                        || request.resource.data.gate6 == get(/databases/$(database)/documents/config/gate).data.pw));
       allow delete: if isTeacher();
     }
   }

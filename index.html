@@ -293,7 +293,7 @@ function lsKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ co
 function lsSnapshot(){ const p={}; lsKeys().forEach(k=>{ try{ p[k]=localStorage.getItem(k); }catch(e){} }); return p; }
 function lsClear(){ lsKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
 let UNLOCK_ALL=false, GUEST=false;
-const APP_VERSION="10/27 읽기1 20문제";
+const APP_VERSION="10/27 잠금·비밀번호";
 const TEACHER_ID="viethaan9";
 /* ---------- data ---------- */
 // type: next(이어질 말) · act(이어서 할 행동) · same(내용과 같은 것) · main(중심 생각)
@@ -572,18 +572,66 @@ const ICON={
 };
 $("speed").onclick=()=>{ rate = rate>=1.1?0.8: rate>=1?1.15:1; rate=Math.round(rate*100)/100; try{localStorage.setItem("tpk-rate",String(rate))}catch(e){} $("speed").textContent=`속도 ${(rate%1?String(rate):rate.toFixed(1))}×`; };
 
-/* ---------- day tabs with lock: Ngày n opens once every question of Ngày n-1 is answered ---------- */
+/* ---------- day tabs with lock ----------
+   Ngày n opens when 2 of the 3 subjects (듣기·읽기·쓰기) of Ngày n-1 are fully done
+   (if Ngày n-1 has fewer subjects, all of them). From Ngày 6 the teacher's password is also needed. */
 const LOCK='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:4px"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
+const GATE_FROM=6; let GATE_OK=false;
 function dayDone(pre,d,n){ try{ const s=JSON.parse(localStorage.getItem(pre+d)||"null"); return !!(s&&s.res&&Object.keys(s.res).length>=n); }catch(e){ return false; } }
+function subjDone(d){ // [available subjects, finished subjects] for Ngày d
+  const S=[];
+  if(DAYS[d]) S.push(dayDone("tpk-day",d,DAYS[d].q.length));
+  if(READ[d]) S.push(dayDone("tpk-read",d,READ[d].q.length));
+  if(WDAYS[d]) S.push(wDayDone(d));
+  return [S.length,S.filter(Boolean).length];
+}
+const prevOk=d=>{ if(d<=1) return true; const [n,k]=subjDone(d-1); return k>=Math.min(2,n); };
+const freeAll=()=>UNLOCK_ALL||isTeacher();
+const gateNeeded=d=>d>=GATE_FROM&&!GATE_OK&&!freeAll();
+function dayState(d){ if(d<=1||freeAll()) return "open"; if(!prevOk(d)) return "prev"; if(gateNeeded(d)) return "gate"; return "open"; }
 function dayTabs(o){
-  const ks=Object.keys(o.days).map(Number).sort((a,b)=>a-b), next=ks[ks.length-1]+1, open=d=>d===ks[0]||UNLOCK_ALL||o.done(d-1)||o.done(d);
-  const tabs=ks.map(d=>open(d)
-    ? `<button class="day" data-d="${d}" aria-current="${d==o.cur}"><b>${o.days[d].title}</b><span>${o.days[d].sub}</span></button>`
-    : `<button class="day lock" disabled title="Ngày ${d-1} 다 풀면 열려요"><b>${LOCK}${o.days[d].title}</b><span>잠김 · Khóa</span></button>`).join("");
-  const more=(UNLOCK_ALL||o.done(next-1))
-    ? `<div class="day soon"><b>Ngày ${next}</b><span>준비 중 · Sắp có</span></div>`
-    : `<div class="day soon"><b>${LOCK}Ngày ${next}</b><span>준비 중</span></div>`;
+  const ks=Object.keys(o.days).map(Number).sort((a,b)=>a-b), next=ks[ks.length-1]+1;
+  const tabs=ks.map(d=>{ const st=o.done(d)?"open":dayState(d);
+    if(st==="open") return `<button class="day" data-d="${d}" aria-current="${d==o.cur}"><b>${o.days[d].title}</b><span>${o.days[d].sub}</span></button>`;
+    if(st==="gate") return `<button class="day lock gate" data-gate="${d}" title="선생님 비밀번호로 열어요"><b>🔑 ${o.days[d].title}</b><span>비밀번호 · Mật khẩu</span></button>`;
+    return `<button class="day lock" data-why="${d}" title="Ngày ${d-1}에서 두 과목을 다 풀면 열려요"><b>${LOCK}${o.days[d].title}</b><span>잠김 · Khóa</span></button>`; }).join("");
+  const more=`<div class="day soon"><b>${dayState(next)==="open"?"":LOCK}Ngày ${next}</b><span>준비 중 · Sắp có</span></div>`;
   return `<nav class="days">${tabs}${more}</nav>`;
+}
+// what is still needed to open Ngày d (shown when a locked tab is tapped)
+function whyLocked(d){
+  const p=d-1, L=[];
+  if(DAYS[p]) L.push(["듣기 · Nghe",dayDone("tpk-day",p,DAYS[p].q.length)]);
+  if(READ[p]) L.push(["읽기 · Đọc",dayDone("tpk-read",p,READ[p].q.length)]);
+  if(WDAYS[p]) L.push(["쓰기 · Viết",wDayDone(p)]);
+  const need=Math.min(2,L.length);
+  return `<div class="fb no" style="margin-top:10px"><b>🔒 Ngày ${d}는 아직 잠겨 있어요 · Ngày ${d} chưa mở</b>
+    Ngày ${p}에서 ${need===L.length&&need<2?"아래 과목을":`${L.length}과목 중 ${need}과목을`} 끝까지 다 풀어야 열려요.<span class="vn">Phải làm xong hết ${need}/${L.length} môn của Ngày ${p} thì mới mở được.</span>
+    <div style="margin-top:8px">${L.map(([n,ok])=>`${ok?"✅":"⬜"} ${n}`).join("<br>")}</div></div>`;
+}
+document.addEventListener("click",e=>{
+  const g=e.target.closest(".day[data-gate]"); if(g){ gateView(+g.dataset.gate); return; }
+  const w=e.target.closest(".day[data-why]"); if(w){ const box=$("lockmsg")||Object.assign(document.createElement("div"),{id:"lockmsg"}); box.innerHTML=whyLocked(+w.dataset.why); w.closest("nav").after(box); box.scrollIntoView({block:"nearest",behavior:"smooth"}); }
+});
+function gateView(d){
+  sec(); stopAll(); setTitle("비밀번호로 열기",menu); $("speed").hidden=true;
+  const back=()=>menu();
+  if(!window.CLOUD||!CLOUD.user){
+    $("body").innerHTML=`<div class="tcard" style="margin-top:4px"><h3>🔑 Ngày ${GATE_FROM}부터는 비밀번호가 필요해요</h3><div class="vn">Từ Ngày ${GATE_FROM} cần mật khẩu của cô</div>
+      <p class="tip">먼저 로그인해 주세요. 로그인하면 선생님이 알려 준 비밀번호를 넣을 수 있어요.<span class="vn" style="display:block">Hãy đăng nhập trước, sau đó nhập mật khẩu cô gửi.</span></p></div>`;
+    foot(`<button class="btn pri" id="glog">로그인 · Đăng nhập</button>`); $("glog").onclick=()=>{ GUEST=false; LOGIN_TAB="in"; showLogin(); }; return;
+  }
+  $("body").innerHTML=`<div class="tcard" style="margin-top:4px"><h3>🔑 Ngày ${GATE_FROM}부터는 선생님 비밀번호로 열어요</h3><div class="vn">Từ Ngày ${GATE_FROM} trở đi, nhập mật khẩu của cô để mở</div>
+     <p class="tip">선생님께 받은 비밀번호를 넣으세요. 한 번만 넣으면 계속 열려 있어요. 비밀번호가 없으면 문의 버튼으로 선생님께 연락하세요.<span class="vn" style="display:block">Nhập mật khẩu cô đã gửi. Chỉ cần nhập 1 lần. Chưa có mật khẩu thì liên hệ cô.</span></p>
+     <input class="inp" id="gpw" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="비밀번호 · Mật khẩu">
+     <div id="gerr"></div></div>`;
+  const go=async()=>{ const v=$("gpw").value.trim(); if(!v){ $("gpw").focus(); return; }
+    const b=$("gok"); b.disabled=true; b.textContent="확인 중… · Đang kiểm tra…";
+    try{ await CLOUD.openGate(v); GATE_OK=true; $("body").innerHTML=`<div class="fb ok" style="margin-top:4px"><b>열렸어요! · Đã mở!</b>이제 Ngày ${GATE_FROM}부터 공부할 수 있어요. 앞 Ngày의 두 과목을 끝내면 다음 날이 열려요.<span class="vn">Bây giờ có thể học từ Ngày ${GATE_FROM}. Làm xong 2 môn của ngày trước thì ngày sau sẽ mở.</span></div>`; foot(`<button class="btn pri" id="gback">공부하러 가기 · Vào học</button>`); $("gback").onclick=back; }
+    catch(e){ b.disabled=false; b.textContent="열기 · Mở"; $("gerr").innerHTML=`<div class="fb no" style="margin-top:10px">${e&&e.code==="permission-denied"?"비밀번호가 틀려요. · Sai mật khẩu.":esc(aerr(e))}</div>`; }
+  };
+  $("gpw").onkeydown=e=>{ if(e.key==="Enter"&&!e.isComposing){ e.preventDefault(); go(); } };
+  foot(`<button class="btn sec" id="gcancel">나중에 · Để sau</button><button class="btn pri" id="gok">열기 · Mở</button>`); $("gok").onclick=go; $("gcancel").onclick=back;
 }
 
 /* ---------- views ---------- */
@@ -2028,7 +2076,7 @@ function bindUserBar(){
     if(GUEST){ GUEST=false; LOGIN_TAB="in"; showLogin(); return; }
     if(!confirm("로그아웃할까요? · Đăng xuất?")) return;
     try{ await CLOUD.flush(); }catch(e){}
-    lsClear(); UNLOCK_ALL=false; await CLOUD.logout();
+    lsClear(); UNLOCK_ALL=false; GATE_OK=false; await CLOUD.logout();
   };
 }
 const isTeacher=()=>!!(window.CLOUD&&CLOUD.user&&CLOUD.user.id===TEACHER_ID);
@@ -2049,12 +2097,19 @@ async function teacher(){
   let list=[]; try{ list=await CLOUD.list(); }catch(e){ $("body").innerHTML=`<div class="fb no">학생 기록을 못 불러왔어요. Firestore 보안 규칙을 확인해 주세요. (${esc(e.code||e.message||e)})</div>`; return; }
   list=list.filter(u=>u.id!==TEACHER_ID).sort((a,b)=>String(a.name||a.id).localeCompare(String(b.name||b.id),"ko"));
   const when=t=>{ try{ const d=t&&t.toDate?t.toDate():null; return d?`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`:"-"; }catch(e){ return "-"; } };
-  $("body").innerHTML=`<p class="tip" style="margin-top:0">버전 ${APP_VERSION} · 학생 ${list.length}명 · 칸 안의 숫자는 「푼 문제 / 전체」, 아래는 맞힌 개수예요.</p>`+(list.length?list.map(u=>{
+  let gpw=""; try{ gpw=await CLOUD.getGatePw(); }catch(e){ gpw=null; }
+  const gateBox=`<div class="tcard" style="margin-top:0"><h3>🔑 Ngày ${GATE_FROM}부터 여는 비밀번호</h3>
+    <p class="tip">${gpw===null?"⚠️ 비밀번호를 읽지 못했어요. Firebase 보안 규칙을 새 규칙으로 바꿔 주세요.":gpw?`지금 비밀번호: <b>${esc(gpw)}</b> · 학생은 이 비밀번호를 한 번 넣으면 계속 열려요. 바꿔도 이미 연 학생은 그대로 열려 있어요.`:"아직 비밀번호가 없어요. 정하기 전에는 아무도 Ngày "+GATE_FROM+"부터 열 수 없어요."}</p>
+    <div style="display:flex;gap:8px;margin-top:8px"><input class="inp" id="tgpw" style="margin-top:0" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="새 비밀번호 (4자 이상)"><button class="btn pri" id="tgsave" style="flex:none;width:auto;padding:0 16px">저장</button></div></div>`;
+  $("body").innerHTML=gateBox+`<p class="tip" style="margin-top:0">버전 ${APP_VERSION} · 학생 ${list.length}명 · 칸 안의 숫자는 「푼 문제 / 전체」, 아래는 맞힌 개수예요.</p>`+(list.length?list.map(u=>{
     const p=u.p||{};
-    return `<div class="tcard stu"><div class="sh"><div><b>${esc(u.name||"-")}</b><small>${esc(u.id||"")} · 마지막 ${when(u.updated)}</small></div>
+    return `<div class="tcard stu"><div class="sh"><div><b>${esc(u.name||"-")}</b><small>${esc(u.id||"")} · 마지막 ${when(u.updated)}${u.gate6!=null?" · 🔑 Ngày "+GATE_FROM+"~ 열림":""}</small></div>
       <button class="lockbtn ${u.unlockAll?"on":""}" data-uid="${esc(u.uid)}" data-v="${u.unlockAll?0:1}">${u.unlockAll?"🔓 전부 열림":"🔒 잠금 해제"}</button></div>
       ${progCells(p).map(row=>`<div class="prow"><span class="pl">${row[0][0]}</span>${row.map(([,d,s])=>`<span class="pc ${s.n>=s.total?"full":s.n?"part":""}"><i>Ngày ${d}</i>${s.n}/${s.total}<em>✓${s.ok}${s.star!=null?` ⭐${s.star}`:""}</em></span>`).join("")}</div>`).join("")}
     </div>`;}).join(""):`<div class="tcard">아직 가입한 학생이 없어요.</div>`);
+  $("tgsave").onclick=async()=>{ const v=$("tgpw").value.trim(); if(v.length<4){ alert("비밀번호는 4자 이상으로 해 주세요."); return; }
+    if(!confirm(`비밀번호를 「${v}」로 정할까요?`)) return;
+    try{ await CLOUD.setGatePw(v); teacher(); }catch(e){ alert("저장하지 못했어요: "+(e.code||e.message)+"\nFirebase 보안 규칙을 새 규칙으로 바꿨는지 확인해 주세요."); } };
   $("body").querySelectorAll(".lockbtn").forEach(b=>b.onclick=async()=>{
     const v=b.dataset.v==="1"; b.disabled=true;
     try{ await CLOUD.setUnlock(b.dataset.uid,v); teacher(); }catch(e){ b.disabled=false; alert("바꾸지 못했어요: "+(e.code||e.message)); }
@@ -2097,8 +2152,8 @@ const C=window.CLOUD={
   async pull(){
     if(!C.user) return;
     const r=doc(db,"users",C.user.uid), s=await getDoc(r);
-    if(!s.exists()){ await setDoc(r,{id:C.user.id,name:C.user.id,created:serverTimestamp(),updated:serverTimestamp(),p:lsSnapshot(),unlockAll:false}); C.user.name=C.user.id; UNLOCK_ALL=false; return; }
-    const d=s.data(); C.user.name=d.name||C.user.id; UNLOCK_ALL=!!d.unlockAll;
+    if(!s.exists()){ await setDoc(r,{id:C.user.id,name:C.user.id,created:serverTimestamp(),updated:serverTimestamp(),p:lsSnapshot(),unlockAll:false}); C.user.name=C.user.id; UNLOCK_ALL=false; GATE_OK=false; return; }
+    const d=s.data(); C.user.name=d.name||C.user.id; UNLOCK_ALL=!!d.unlockAll; GATE_OK=d.gate6!=null;
     const p=d.p||{};
     C.applying=true;
     try{ lsClear(); Object.keys(p).forEach(k=>{ if(k.startsWith("tpk-")&&p[k]!=null) localStorage.setItem(k,p[k]); }); }
@@ -2107,7 +2162,11 @@ const C=window.CLOUD={
   schedule(){ if(!C.user||C.applying) return; clearTimeout(timer); timer=setTimeout(()=>C.flush(),1200); },
   async flush(){ clearTimeout(timer); if(!C.user) return; await setDoc(doc(db,"users",C.user.uid),{p:lsSnapshot(),updated:serverTimestamp()},{merge:true}); },
   async list(){ const s=await getDocs(collection(db,"users")); return s.docs.map(d=>({uid:d.id,...d.data()})); },
-  setUnlock(uid,v){ return setDoc(doc(db,"users",uid),{unlockAll:!!v},{merge:true}); }
+  setUnlock(uid,v){ return setDoc(doc(db,"users",uid),{unlockAll:!!v},{merge:true}); },
+  // the security rules only accept gate6 when it equals the teacher's password in config/gate
+  openGate(pw){ return setDoc(doc(db,"users",C.user.uid),{gate6:pw},{merge:true}); },
+  async getGatePw(){ const s=await getDoc(doc(db,"config","gate")); return s.exists()?(s.data().pw||""):""; },
+  setGatePw(pw){ return setDoc(doc(db,"config","gate"),{pw,updated:serverTimestamp()}); }
 };
 addEventListener("visibilitychange",()=>{ if(document.visibilityState==="hidden"&&timer) C.flush().catch(()=>{}); });
 addEventListener("pagehide",()=>{ if(timer) C.flush().catch(()=>{}); });
