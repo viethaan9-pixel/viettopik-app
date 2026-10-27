@@ -282,7 +282,7 @@ function lsKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ co
 function lsSnapshot(){ const p={}; lsKeys().forEach(k=>{ try{ p[k]=localStorage.getItem(k); }catch(e){} }); return p; }
 function lsClear(){ lsKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
 let UNLOCK_ALL=false, GUEST=false;
-const APP_VERSION="10/27 급수 선택";
+const APP_VERSION="10/27 녹음 목소리";
 const TEACHER_ID="viethaan9";
 /* ---------- data ---------- */
 // type: next(이어질 말) · act(이어서 할 행동) · same(내용과 같은 것) · main(중심 생각)
@@ -506,15 +506,36 @@ function pickVoices(){
   MPITCH=typeof o.mp==="number"?o.mp:0.92;
 }
 if(canSpeak){pickVoices(); speechSynthesis.onvoiceschanged=pickVoices;}
-function sayLine(sp,text){
+/* recorded voices (Google TTS mp3 made by .github/workflows/tts.yml); phone voice is the fallback */
+const TTSV={M:"ko-KR-Neural2-C",F:"ko-KR-Neural2-A"};
+const fnv=(s,h)=>{ for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619)>>>0; } return h>>>0; };
+const ttsKey=(sp,t)=>{ const s=TTSV[sp]+"|"+t; return fnv(s,2166136261).toString(16).padStart(8,"0")+fnv(s,0x811c9dc6^0x5bd1e995).toString(16).padStart(8,"0"); };
+let AUD=new Set(); const AU=new Audio(); AU.preload="auto";
+fetch("audio/index.json",{cache:"no-cache"}).then(r=>r.ok?r.json():null).then(j=>{ if(j&&j.keys) AUD=new Set(j.keys); }).catch(()=>{});
+const useRec=()=>!VOPT().dev;
+function sayRec(sp,t){
+  return new Promise(res=>{
+    let done=false; const fin=ok=>{ if(done) return; done=true; AU.onended=AU.onerror=null; res(ok); };
+    AU.onended=()=>fin(true); AU.onerror=()=>fin(false);
+    AU.src=`audio/${ttsKey(sp,t)}.mp3`; AU.playbackRate=rate; try{ AU.preservesPitch=true; }catch(e){}
+    const pr=AU.play(); if(pr&&pr.catch) pr.catch(()=>fin(false));
+    setTimeout(()=>fin(true), 6000+t.length*400/rate);
+  });
+}
+function sayDevice(sp,text){
   return new Promise(res=>{
     if(!canSpeak){res();return;}
-    const u=new SpeechSynthesisUtterance(text.replace(/\(.*?\)/g,"")); u.lang="ko-KR"; u.rate=0.95*rate;
+    const u=new SpeechSynthesisUtterance(text); u.lang="ko-KR"; u.rate=0.95*rate;
     const v=sp==="M"?VM:VF; if(v) u.voice=v;
     u.pitch = (VF&&VM&&VF!==VM)? 1 : (sp==="M"?MPITCH:1.08);
     u.onend=res; u.onerror=res; speechSynthesis.speak(u);
     setTimeout(res, 4000+text.length*350/rate);
   });
+}
+async function sayLine(sp,text){
+  sp=sp==="M"?"M":"F"; const t=String(text).replace(/\(.*?\)/g,"").replace(/~/g,"").trim();
+  if(useRec()&&AUD.has(ttsKey(sp,t))){ if(await sayRec(sp,t)) return; }
+  return sayDevice(sp,t);
 }
 async function playLines(lines,{onLine,skipBlank=true,fill}={}){
   stopAll(); const tk=++playToken; playing=true; uiPlay(true);
@@ -529,7 +550,7 @@ async function playLines(lines,{onLine,skipBlank=true,fill}={}){
   }
   if(tk===playToken){ playing=false; uiPlay(false); onLine&&onLine(-1); }
 }
-function stopAll(){ playToken++; playing=false; if(canSpeak) try{speechSynthesis.cancel()}catch(e){} uiPlay(false); }
+function stopAll(){ playToken++; playing=false; try{ AU.pause(); }catch(e){} if(canSpeak) try{speechSynthesis.cancel()}catch(e){} uiPlay(false); }
 function uiPlay(on){ const b=$("pbtn"),w=$("wave"); if(b){b.classList.toggle("on",on); b.innerHTML=on?ICON.stop:ICON.play;} if(w) w.classList.toggle("on",on); }
 const ICON={
   play:'<svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z"/></svg>',
@@ -564,7 +585,11 @@ function voiceSet(){
   const same=!VF||!VM||VF===VM;
   const row=(v,i)=>`<div class="vrow2"><button class="vplay" data-i="${i}" aria-label="들어 보기">${ICON.sp}</button><span class="vname">${esc(v.name)}</span>
      <button class="vpick ${VM===v?"on":""}" data-i="${i}" data-r="m">남자</button><button class="vpick ${VF===v?"on":""}" data-i="${i}" data-r="f">여자</button></div>`;
-  $("body").innerHTML=`<div class="tcard" style="margin-top:4px"><h3>남자·여자 목소리 고르기</h3><div class="vn">Chọn giọng nam / nữ</div>
+  const rec=useRec();
+  $("body").innerHTML=`<div class="tcard" style="margin-top:4px"><h3>목소리 종류</h3><div class="vn">Loại giọng đọc</div>
+    <div class="seg" style="margin-top:8px"><button data-dev="0" aria-pressed="${rec}">녹음 목소리 (추천)<small>Giọng thu sẵn</small></button><button data-dev="1" aria-pressed="${!rec}">폰 목소리<small>Giọng của máy</small></button></div>
+    <p class="tip">${AUD.size?"녹음 목소리는 남자·여자가 또렷하게 들려요. 인터넷이 없으면 폰 목소리로 바뀌어요.":"녹음 목소리를 준비 중이에요. 지금은 폰 목소리로 들려요."}<span class="vn" style="display:block">Giọng thu sẵn nghe rõ giọng nam/nữ. Không có mạng thì dùng giọng của máy.</span></p></div>
+   <div class="tcard" ${rec&&AUD.size?'style="opacity:.6"':""}><h3>남자·여자 목소리 고르기 (폰 목소리)</h3><div class="vn">Chọn giọng nam / nữ</div>
     <p class="tip">스피커 버튼을 눌러 들어 보고, 남자 목소리로 쓸 것과 여자 목소리로 쓸 것을 고르세요. 폰마다 들어 있는 목소리가 달라요.<span class="vn" style="display:block">Bấm nút loa để nghe thử rồi chọn giọng nam và giọng nữ. Mỗi máy có giọng khác nhau.</span></p></div>
    <div class="vlist" style="margin-top:10px">${ko.length?ko.map(row).join(""):`<div class="vrow2"><span class="vname">이 폰에는 한국어 목소리가 없어요. 설정 → 텍스트 음성 변환에서 한국어를 추가해 주세요.</span></div>`}</div>
    <div class="tcard"><h3>남자 목소리 높낮이</h3><div class="vn">Độ trầm giọng nam</div>
@@ -575,6 +600,7 @@ function voiceSet(){
   $("body").querySelectorAll(".vplay").forEach(b=>b.onclick=()=>{ stopAll(); const v=ko[+b.dataset.i]; const u=new SpeechSynthesisUtterance("안녕하세요. 오늘 면접 잘 보세요."); u.lang="ko-KR"; u.voice=v; u.rate=0.95*rate; speechSynthesis.speak(u); });
   $("body").querySelectorAll(".vpick").forEach(b=>b.onclick=()=>save({[b.dataset.r]:ko[+b.dataset.i].name}));
   $("body").querySelectorAll("[data-mp]").forEach(b=>b.onclick=()=>save({mp:+b.dataset.mp}));
+  $("body").querySelectorAll("[data-dev]").forEach(b=>b.onclick=()=>save({dev:b.dataset.dev==="1"}));
   $("vtest").onclick=()=>playLines([["M","수미야, 오늘 면접 있지? 면접 잘 봐."],["F","어쩌지? 벌써부터 너무 떨려서 아무 생각이 안 나."],["M","준비 많이 했으니까 잘할 수 있을 거야."]]);
   foot(`<button class="btn pri" id="vdone">다 됐어요 · Xong</button>`); $("vdone").onclick=home;
 }
@@ -966,7 +992,7 @@ function vocab(){ sec("vocab");
    <div class="vlist ${vHide?"hide":""}" id="vl">${list.map((w,i)=>`<button class="vrow" data-i="${i}"><b>${esc(w.k)}</b><span class="vn">${esc(w.v)}</span><small>${esc(w.src)}</small></button>`).join("")}</div>`;
   $("vh").onclick=()=>{ vHide=!vHide; vocab(); };
   $("body").querySelectorAll(".day[data-d]").forEach(b=>b.onclick=()=>{ VDAY=+b.dataset.d; vocab(); });
-  $("vl").querySelectorAll(".vrow").forEach(b=>b.onclick=()=>{ b.classList.add("show"); const w=list[+b.dataset.i]; stopAll(); sayLine("F",w.k.replace(/~/g,"")); });
+  $("vl").querySelectorAll(".vrow").forEach(b=>b.onclick=()=>{ b.classList.add("show"); const w=list[+b.dataset.i]; stopAll(); sayLine("F",w.k); });
   foot(`<button class="btn sec" id="h">처음으로</button>`); $("h").onclick=menu;
 }
 
