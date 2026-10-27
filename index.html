@@ -143,6 +143,15 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .tb span:last-child{text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
 .note{margin-top:12px;font-size:12.5px;color:var(--muted);text-align:center}
 /* menu + writing + vocab */
+.lvl{display:flex;align-items:center;gap:14px;width:100%;padding:18px 16px;margin-bottom:10px;border-radius:var(--r);background:var(--surface);border:1.5px solid var(--line);text-align:left}
+.lvl .badge{flex:none;min-width:64px;height:64px;padding:0 8px;border-radius:16px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);font-weight:800;font-size:17px;line-height:1.1;text-align:center}
+.lvl b{display:block;font-size:19px;font-weight:800}
+.lvl .vn{display:block}
+.lvl .mm{display:block;margin-top:4px;font-size:12.5px;color:var(--muted)}
+.lvl .go{margin-left:auto;flex:none;color:var(--accent);font-size:22px;font-weight:700}
+.lvl:not(:disabled){border-color:var(--accent)}
+.lvl:disabled{opacity:.55;cursor:default}
+.lvl .soon{margin-left:auto;flex:none;font-size:11.5px;font-weight:700;padding:4px 9px;border-radius:99px;background:var(--line);color:var(--muted)}
 .menu{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
 .mcard{display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:16px 14px;border-radius:var(--r);background:var(--surface);border:1.5px solid var(--line);text-align:left;min-height:168px}
 .mcard .ic{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);margin-bottom:10px}
@@ -273,7 +282,7 @@ function lsKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ co
 function lsSnapshot(){ const p={}; lsKeys().forEach(k=>{ try{ p[k]=localStorage.getItem(k); }catch(e){} }); return p; }
 function lsClear(){ lsKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
 let UNLOCK_ALL=false, GUEST=false;
-const APP_VERSION="10/27 읽기 완성";
+const APP_VERSION="10/27 급수 선택";
 const TEACHER_ID="viethaan9";
 /* ---------- data ---------- */
 // type: next(이어질 말) · act(이어서 할 행동) · same(내용과 같은 것) · main(중심 생각)
@@ -825,14 +834,12 @@ const vDays=()=>[...new Set([...Object.keys(DAYS),...Object.keys(VOCAB)])].map(N
 
 /* ---------- start menu ---------- */
 function menu(){ sec();
-  stopAll(); setTitle("",null); $("speed").hidden=true;
+  stopAll(); setTitle("TOPIK II · 3·4급",topik2); $("speed").hidden=true;
   const lq=Q(), lok=lq.filter((_,i)=>ST.res[i]===true).length, ldone=lq.filter((_,i)=>ST.res[i]!=null).length;
   const wdone=Object.keys(WS.n3).length, wok=Object.values(WS.n3).filter(Boolean).length;
   const nw=vDays().reduce((n,d)=>n+wordList(d).length,0);
   $("body").innerHTML=`
-   ${userBar()}
-   <section class="mlogo"><img src="logo.png" alt=""><div><b>TOPIK II 연습</b><div class="eyebrow">무엇을 공부할까요? · HÔM NAY HỌC GÌ?</div></div><a class="contact" href="https://www.facebook.com/profile.php?id=61594346458669" target="_blank" rel="noopener" aria-label="선생님께 문의하기 · Liên hệ giáo viên" title="선생님께 문의하기 · Liên hệ giáo viên"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.8-.8L3 21l1.9-5.2A8.4 8.4 0 0 1 12 3.1a8.4 8.4 0 0 1 9 8.4z"/></svg></a></section>
-   ${isTeacher()?`<button class="all" id="tview" style="margin-bottom:12px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg><span><b>학생 기록 보기</b><span>선생님 전용 · 학생별 진도와 잠금 해제</span></span></button>`:""}
+   <div class="eyebrow" style="margin:2px 0 10px">선생님 20일 수업 · Lộ trình 20 ngày của cô · 3급~4급</div>
    <div class="menu">
     <button class="mcard" data-m="listen"><span class="ic">${IC.listen}</span><b>듣기</b><span class="vn">Nghe</span><span class="mm">${DAYS[DAY].title} · ${lq.length}문제<br>${ldone?`맞힌 문제 ${lok} / ${lq.length}`:"아직 시작 전"}</span></button>
     <button class="mcard" data-m="write"><span class="ic">${IC.write}</span><b>쓰기</b><span class="vn">Viết</span><span class="mm">Ngày ${WDAY} · 문장 연습 ${NQ().length}문제<br>${wdone?`맞힌 문제 ${wok} / ${NQ().length}`:"아직 시작 전"}</span></button>
@@ -840,8 +847,31 @@ function menu(){ sec();
     <button class="mcard" data-m="vocab"><span class="ic">${IC.vocab}</span><b>단어장</b><span class="vn">Từ vựng</span><span class="mm">${vDays().map(d=>`Ngày ${d}`).join(" · ")} · ${nw}개<br>누르면 발음을 들어요</span></button>
    </div>`;
   $("body").querySelectorAll(".mcard[data-m]").forEach(b=>b.onclick=()=>({listen:home,write:wHome,read:rHome,vocab:vocab})[b.dataset.m]());
-  $("body").insertAdjacentHTML("beforeend",`<p class="note" style="margin-top:18px">버전 ${APP_VERSION}</p>`);
+  foot("");
+}
+/* ---------- level picker: TOPIK I / TOPIK II → 3·4급 / 5·6급 ---------- */
+const lvlBtn=(o)=>`<button class="lvl" ${o.id?`id="${o.id}"`:"disabled"} style="${o.c?`--accent:var(--c-${o.c});--accent-soft:var(--c-${o.c}-soft)`:""}"><span class="badge">${o.badge}</span><span><b>${o.ko}</b><span class="vn">${o.vn}</span><span class="mm">${o.mm}</span></span>${o.id?`<span class="go">›</span>`:`<span class="soon">준비 중 · Sắp có</span>`}</button>`;
+function start(){ sec();
+  stopAll(); setTitle("",null); $("speed").hidden=true;
+  $("body").innerHTML=`
+   ${userBar()}
+   <section class="mlogo"><img src="logo.png" alt=""><div><b>TOPIK 연습</b><div class="eyebrow">어떤 시험을 준비해요? · BẠN ÔN THI GÌ?</div></div><a class="contact" href="https://www.facebook.com/profile.php?id=61594346458669" target="_blank" rel="noopener" aria-label="선생님께 문의하기 · Liên hệ giáo viên" title="선생님께 문의하기 · Liên hệ giáo viên"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.8-.8L3 21l1.9-5.2A8.4 8.4 0 0 1 12 3.1a8.4 8.4 0 0 1 9 8.4z"/></svg></a></section>
+   ${isTeacher()?`<button class="all" id="tview" style="margin-bottom:12px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg><span><b>학생 기록 보기</b><span>선생님 전용 · 학생별 진도와 잠금 해제</span></span></button>`:""}
+   ${lvlBtn({badge:"I",ko:"TOPIK I",vn:"TOPIK I · Sơ cấp",mm:"1급 · 2급 (듣기 · 읽기)",c:"read"})}
+   ${lvlBtn({id:"t2",badge:"II",ko:"TOPIK II",vn:"TOPIK II · Trung - cao cấp",mm:"3급 ~ 6급 (듣기 · 쓰기 · 읽기)",c:"listen"})}
+   <p class="note" style="margin-top:18px">버전 ${APP_VERSION}</p>`;
+  $("t2").onclick=topik2;
   bindUserBar(); if($("tview")) $("tview").onclick=teacher;
+  foot("");
+}
+function topik2(){ sec();
+  stopAll(); setTitle("TOPIK II",start); $("speed").hidden=true;
+  const n=Object.keys(READ).length;
+  $("body").innerHTML=`
+   <div class="eyebrow" style="margin:2px 0 12px">목표 등급을 고르세요 · CHỌN CẤP ĐỘ MỤC TIÊU</div>
+   ${lvlBtn({id:"l34",badge:"3·4급",ko:"3급 · 4급",vn:"Cấp 3 · 4 — lộ trình của cô",mm:`선생님 수업 ${n}일 · 듣기 · 쓰기 · 읽기 · 단어장`,c:"listen"})}
+   ${lvlBtn({badge:"5·6급",ko:"5급 · 6급",vn:"Cấp 5 · 6 — cao cấp",mm:"고급 수업은 나중에 열려요 · Sẽ mở sau",c:"write"})}`;
+  $("l34").onclick=menu;
   foot("");
 }
 
@@ -1533,7 +1563,7 @@ function showLogin(err){
   };
   $("af").onsubmit=e=>{ e.preventDefault(); go(); };
   $("apw").onkeydown=e=>{ if(e.key==="Enter"&&!e.isComposing){ e.preventDefault(); go(); } };
-  $("guest").onclick=()=>{ GUEST=true; load(); wload(); rload(); menu(); };
+  $("guest").onclick=()=>{ GUEST=true; load(); wload(); rload(); start(); };
   foot(`<button class="btn pri" id="ago">${up?"가입하기 · Đăng ký":"들어가기 · Vào học"}</button>`); $("ago").onclick=go;
 }
 // called by the cloud module whenever the signed-in user changes
@@ -1541,7 +1571,7 @@ window.onCloudUser=async u=>{
   if(!u){ if(!GUEST) showLogin(); return; }
   GUEST=false; bootScreen("기록을 불러오는 중 · Đang tải kết quả…");
   try{ await CLOUD.pull(); }catch(e){ console.warn(e); }
-  load(); wload(); rload(); menu();
+  load(); wload(); rload(); start();
 };
 function userBar(){
   if(GUEST) return `<div class="ubar"><span>로그인 안 함 · 이 폰에만 저장</span><button id="ulog">로그인 · Đăng nhập</button></div>`;
@@ -1570,7 +1600,7 @@ function progCells(p){
   return [L,R,W];
 }
 async function teacher(){
-  sec(); stopAll(); setTitle("학생 기록",menu); $("speed").hidden=true; foot(`<button class="btn sec" id="tr">새로고침 · Tải lại</button>`); $("tr").onclick=teacher;
+  sec(); stopAll(); setTitle("학생 기록",start); $("speed").hidden=true; foot(`<button class="btn sec" id="tr">새로고침 · Tải lại</button>`); $("tr").onclick=teacher;
   $("body").innerHTML=`<p class="tip">불러오는 중…</p>`;
   let list=[]; try{ list=await CLOUD.list(); }catch(e){ $("body").innerHTML=`<div class="fb no">학생 기록을 못 불러왔어요. Firestore 보안 규칙을 확인해 주세요. (${esc(e.code||e.message||e)})</div>`; return; }
   list=list.filter(u=>u.id!==TEACHER_ID).sort((a,b)=>String(a.name||a.id).localeCompare(String(b.name||b.id),"ko"));
