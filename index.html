@@ -189,7 +189,21 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .boot b{display:block;font-size:22px;font-weight:800}
 .bootlogo{position:relative;width:132px;height:132px;margin-bottom:46px}
 .bootlogo .blogo{width:100%;height:100%;border-radius:50%;box-shadow:0 6px 18px -10px rgba(0,0,0,.4);display:block}
-.bootlogo .bcat{position:absolute;left:0;top:0;width:35.94%;will-change:transform;filter:drop-shadow(0 3px 3px rgba(0,0,0,.18));z-index:2}
+.bootlogo .bcat{position:absolute;left:0;top:0;width:35.94%;aspect-ratio:138/89;will-change:transform;filter:drop-shadow(0 3px 3px rgba(0,0,0,.18));z-index:2}
+.bcat img{position:absolute;inset:0;width:100%;height:100%;z-index:2}
+/* legs: drawn under the body, swing in a gallop while running */
+.bcat .leg{position:absolute;width:11%;height:33%;box-sizing:border-box;border:1.4px solid #7a4b30;border-top:0;border-radius:2px 2px 50% 50%/2px 2px 42% 42%;background:linear-gradient(#f4be62 0 40%,#fff6e8 40%);transform-origin:50% 8%;z-index:1;opacity:1;transition:opacity .2s}
+.bcat .leg.lfb,.bcat .leg.lbb{z-index:0;background:linear-gradient(#d9a24d 0 40%,#eadcc6 40%)}
+.bcat .lff{left:30%;top:72%}.bcat .lfb{left:37%;top:70%}
+.bcat .lbf{left:66%;top:84%}.bcat .lbb{left:74%;top:82%}
+.bcat.run .lff{animation:gal .48s linear infinite}
+.bcat.run .lfb{animation:gal .48s linear infinite -.12s}
+.bcat.run .lbf{animation:gal .48s linear infinite -.24s}
+.bcat.run .lbb{animation:gal .48s linear infinite -.36s}
+@keyframes gal{0%{transform:rotate(38deg)}25%{transform:rotate(8deg) scaleY(.82)}50%{transform:rotate(-34deg)}75%{transform:rotate(-6deg) scaleY(1.05)}100%{transform:rotate(38deg)}}
+.bcat.fly .lff,.bcat.fly .lfb{transform:rotate(55deg)}
+.bcat.fly .lbf,.bcat.fly .lbb{transform:rotate(-50deg)}
+.bcat.home .leg{opacity:0}
 .bootlogo .bcat.home{left:46.48%;top:54.69%;transform:none;filter:none;transform-origin:50% 100%}
 .bootlogo .bcat.land{animation:bland .42s ease-out}
 @keyframes bland{0%{transform:scale(1.12,.86)}45%{transform:scale(.95,1.06)}100%{transform:scale(1)}}
@@ -336,7 +350,7 @@ function lsKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ co
 function lsSnapshot(){ const p={}; lsKeys().forEach(k=>{ try{ p[k]=localStorage.getItem(k); }catch(e){} }); return p; }
 function lsClear(){ lsKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
 let UNLOCK_ALL=false, GUEST=false;
-const APP_VERSION="10/28 고양이 로딩";
+const APP_VERSION="10/28 고양이 다리";
 const TEACHER_ID="viethaan9";
 /* ---------- data ---------- */
 // type: next(이어질 말) · act(이어서 할 행동) · same(내용과 같은 것) · main(중심 생각)
@@ -2517,7 +2531,7 @@ function bootScreen(msg){
   const keep=BC.running&&$("bootlogo");
   if(keep){ const m=$("bootmsg"); if(m) m.textContent=msg||"불러오는 중 · Đang tải…"; return; }
   sec(); setTitle("",null); $("speed").hidden=true; foot("");
-  $("body").innerHTML=`<section class="boot"><div class="bootlogo" id="bootlogo"><img class="blogo" src="logo-empty.png" alt=""><img class="bcat" id="bcat" src="logo-cat.png" alt=""></div>
+  $("body").innerHTML=`<section class="boot"><div class="bootlogo" id="bootlogo"><img class="blogo" src="logo-empty.png" alt=""><div class="bcat" id="bcat"><i class="leg lfb"></i><i class="leg lbb"></i><img src="logo-cat.png" alt=""><i class="leg lff"></i><i class="leg lbf"></i></div></div>
     <div><b>TOPIK 연습</b><div class="eyebrow" id="bootmsg">${msg||"불러오는 중 · Đang tải…"}</div></div></section>`;
   bootCatRun();
 }
@@ -2525,7 +2539,7 @@ function bootCatRun(){
   const box=$("bootlogo"), cat=$("bcat"); if(!box||!cat) return;
   BC.el=cat; BC.running=true; BC.t0=performance.now(); BC.last=BC.t0; BC.ang=Math.PI*0.62; BC.dust=0;
   if(matchMedia("(prefers-reduced-motion: reduce)").matches){ cat.classList.add("home"); return; }
-  cat.classList.remove("home");
+  cat.classList.remove("home","land","fly"); cat.classList.add("run");
   const step=now=>{
     if(!BC.running) return;
     const dt=Math.min(50,now-BC.last); BC.last=now; const t=(now-BC.t0)/1000;
@@ -2553,13 +2567,14 @@ function afterBoot(fn){
     const W=box.clientWidth, cw=cat.offsetWidth, ch=cat.offsetHeight;
     const hx=W*BC_HOME.l/100+cw/2, hy=W*BC_HOME.t/100+ch/2;     // home centre
     const sx=BC.x, sy=BC.y, face=hx>sx?-1:1, T=620, t0=performance.now();
+    cat.classList.remove("run"); cat.classList.add("fly");
     const fly=now=>{
       const k=Math.min(1,(now-t0)/T), e=1-Math.pow(1-k,2);
       const x=sx+(hx-sx)*e, y=sy+(hy-sy)*e-Math.sin(Math.PI*k)*W*0.38;
       const sc=1.25-0.25*k;
       cat.style.transform=`translate(${x-cw/2}px,${y-ch/2}px) scale(${face*sc},${sc}) rotate(${(-25+40*k)*face}deg)`;
       if(k<1) requestAnimationFrame(fly);
-      else{ cat.style.transform=""; cat.classList.add("home","land"); setTimeout(fn,420); }
+      else{ cat.style.transform=""; cat.classList.remove("fly"); cat.classList.add("home","land"); setTimeout(fn,420); }
     };
     requestAnimationFrame(fly);
   },wait);
