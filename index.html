@@ -211,6 +211,15 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 @keyframes bland{0%{transform:scale(1.12,.86)}45%{transform:scale(.95,1.06)}100%{transform:scale(1)}}
 .bdust{position:absolute;width:9px;height:9px;margin:-4px 0 0 -4px;border-radius:50%;background:#e9d9c7;opacity:.8;pointer-events:none;animation:bdust .6s ease-out forwards}
 @keyframes bdust{to{transform:scale(2.4) translateY(-6px);opacity:0}}
+.day b .gr{display:inline-block;margin-left:5px;padding:0 5px;border-radius:6px;font-size:10.5px;font-style:normal;font-weight:800;line-height:16px;vertical-align:1px}
+.gr-D{background:#E3F4E8;color:#2F7A45}.gr-C{background:#E4EEFB;color:#2B5BA8}.gr-Cp{background:#ECE6FA;color:#5B3FA8}.gr-B{background:#FCEBD8;color:#A6561A}.gr-Bp{background:#FBE1E4;color:#B0303F}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .gr{filter:brightness(.8) saturate(1.2)}}
+.mswitch{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:2px 0 12px}
+.mswitch button{padding:10px 8px;border-radius:14px;border:1.5px solid var(--line);background:var(--surface);text-align:center;font:inherit}
+.mswitch button b{display:block;font-size:16px;font-weight:800}.mswitch button span{font-size:11.5px;color:var(--muted)}
+.mswitch button[aria-pressed="true"]{border-color:var(--c-listen);background:var(--c-listen-soft)}
+.mswitch button.lk{opacity:.7}
+.ptq .opt{display:block;width:100%;text-align:left}
 .menu{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
 .mcard{display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:16px 14px;border-radius:var(--r);background:var(--surface);border:1.5px solid var(--line);text-align:left;min-height:168px}
 .mcard .ic{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);margin-bottom:10px}
@@ -352,7 +361,7 @@ function lsKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ co
 function lsSnapshot(){ const p={}; lsKeys().forEach(k=>{ try{ p[k]=localStorage.getItem(k); }catch(e){} }); return p; }
 function lsClear(){ lsKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
 let UNLOCK_ALL=false, GUEST=false;
-const APP_VERSION="10/28 고양이 테두리";
+const APP_VERSION="10/28 TOPIK 3·4 나누기";
 const TEACHER_ID="viethaan9";
 /* ---------- data ---------- */
 // type: next(이어질 말) · act(이어서 할 행동) · same(내용과 같은 것) · main(중심 생각)
@@ -1092,6 +1101,18 @@ $("speed").onclick=()=>{ rate = rate>=1.1?0.8: rate>=1?1.15:1; rate=Math.round(r
 /* ---------- day tabs with lock ----------
    Ngày n opens when 2 of the 3 subjects (듣기·읽기·쓰기) of Ngày n-1 are fully done
    (if Ngày n-1 has fewer subjects, all of them). */
+/* TOPIK 3 = Ngày 1~10, TOPIK 4 = Ngày 11~. TRACK: where the student started ("3" or "4", null = not chosen yet).
+   MODE: which half is shown now. Grades D~B+ per subject and day. */
+const T4_FROM=11;
+const GRADES={listen:[[1,2,"D"],[3,5,"C"],[6,9,"C+"],[10,14,"B"],[15,99,"B+"]],read:[[1,10,"C"],[11,14,"B"],[15,99,"B+"]],write:[[1,3,"D"],[4,9,"C"],[10,10,"C+"],[11,11,"B"],[12,99,"B+"]]};
+const gradeOf=(subj,d)=>((GRADES[subj]||[]).find(([a,b])=>d>=a&&d<=b)||[])[2]||"";
+const lsGet=k=>{ try{ return localStorage.getItem(k); }catch(e){ return null; } };
+const lsSet=(k,v)=>{ try{ localStorage.setItem(k,v); }catch(e){} };
+const TRACK=()=>lsGet("tpk-track");
+const MODE=()=>lsGet("tpk-mode")||"3";
+const t4Open=()=>freeAll()||TRACK()==="4"||dayState(T4_FROM)==="open";
+function setMode(m){ lsSet("tpk-mode",m); const inR=d=>m==="4"?d>=T4_FROM:d<T4_FROM, first=m==="4"?T4_FROM:1;
+  if(!inR(DAY)){ DAY=DAYS[first]?first:DAY; load(); } if(!inR(RDAY)){ RDAY=READ[first]?first:RDAY; rload(); } if(!inR(WDAY)){ WDAY=WDAYS[first]?first:WDAY; wload(); } }
 const LOCK='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:4px"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
 function dayDone(pre,d,n){ try{ const s=JSON.parse(localStorage.getItem(pre+d)||"null"); return !!(s&&s.res&&Object.keys(s.res).length>=n); }catch(e){ return false; } }
 function subjDone(d){ // [available subjects, finished subjects] for Ngày d
@@ -1103,13 +1124,17 @@ function subjDone(d){ // [available subjects, finished subjects] for Ngày d
 }
 const prevOk=d=>{ if(d<=1) return true; const [n,k]=subjDone(d-1); return k>=Math.min(2,n); };
 const freeAll=()=>UNLOCK_ALL||isTeacher();
-function dayState(d){ if(d<=1||freeAll()) return "open"; return prevOk(d)?"open":"prev"; }
+function dayState(d){ if(d<=1||freeAll()) return "open"; if(d===T4_FROM&&TRACK()==="4") return "open"; return prevOk(d)?"open":"prev"; }
 function dayTabs(o){
-  const ks=Object.keys(o.days).map(Number).sort((a,b)=>a-b), next=ks[ks.length-1]+1;
+  const lo=MODE()==="4"?T4_FROM:1, hi=MODE()==="4"?999:T4_FROM-1;
+  const ks=Object.keys(o.days).map(Number).filter(d=>d>=lo&&d<=hi).sort((a,b)=>a-b);
+  const g=d=>o.subj?gradeOf(o.subj,d):"";
+  const chip=d=>g(d)?`<em class="gr gr-${g(d).replace("+","p")}">${g(d)}</em>`:"";
   const tabs=ks.map(d=>{ const st=o.done(d)?"open":dayState(d);
-    if(st==="open") return `<button class="day" data-d="${d}" aria-current="${d==o.cur}"><b>${o.days[d].title}</b><span>${o.days[d].sub}</span></button>`;
-    return `<button class="day lock" data-why="${d}" title="Ngày ${d-1}에서 두 과목을 다 풀면 열려요"><b>${LOCK}${o.days[d].title}</b><span>잠김 · Khóa</span></button>`; }).join("");
-  const more=`<div class="day soon"><b>${dayState(next)==="open"?"":LOCK}Ngày ${next}</b><span>준비 중 · Sắp có</span></div>`;
+    if(st==="open") return `<button class="day" data-d="${d}" aria-current="${d==o.cur}"><b>${o.days[d].title}${chip(d)}</b><span>${o.days[d].sub}</span></button>`;
+    return `<button class="day lock" data-why="${d}" title="Ngày ${d-1}에서 두 과목을 다 풀면 열려요"><b>${LOCK}${o.days[d].title}${chip(d)}</b><span>잠김 · Khóa</span></button>`; }).join("");
+  const next=(ks[ks.length-1]||0)+1;
+  const more=MODE()==="4"?`<div class="day soon"><b>${dayState(next)==="open"?"":LOCK}Ngày ${next}</b><span>준비 중 · Sắp có</span></div>`:"";
   return `<nav class="days">${tabs}${more}</nav>`;
 }
 // what is still needed to open Ngày d (shown when a locked tab is tapped)
@@ -1162,7 +1187,7 @@ function home(){ sec("listen");
   stopAll(); setTitle("TOPIK II 듣기",menu); $("speed").hidden=false; $("speed").textContent=`속도 ${(rate%1?String(rate):rate.toFixed(1))}×`;
   const qs=Q(), done=qs.filter((_,i)=>ST.res[i]!=null).length, ok=qs.filter((_,i)=>ST.res[i]===true).length;
   $("body").innerHTML=`
-   ${dayTabs({days:DAYS,cur:DAY,done:d=>dayDone("tpk-day",d,DAYS[d]?DAYS[d].q.length:1e9)})}
+   ${dayTabs({subj:"listen",days:DAYS,cur:DAY,done:d=>dayDone("tpk-day",d,DAYS[d]?DAYS[d].q.length:1e9)})}
    <section class="hero"><div class="eyebrow">맞힌 문제 · CÂU ĐÚNG</div><div class="big">${ok}<small> / ${qs.length}</small></div>
      <div style="display:flex;gap:10px;align-items:center;margin-top:10px"><div class="bar"><i style="width:${done/qs.length*100}%"></i></div><span class="eyebrow">${done}문제 풂</span></div></section>
    <div class="howto"><div><b>① 듣고 풀기</b>대본 없이 듣고 답 고르기<br><span>Nghe và chọn</span></div><div><b>② 근거 찾기</b>정답 근거 문장 누르기<br><span>Tìm câu căn cứ</span></div></div>
@@ -1775,11 +1800,15 @@ const vDays=()=>[...new Set([...Object.keys(DAYS),...Object.keys(VOCAB)])].map(N
 /* ---------- start menu ---------- */
 function menu(){ sec();
   stopAll(); setTitle("TOPIK II · 3·4급",topik2); $("speed").hidden=true;
+  if(!TRACK()){ const any=Object.keys(localStorage).some(k=>/^tpk-(day|read|write)\d*$/.test(k));
+    if(any||freeAll()){ lsSet("tpk-track","3"); } else return chooseTrack(); }
+  { const m=MODE(); if(m==="4"&&!t4Open()) lsSet("tpk-mode","3"); setMode(MODE()); }
   const lq=Q(), lok=lq.filter((_,i)=>ST.res[i]===true).length, ldone=lq.filter((_,i)=>ST.res[i]!=null).length;
   const wdone=Object.keys(WS.n3).length, wok=Object.values(WS.n3).filter(Boolean).length;
   const nw=vDays().reduce((n,d)=>n+wordList(d).length,0);
   $("body").innerHTML=`
-   <div class="eyebrow" style="margin:2px 0 10px">선생님 20일 수업 · Lộ trình 20 ngày của cô · 3급~4급</div>
+   <div class="mswitch"><button data-mode="3" aria-pressed="${MODE()==="3"}"><b>TOPIK 3</b><span>Ngày 1~10 · D~C+</span></button>
+     <button data-mode="4" aria-pressed="${MODE()==="4"}" class="${t4Open()?"":"lk"}"><b>${t4Open()?"":"🔒 "}TOPIK 4</b><span>${t4Open()?"Ngày 11~ · B~B+":"Kiểm tra 10 câu · Thi xếp lớp"}</span></button></div>
    <div class="menu">
     <button class="mcard" data-m="listen"><span class="ic">${IC.listen}</span><b>듣기</b><span class="vn">Nghe</span><span class="mm">${DAYS[DAY].title} · ${lq.length}문제<br>${ldone?`맞힌 문제 ${lok} / ${lq.length}`:"아직 시작 전"}</span></button>
     <button class="mcard" data-m="write"><span class="ic">${IC.write}</span><b>쓰기</b><span class="vn">Viết</span><span class="mm">Ngày ${WDAY} · ${is51Day()?"51·52번 실전":"문장 연습"} ${NQ().length}문제<br>${wdone?`맞힌 문제 ${wok} / ${NQ().length}`:"아직 시작 전"}</span></button>
@@ -1787,7 +1816,58 @@ function menu(){ sec();
     <button class="mcard" data-m="vocab"><span class="ic">${IC.vocab}</span><b>단어장</b><span class="vn">Từ vựng</span><span class="mm">${(v=>v.length>2?`Ngày ${v[0]}~${v[v.length-1]}`:v.map(d=>`Ngày ${d}`).join(" · "))(vDays())} · ${nw}개<br>누르면 발음을 들어요</span></button>
    </div>`;
   $("body").querySelectorAll(".mcard[data-m]").forEach(b=>b.onclick=()=>({listen:home,write:wHome,read:rHome,vocab:vocab})[b.dataset.m]());
+  $("body").querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{ const m=b.dataset.mode;
+    if(m==="4"&&!t4Open()) return placeIntro(menu);
+    setMode(m); menu(); });
   foot("");
+}
+/* first visit: start from TOPIK 3 (Ngày 1) or take a 10-question test to start at TOPIK 4 (Ngày 11) */
+function chooseTrack(){ sec(); stopAll(); setTitle("TOPIK II · 3·4급",topik2); $("speed").hidden=true;
+  $("body").innerHTML=`<div class="tcard" style="margin-top:4px"><h3>어디서부터 시작할까요?</h3><div class="vn">Bạn muốn bắt đầu từ đâu?</div>
+     <p class="tip">처음 한 번만 고르면 돼요. TOPIK 4부터 하려면 TOPIK 3에서 가장 어려운 10문제 중 <b>9문제 이상</b> 맞혀야 해요.<span class="vn" style="display:block">Chỉ chọn một lần. Muốn học từ TOPIK 4 thì phải làm đúng ít nhất 9/10 câu khó nhất của TOPIK 3.</span></p></div>
+   <button class="lvl" id="tr3" style="--accent:var(--c-read);--accent-soft:var(--c-read-soft)"><span class="badge">3</span><span><b>처음부터 · TOPIK 3</b><span class="vn">Học từ đầu · Ngày 1 (D~C+)</span><span class="mm">듣기 · 쓰기 · 읽기 기초부터 차근차근</span></span><span class="go">›</span></button>
+   <button class="lvl" id="tr4" style="--accent:var(--c-listen);--accent-soft:var(--c-listen-soft)"><span class="badge">4</span><span><b>TOPIK 4부터 도전</b><span class="vn">Bắt đầu từ TOPIK 4 · Ngày 11 (B~B+)</span><span class="mm">먼저 10문제 시험 (듣기 5 · 읽기 5) · 9/10 이상 통과</span></span><span class="go">›</span></button>`;
+  $("tr3").onclick=()=>{ lsSet("tpk-track","3"); setMode("3"); menu(); };
+  $("tr4").onclick=()=>placeIntro(chooseTrack);
+  foot("");
+}
+// the 10 hardest TOPIK 3 questions (listening Ngày 7~9, reading Ngày 8~10)
+const PLACE=[["L",8,15],["R",8,16],["L",9,9],["R",10,7],["L",8,13],["R",9,14],["L",8,11],["R",10,12],["L",9,18],["R",10,17]];
+let PT={i:0,ok:0,back:null,ans:[]};
+function placeIntro(back){ sec(); stopAll(); setTitle("TOPIK 4 시험 · Thi xếp lớp",back); $("speed").hidden=true;
+  $("body").innerHTML=`<div class="tcard" style="margin-top:4px"><h3>TOPIK 4 시험 · 10문제</h3><div class="vn">Bài kiểm tra lên TOPIK 4 · 10 câu</div>
+    <ul><li>TOPIK 3에서 가장 어려운 문제 10개예요. 듣기 5문제, 읽기 5문제.</li><li><b>9문제 이상</b> 맞히면 TOPIK 4 (Ngày 11)부터 시작해요.</li><li>듣기는 두 번까지 들을 수 있어요. 답을 고르면 바로 다음 문제로 넘어가요.</li><li>통과하지 못하면 TOPIK 3부터 시작하고, 나중에 다시 볼 수 있어요.</li></ul>
+    <div class="vn" style="margin-top:6px">10 câu khó nhất của TOPIK 3 (5 nghe, 5 đọc). Đúng ≥ 9 câu thì học từ Ngày 11. Phần nghe được nghe tối đa 2 lần.</div></div>`;
+  foot(`<button class="btn pri" id="ptgo">시험 시작 · Bắt đầu</button>`);
+  $("ptgo").onclick=()=>{ PT={i:0,ok:0,back,ans:[]}; placeQ(); };
+}
+function placeQ(){ sec(); stopAll(); const [k,d,n]=PLACE[PT.i], last=PT.i===PLACE.length-1;
+  setTitle(`TOPIK 4 시험 · ${PT.i+1} / ${PLACE.length}`,()=>{ if(confirm("시험을 그만할까요? · Dừng bài kiểm tra?")) PT.back(); }); $("speed").hidden=k!=="L";
+  const prog=`<div class="prog"><span>${PT.i+1} / ${PLACE.length}</span><div class="bar"><i style="width:${PT.i/PLACE.length*100}%"></i></div></div>`;
+  let q,head,body,opts;
+  if(k==="L"){ q=DAYS[d].q[n-1]; const T=TYPES[q.t]; opts=q.o;
+    head=`<div class="qhead"><span class="qno">${String(PT.i+1).padStart(2,"0")}</span><span class="chip">듣기 · ${q.sp==="F"?T.ko.replace("남자","여자"):T.ko}</span></div><div class="instr">${q.sp==="F"?T.q.replace("남자","여자"):T.q}<span class="vn">${q.sp==="F"?T.qvn.replace("người đàn ông","người phụ nữ"):T.qvn}</span></div>`;
+    body=`<div class="player"><button class="playbtn" id="pbtn" aria-label="듣기">${ICON.play}</button><div class="wave" id="wave"><i></i><i></i><i></i><i></i><i></i></div><div class="eyebrow" id="plays" style="margin-top:8px">2번 들을 수 있어요 · Nghe tối đa 2 lần</div></div>`;
+  } else { q=READ[d].q[n-1]; const I=RI[q.i]; opts=q.o;
+    head=`<div class="qhead"><span class="qno">${String(PT.i+1).padStart(2,"0")}</span><span class="chip">읽기 · ${esc(q.t)}</span></div><div class="instr">${q.who?I.q.replace("어머니",q.who):I.q}<span class="vn">${I.v}</span></div>`;
+    body=rBox(q); }
+  const ro=(k==="R"&&q.k==="ins")?[0,1,2,3]:shuffle([0,1,2,3]);
+  $("body").innerHTML=`${prog}${head}${body}<div class="choices" id="chs">${ro.map((j,pos)=>`<button class="ch" data-i="${j}"><span class="k">${circ[pos]}</span><span>${esc(opts[j])}</span></button>`).join("")}</div>`;
+  if(k==="L"){ let left=2; const pb=$("pbtn");
+    pb.onclick=()=>{ if(playing){ stopAll(); return; } if(left<=0) return; left--; $("plays").textContent=left?"한 번 더 들을 수 있어요 · Còn 1 lần nghe":"다 들었어요 · Đã hết lượt nghe"; playLines(q.l).then(()=>{ if(!left) pb.disabled=true; }); };
+    setTimeout(()=>{ if(PT.i<PLACE.length&&$("pbtn")===pb&&left===2) pb.click(); },400); }
+  $("chs").querySelectorAll(".ch").forEach(b=>b.onclick=()=>{ stopAll(); const ok=+b.dataset.i===q.a; PT.ans.push(ok); if(ok) PT.ok++;
+    if(last) placeResult(); else { PT.i++; placeQ(); $("body").scrollTop=0; } });
+  foot("");
+}
+function placeResult(){ sec(); stopAll(); const pass=PT.ok>=9; setTitle("TOPIK 4 시험 결과",null); $("speed").hidden=true;
+  lsSet("tpk-ptest",JSON.stringify({ok:PT.ok,at:Date.now()}));
+  if(pass){ lsSet("tpk-track","4"); setMode("4"); } else if(!TRACK()){ lsSet("tpk-track","3"); setMode("3"); }
+  $("body").innerHTML=`<section class="hero" style="text-align:center"><div class="eyebrow">맞힌 문제 · CÂU ĐÚNG</div><div class="big">${PT.ok}<small> / ${PLACE.length}</small></div>
+    <div style="margin-top:10px;font-size:22px">${PT.ans.map(x=>x?"🟢":"⚪").join("")}</div></section>
+    <div class="fb ${pass?"ok":"no"}" style="margin-top:12px"><b>${pass?"통과! TOPIK 4 (Ngày 11)부터 시작해요":"아쉬워요. TOPIK 3 (Ngày 1)부터 시작해요"}</b>${pass?"TOPIK 3로 돌아가고 싶으면 메뉴 위의 「TOPIK 3」 버튼을 누르세요.":"9문제 이상 맞혀야 해요. TOPIK 3를 공부한 뒤 메뉴의 「TOPIK 4」를 눌러 다시 볼 수 있어요."}
+    <span class="vn">${pass?"Đạt! Bắt đầu từ TOPIK 4 (Ngày 11). Muốn quay lại thì bấm nút 「TOPIK 3」 ở menu.":"Cần đúng ít nhất 9 câu. Học TOPIK 3 rồi bấm 「TOPIK 4」 ở menu để thi lại."}</span></div>`;
+  foot(`<button class="btn pri" id="ptdone">${pass?"TOPIK 4 시작 · Bắt đầu":"TOPIK 3 시작 · Bắt đầu"}</button>`); $("ptdone").onclick=menu;
 }
 /* ---------- level picker: TOPIK I / TOPIK II → 3·4급 / 5·6급 ---------- */
 const lvlBtn=(o)=>`<button class="lvl" ${o.id?`id="${o.id}"`:"disabled"} style="${o.c?`--accent:var(--c-${o.c});--accent-soft:var(--c-${o.c}-soft)`:""}"><span class="badge">${o.badge}</span><span><b>${o.ko}</b><span class="vn">${o.vn}</span><span class="mm">${o.mm}</span></span>${o.id?`<span class="go">›</span>`:`<span class="soon">준비 중 · Sắp có</span>`}</button>`;
@@ -1829,7 +1909,7 @@ function topik2(){ sec();
 function wHome(){ sec("write");
   stopAll(); setTitle("TOPIK II 쓰기",menu); $("speed").hidden=true;
   $("body").innerHTML=`
-   ${dayTabs({days:Object.fromEntries(Object.keys(WDAYS).map(d=>[d,{title:"Ngày "+d,sub:WDAYS[d].length+"문제"}])),cur:WDAY,done:d=>!!WDAYS[d]&&wDayDone(d)})}
+   ${dayTabs({subj:"write",days:Object.fromEntries(Object.keys(WDAYS).map(d=>[d,{title:"Ngày "+d,sub:WDAYS[d].length+"문제"}])),cur:WDAY,done:d=>!!WDAYS[d]&&wDayDone(d)})}
    ${is51Day()?`<div class="tcard" style="margin-top:4px"><h3>51·52번 실전 연습</h3><div class="vn">Luyện đề thật câu 51·52</div>
     <ul><li>글을 읽고 ㉠과 ㉡에 들어갈 말을 각각 쓰세요. 실제 시험과 같은 형식이에요.</li><li>1~10번은 51번(실용문): 글의 문체(-습니다 / 해요 / 반말)를 그대로 따라 쓰세요.</li><li>11~20번은 52번(설명문): "-다"체로 쓰고, 앞뒤 접속어(그래서, 그러나, 따라서)를 꼭 보세요.</li><li>모범 답안과 다르게 썼으면 직접 비교해서 맞았는지 고르세요.</li></ul>
     <div class="vn" style="margin-top:6px">Đọc bài, viết vào ㉠ và ㉡. Câu 1~10 giữ đúng thể văn; câu 11~20 viết thể "-다", chú ý từ nối trước sau.</div></div>`:`<div class="tcard" style="margin-top:4px"><h3>이렇게 공부하세요</h3><div class="vn">Cách học</div>
@@ -2457,7 +2537,7 @@ function rHome(){ sec("read");
   stopAll(); setTitle("TOPIK II 읽기",menu); $("speed").hidden=true;
   const qs=RQ(), done=qs.filter((_,i)=>RS.res[i]!=null).length, ok=qs.filter((_,i)=>RS.res[i]===true).length;
   $("body").innerHTML=`
-   ${dayTabs({days:READ,cur:RDAY,done:d=>dayDone("tpk-read",d,READ[d]?READ[d].q.length:1e9)})}
+   ${dayTabs({subj:"read",days:READ,cur:RDAY,done:d=>dayDone("tpk-read",d,READ[d]?READ[d].q.length:1e9)})}
    <section class="hero"><div class="eyebrow">맞힌 문제 · CÂU ĐÚNG</div><div class="big">${ok}<small> / ${qs.length}</small></div>
      <div style="display:flex;gap:10px;align-items:center;margin-top:10px"><div class="bar"><i style="width:${done/qs.length*100}%"></i></div><span class="eyebrow">${done}문제 풂</span></div></section>
    <div class="sec"><b>유형별 · Theo dạng</b></div>
@@ -2654,7 +2734,7 @@ async function teacher(){
   const when=t=>{ try{ const d=t&&t.toDate?t.toDate():null; return d?`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`:"-"; }catch(e){ return "-"; } };
   $("body").innerHTML=`<p class="tip" style="margin-top:0">버전 ${APP_VERSION} · 학생 ${list.length}명 · 칸 안의 숫자는 「푼 문제 / 전체」, 아래는 맞힌 개수예요.</p>`+(list.length?list.map(u=>{
     const p=u.p||{};
-    return `<div class="tcard stu"><div class="sh"><div><b>${esc(u.name||"-")}</b><small>${esc(u.id||"")} · 마지막 ${when(u.updated)}</small></div>
+    return `<div class="tcard stu"><div class="sh"><div><b>${esc(u.name||"-")}</b><small>${esc(u.id||"")} · 마지막 ${when(u.updated)} · ${p["tpk-track"]==="4"?"TOPIK 4부터 (시험 통과)":p["tpk-track"]==="3"?"TOPIK 3부터":"시작 전"}${(t=>{try{const o=JSON.parse(t);return o?" · 시험 "+o.ok+"/10":""}catch(e){return ""}})(p["tpk-ptest"])}</small></div>
       <button class="lockbtn ${u.unlockAll?"on":""}" data-uid="${esc(u.uid)}" data-v="${u.unlockAll?0:1}">${u.unlockAll?"🔓 전부 열림":"🔒 잠금 해제"}</button></div>
       ${progCells(p).map(row=>`<div class="prow"><span class="pl">${row[0][0]}</span>${row.map(([,d,s])=>`<span class="pc ${s.n>=s.total?"full":s.n?"part":""}"><i>Ngày ${d}</i>${s.n}/${s.total}<em>✓${s.ok}${s.star!=null?` ⭐${s.star}`:""}</em></span>`).join("")}</div>`).join("")}
     </div>`;}).join(""):`<div class="tcard">아직 가입한 학생이 없어요.</div>`);
