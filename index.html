@@ -184,6 +184,17 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 @keyframes waitGlow{0%,100%{box-shadow:0 0 0 0 rgba(90,120,210,.0)}50%{box-shadow:0 0 0 6px rgba(90,120,210,.16)}}
 @media (prefers-reduced-motion:reduce){.lcat,.lcat img,.spark,.lvlw.blue .lvl{animation:none!important}.spark{display:none}}
 .tcard,.mcard,.lvl,.grp,.day,.pass,.sent{box-shadow:0 2px 10px -6px rgba(22,32,58,.18)}
+/* loading screen with the running cat */
+.boot{display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px;padding-top:110px}
+.boot b{display:block;font-size:22px;font-weight:800}
+.bootlogo{position:relative;width:132px;height:132px;margin-bottom:46px}
+.bootlogo .blogo{width:100%;height:100%;border-radius:50%;box-shadow:0 6px 18px -10px rgba(0,0,0,.4);display:block}
+.bootlogo .bcat{position:absolute;left:0;top:0;width:35.94%;will-change:transform;filter:drop-shadow(0 3px 3px rgba(0,0,0,.18));z-index:2}
+.bootlogo .bcat.home{left:46.48%;top:54.69%;transform:none;filter:none;transform-origin:50% 100%}
+.bootlogo .bcat.land{animation:bland .42s ease-out}
+@keyframes bland{0%{transform:scale(1.12,.86)}45%{transform:scale(.95,1.06)}100%{transform:scale(1)}}
+.bdust{position:absolute;width:9px;height:9px;margin:-4px 0 0 -4px;border-radius:50%;background:#e9d9c7;opacity:.8;pointer-events:none;animation:bdust .6s ease-out forwards}
+@keyframes bdust{to{transform:scale(2.4) translateY(-6px);opacity:0}}
 .menu{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
 .mcard{display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:16px 14px;border-radius:var(--r);background:var(--surface);border:1.5px solid var(--line);text-align:left;min-height:168px}
 .mcard .ic{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);margin-bottom:10px}
@@ -325,7 +336,7 @@ function lsKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ co
 function lsSnapshot(){ const p={}; lsKeys().forEach(k=>{ try{ p[k]=localStorage.getItem(k); }catch(e){} }); return p; }
 function lsClear(){ lsKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
 let UNLOCK_ALL=false, GUEST=false;
-const APP_VERSION="10/28 고양이 부드럽게";
+const APP_VERSION="10/28 고양이 로딩";
 const TEACHER_ID="viethaan9";
 /* ---------- data ---------- */
 // type: next(이어질 말) · act(이어서 할 행동) · same(내용과 같은 것) · main(중심 생각)
@@ -2498,9 +2509,60 @@ const AERR={
  "auth/too-many-requests":"잠시 후 다시 해 주세요. · Thử lại sau ít phút."
 };
 const aerr=e=>AERR[e&&e.code]||("문제가 생겼어요. 다시 해 주세요. · Có lỗi, hãy thử lại."+(e&&e.code?` (${e.code})`:""));
+/* loading screen: the little orange cat jumps off the logo and runs around until loading is done,
+   then hops back onto its owner's lap */
+const BC={el:null,raf:0,t0:0,ang:0,running:false,last:0,x:0,y:0,face:1,dust:0};
+const BC_HOME={l:46.48,t:54.69,w:35.94};   // cat position inside the logo (% of logo size)
 function bootScreen(msg){
+  const keep=BC.running&&$("bootlogo");
+  if(keep){ const m=$("bootmsg"); if(m) m.textContent=msg||"불러오는 중 · Đang tải…"; return; }
   sec(); setTitle("",null); $("speed").hidden=true; foot("");
-  $("body").innerHTML=`<section class="mlogo" style="justify-content:center;flex-direction:column;text-align:center;padding-top:60px"><img src="logo.png" alt=""><div><b>TOPIK II 연습</b><div class="eyebrow">${msg||"불러오는 중 · Đang tải…"}</div></div></section>`;
+  $("body").innerHTML=`<section class="boot"><div class="bootlogo" id="bootlogo"><img class="blogo" src="logo-empty.png" alt=""><img class="bcat" id="bcat" src="logo-cat.png" alt=""></div>
+    <div><b>TOPIK 연습</b><div class="eyebrow" id="bootmsg">${msg||"불러오는 중 · Đang tải…"}</div></div></section>`;
+  bootCatRun();
+}
+function bootCatRun(){
+  const box=$("bootlogo"), cat=$("bcat"); if(!box||!cat) return;
+  BC.el=cat; BC.running=true; BC.t0=performance.now(); BC.last=BC.t0; BC.ang=Math.PI*0.62; BC.dust=0;
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches){ cat.classList.add("home"); return; }
+  cat.classList.remove("home");
+  const step=now=>{
+    if(!BC.running) return;
+    const dt=Math.min(50,now-BC.last); BC.last=now; const t=(now-BC.t0)/1000;
+    const W=box.clientWidth, R=W*0.78, Ry=W*0.62;
+    BC.ang-=dt/1000*2.3;                         // run clockwise around the logo
+    const cx=W/2+Math.cos(BC.ang)*R, cy=W/2+Math.sin(BC.ang)*Ry;
+    const vx=Math.sin(BC.ang);                  // derivative sign of x for clockwise motion
+    BC.face=vx>0?-1:1;                          // sprite looks left; flip when running right
+    const hop=Math.abs(Math.sin(t*13))*W*0.07, tilt=Math.sin(t*13)*9, sq=1-Math.abs(Math.cos(t*13))*0.08;
+    BC.x=cx; BC.y=cy-hop;
+    cat.style.transform=`translate(${cx-cat.offsetWidth/2}px,${cy-cat.offsetHeight/2-hop}px) scale(${BC.face*1.25},${1.25*sq}) rotate(${tilt*BC.face}deg)`;
+    if(now-BC.dust>170&&hop<W*0.012){ BC.dust=now; const d=document.createElement("i"); d.className="bdust"; d.style.left=(cx-BC.face*cat.offsetWidth*0.45)+"px"; d.style.top=(cy+cat.offsetHeight*0.35)+"px"; box.appendChild(d); setTimeout(()=>d.remove(),600); }
+    BC.raf=requestAnimationFrame(step);
+  };
+  cancelAnimationFrame(BC.raf); BC.raf=requestAnimationFrame(step);
+}
+// call when loading is finished: the cat jumps home, then fn() runs
+function afterBoot(fn){
+  const cat=BC.el, box=$("bootlogo");
+  if(!BC.running||!cat||!box||!document.body.contains(cat)){ BC.running=false; fn(); return; }
+  const minRun=1300, wait=Math.max(0,minRun-(performance.now()-BC.t0));
+  setTimeout(()=>{
+    BC.running=false; cancelAnimationFrame(BC.raf);
+    if(matchMedia("(prefers-reduced-motion: reduce)").matches){ fn(); return; }
+    const W=box.clientWidth, cw=cat.offsetWidth, ch=cat.offsetHeight;
+    const hx=W*BC_HOME.l/100+cw/2, hy=W*BC_HOME.t/100+ch/2;     // home centre
+    const sx=BC.x, sy=BC.y, face=hx>sx?-1:1, T=620, t0=performance.now();
+    const fly=now=>{
+      const k=Math.min(1,(now-t0)/T), e=1-Math.pow(1-k,2);
+      const x=sx+(hx-sx)*e, y=sy+(hy-sy)*e-Math.sin(Math.PI*k)*W*0.38;
+      const sc=1.25-0.25*k;
+      cat.style.transform=`translate(${x-cw/2}px,${y-ch/2}px) scale(${face*sc},${sc}) rotate(${(-25+40*k)*face}deg)`;
+      if(k<1) requestAnimationFrame(fly);
+      else{ cat.style.transform=""; cat.classList.add("home","land"); setTimeout(fn,420); }
+    };
+    requestAnimationFrame(fly);
+  },wait);
 }
 let LOGIN_TAB="in";
 function showLogin(err){
@@ -2536,10 +2598,10 @@ function showLogin(err){
 }
 // called by the cloud module whenever the signed-in user changes
 window.onCloudUser=async u=>{
-  if(!u){ if(!GUEST) showLogin(); return; }
+  if(!u){ if(!GUEST) afterBoot(()=>showLogin()); return; }
   GUEST=false; bootScreen("기록을 불러오는 중 · Đang tải kết quả…");
   try{ await CLOUD.pull(); }catch(e){ console.warn(e); }
-  CAT_INTRO=true; load(); wload(); rload(); start();
+  CAT_INTRO=true; load(); wload(); rload(); afterBoot(start);
 };
 function userBar(){
   if(GUEST) return `<div class="ubar"><span>로그인 안 함 · 이 폰에만 저장</span><button id="ulog">로그인 · Đăng nhập</button></div>`;
@@ -2586,7 +2648,7 @@ async function teacher(){
 }
 
 load(); wload(); rload(); bootScreen();
-setTimeout(()=>{ if(!window.CLOUD&&!GUEST) showLogin("로그인 기능을 불러오지 못했어요. 인터넷을 확인하거나 「로그인 없이 하기」로 풀어 주세요. · Không tải được đăng nhập."); },10000);
+setTimeout(()=>{ if(!window.CLOUD&&!GUEST) afterBoot(()=>showLogin("로그인 기능을 불러오지 못했어요. 인터넷을 확인하거나 「로그인 없이 하기」로 풀어 주세요. · Không tải được đăng nhập.")); },10000);
 </script>
 <script type="module">
 /* ---------- Firebase: accounts + saving progress ---------- */
