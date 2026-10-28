@@ -390,7 +390,7 @@ function lsKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ co
 function lsSnapshot(){ const p={}; lsKeys().forEach(k=>{ try{ p[k]=localStorage.getItem(k); }catch(e){} }); return p; }
 function lsClear(){ lsKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
 let UNLOCK_ALL=false, GUEST=false;
-const APP_VERSION="10/28 틀린 문제 다시 풀기";
+const APP_VERSION="10/28 틀린 문제까지 풀어야 열림";
 const TEACHER_ID="viethaan9";
 /* ---------- data ---------- */
 // type: next(이어질 말) · act(이어서 할 행동) · same(내용과 같은 것) · main(중심 생각)
@@ -1143,7 +1143,16 @@ const t4Open=()=>freeAll()||TRACK()==="4"||dayState(T4_FROM)==="open";
 function setMode(m){ lsSet("tpk-mode",m); const inR=d=>m==="4"?d>=T4_FROM:d<T4_FROM, first=m==="4"?T4_FROM:1;
   if(!inR(DAY)){ DAY=DAYS[first]?first:DAY; load(); } if(!inR(RDAY)){ RDAY=READ[first]?first:RDAY; rload(); } if(!inR(WDAY)){ WDAY=WDAYS[first]?first:WDAY; wload(); } }
 const LOCK='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:4px"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
-function dayDone(pre,d,n){ try{ const s=JSON.parse(localStorage.getItem(pre+d)||"null"); return !!(s&&s.res&&Object.keys(s.res).length>=n); }catch(e){ return false; } }
+// a subject of a Ngày is "done" only when every question is answered AND every wrong one was solved again (다시 풀기)
+function subjInfo(raw,key,n){ try{ const s=JSON.parse(raw||"null"); const r=(s&&s[key])||{}, f=(s&&s.fix)||{};
+  const ans=Object.keys(r).length, left=Object.keys(r).filter(i=>r[i]===false&&!f[i]).length;
+  return {ans,left,all:ans>=n,done:ans>=n&&!left}; }catch(e){ return {ans:0,left:0,all:false,done:false}; } }
+const lInfo=d=>subjInfo(localStorage.getItem("tpk-day"+d),"res",DAYS[d]?DAYS[d].q.length:1e9);
+const rInfo=d=>subjInfo(localStorage.getItem("tpk-read"+d),"res",READ[d]?READ[d].q.length:1e9);
+const wInfo=d=>subjInfo(localStorage.getItem(WKEY(d)),"n3",WDAYS[d]?WDAYS[d].length:1e9);
+function dayDone(pre,d,n){ return (pre==="tpk-read"?rInfo:lInfo)(d).done; }
+// a Ngày the student already started stays open (records made before this rule)
+const started=d=>[lInfo(d),rInfo(d),wInfo(d)].some(x=>x.ans>0);
 function subjDone(d){ // [available subjects, finished subjects] for Ngày d
   const S=[];
   if(DAYS[d]) S.push(dayDone("tpk-day",d,DAYS[d].q.length));
@@ -1153,7 +1162,7 @@ function subjDone(d){ // [available subjects, finished subjects] for Ngày d
 }
 const prevOk=d=>{ if(d<=1) return true; const [n,k]=subjDone(d-1); return k>=Math.min(2,n); };
 const freeAll=()=>UNLOCK_ALL||isTeacher();
-function dayState(d){ if(d<=1||freeAll()) return "open"; if(d===T4_FROM&&TRACK()==="4") return "open"; return prevOk(d)?"open":"prev"; }
+function dayState(d){ if(d<=1||freeAll()) return "open"; if(d===T4_FROM&&TRACK()==="4") return "open"; return prevOk(d)||started(d)?"open":"prev"; }
 function dayTabs(o){
   const lo=MODE()==="4"?T4_FROM:1, hi=MODE()==="4"?999:T4_FROM-1;
   const ks=Object.keys(o.days).map(Number).filter(d=>d>=lo&&d<=hi).sort((a,b)=>a-b);
@@ -1161,7 +1170,7 @@ function dayTabs(o){
   const chip=d=>g(d)?`<em class="gr gr-${g(d).replace("+","p")}">${g(d)}</em>`:"";
   const tabs=ks.map(d=>{ const st=o.done(d)?"open":dayState(d);
     if(st==="open") return `<button class="day" data-d="${d}" aria-current="${d==o.cur}"><b>${o.days[d].title}${chip(d)}</b><span>${o.days[d].sub}</span></button>`;
-    return `<button class="day lock" data-why="${d}" title="Ngày ${d-1}에서 두 과목을 다 풀면 열려요"><b>${LOCK}${o.days[d].title}${chip(d)}</b><span>잠김 · Khóa</span></button>`; }).join("");
+    return `<button class="day lock" data-why="${d}" title="Ngày ${d-1}에서 두 과목을 다 풀고 틀린 문제도 다시 풀면 열려요"><b>${LOCK}${o.days[d].title}${chip(d)}</b><span>잠김 · Khóa</span></button>`; }).join("");
   const next=(ks[ks.length-1]||0)+1;
   const more=MODE()==="4"?`<div class="day soon"><b>${dayState(next)==="open"?"":LOCK}Ngày ${next}</b><span>준비 중 · Sắp có</span></div>`:"";
   return `<nav class="days">${tabs}${more}</nav>`;
@@ -1169,13 +1178,13 @@ function dayTabs(o){
 // what is still needed to open Ngày d (shown when a locked tab is tapped)
 function whyLocked(d){
   const p=d-1, L=[];
-  if(DAYS[p]) L.push(["듣기 · Nghe",dayDone("tpk-day",p,DAYS[p].q.length)]);
-  if(READ[p]) L.push(["읽기 · Đọc",dayDone("tpk-read",p,READ[p].q.length)]);
-  if(WDAYS[p]) L.push(["쓰기 · Viết",wDayDone(p)]);
+  if(DAYS[p]) L.push(["듣기 · Nghe",lInfo(p)]);
+  if(READ[p]) L.push(["읽기 · Đọc",rInfo(p)]);
+  if(WDAYS[p]) L.push(["쓰기 · Viết",wInfo(p)]);
   const need=Math.min(2,L.length);
   return `<div class="fb no" style="margin-top:10px"><b>🔒 Ngày ${d}는 아직 잠겨 있어요 · Ngày ${d} chưa mở</b>
-    Ngày ${p}에서 ${need===L.length&&need<2?"아래 과목을":`${L.length}과목 중 ${need}과목을`} 끝까지 다 풀어야 열려요.<span class="vn">Phải làm xong hết ${need}/${L.length} môn của Ngày ${p} thì mới mở được.</span>
-    <div style="margin-top:8px">${L.map(([n,ok])=>`${ok?"✅":"⬜"} ${n}`).join("<br>")}</div></div>`;
+    Ngày ${p}에서 ${need===L.length&&need<2?"아래 과목을":`${L.length}과목 중 ${need}과목을`} 끝까지 다 풀고, 틀린 문제도 「다시 풀기」로 모두 맞혀야 열려요.<span class="vn">Phải làm xong ${need}/${L.length} môn của Ngày ${p} và làm lại cho đúng hết các câu sai thì mới mở được.</span>
+    <div style="margin-top:8px">${L.map(([n,x])=>`${x.done?"✅":"⬜"} ${n}${x.done?"":x.all?` · 🔁 틀린 문제 ${x.left}개 남음 · còn ${x.left} câu sai`:` · ${x.ans}/${n.startsWith("쓰기")?WDAYS[p].length:(n.startsWith("듣기")?DAYS[p]:READ[p]).q.length}문제 풂`}`).join("<br>")}</div></div>`;
 }
 document.addEventListener("click",e=>{
   const w=e.target.closest(".day[data-why]"); if(w){ const box=$("lockmsg")||Object.assign(document.createElement("div"),{id:"lockmsg"}); box.innerHTML=whyLocked(+w.dataset.why); w.closest("nav").after(box); box.scrollIntoView({block:"nearest",behavior:"smooth"}); }
@@ -1830,7 +1839,7 @@ const WSETS=[
 /* ---------- writing state ---------- */
 const WKEY=d=>"tpk-write"+((d||WDAY)===1?"":(d||WDAY)); let WS={n3:{},n3a:{},p:{},pa:{}};
 function wload(){ WS={n3:{},n3a:{},p:{},pa:{}}; try{const s=JSON.parse(localStorage.getItem(WKEY())||"null"); if(s) WS=Object.assign(WS,s);}catch(e){} }
-function wDayDone(d){ try{const s=JSON.parse(localStorage.getItem(WKEY(d))||"null"); return !!(s&&s.n3&&Object.keys(s.n3).length>=WDAYS[d].length);}catch(e){return false;} }
+function wDayDone(d){ return !!WDAYS[d]&&wInfo(d).done; }
 function wsave(){ try{localStorage.setItem(WKEY(),JSON.stringify(WS))}catch(e){} }
 const norm=s=>String(s||"").replace(/[\s.,!?~·"'()]/g,"");
 const IC={
