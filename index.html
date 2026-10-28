@@ -152,23 +152,6 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .lvl:not(:disabled){border-color:var(--accent)}
 .lvl:disabled{opacity:.55;cursor:default}
 .lvl .soon{margin-left:auto;flex:none;font-size:11.5px;font-weight:700;padding:4px 9px;border-radius:99px;background:var(--line);color:var(--muted)}
-/* two cats on the start screen */
-.cats{position:relative;width:100%;max-width:300px;margin:18px auto 0;aspect-ratio:566/499;border-radius:22px;background:#fff;box-shadow:0 8px 24px -16px rgba(0,0,0,.35);overflow:hidden;cursor:pointer;-webkit-tap-highlight-color:transparent}
-.cats img{position:absolute;display:block;pointer-events:none;user-select:none}
-.cats .cl{left:1.06%;top:1.6%;width:57.07%;transform-origin:45% 95%;animation:catL 5.2s ease-in-out infinite}
-.cats .cr{left:50.35%;top:6.41%;width:48.59%;transform-origin:55% 95%;animation:catR 6.1s ease-in-out infinite}
-@keyframes catL{0%,100%{transform:rotate(0) scaleY(1)}30%{transform:rotate(-1.4deg) scaleY(1.012)}60%{transform:rotate(.6deg) scaleY(.996)}}
-@keyframes catR{0%,100%{transform:rotate(0) scaleY(1)}35%{transform:rotate(1.3deg) scaleY(1.01)}70%{transform:rotate(-.7deg) scaleY(.997)}}
-.cats.love .cl{animation:loveL 1.4s ease-in-out}
-.cats.love .cr{animation:loveR 1.4s ease-in-out}
-@keyframes loveL{0%,100%{transform:rotate(0)}40%,60%{transform:rotate(3.5deg) translateX(2%)}}
-@keyframes loveR{0%,100%{transform:rotate(0)}40%,60%{transform:rotate(-3.5deg) translateX(-2%)}}
-.cats .paw{position:absolute;width:6.5%;opacity:0;animation:paw 7s ease-in-out infinite}
-@keyframes paw{0%{opacity:0;transform:scale(.6)}8%{opacity:.85;transform:scale(1)}45%{opacity:.85}60%,100%{opacity:0}}
-.cats .heart{position:absolute;left:47%;top:30%;font-size:22px;color:#f08aa8;pointer-events:none;animation:heart 1.6s ease-out forwards}
-@keyframes heart{0%{opacity:0;transform:translate(0,0) scale(.5)}20%{opacity:1}100%{opacity:0;transform:translate(var(--dx),-90px) scale(1.2)}}
-.cats .hint{position:absolute;right:10px;bottom:8px;font-size:11px;color:#b5a9b9}
-@media (prefers-reduced-motion:reduce){.cats .cl,.cats .cr,.cats .paw{animation:none}.cats .paw{opacity:.7}}
 .menu{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
 .mcard{display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:16px 14px;border-radius:var(--r);background:var(--surface);border:1.5px solid var(--line);text-align:left;min-height:168px}
 .mcard .ic{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);margin-bottom:10px}
@@ -310,7 +293,7 @@ function lsKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ co
 function lsSnapshot(){ const p={}; lsKeys().forEach(k=>{ try{ p[k]=localStorage.getItem(k); }catch(e){} }); return p; }
 function lsClear(){ lsKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
 let UNLOCK_ALL=false, GUEST=false;
-const APP_VERSION="10/28 고양이";
+const APP_VERSION="10/28 듣기 25일 (2)";
 const TEACHER_ID="viethaan9";
 /* ---------- data ---------- */
 // type: next(이어질 말) · act(이어서 할 행동) · same(내용과 같은 것) · main(중심 생각)
@@ -1749,13 +1732,6 @@ function menu(){ sec();
 }
 /* ---------- level picker: TOPIK I / TOPIK II → 3·4급 / 5·6급 ---------- */
 const lvlBtn=(o)=>`<button class="lvl" ${o.id?`id="${o.id}"`:"disabled"} style="${o.c?`--accent:var(--c-${o.c});--accent-soft:var(--c-${o.c}-soft)`:""}"><span class="badge">${o.badge}</span><span><b>${o.ko}</b><span class="vn">${o.vn}</span><span class="mm">${o.mm}</span></span>${o.id?`<span class="go">›</span>`:`<span class="soon">준비 중 · Sắp có</span>`}</button>`;
-// two cats: they sway, paw prints appear one by one; tap → they lean in and hearts float up
-const PAWS=[[2.7,42],[35,43],[50,35],[47.7,49],[40.3,55],[48,66],[62.7,61]];
-const PAW_SVG='<svg viewBox="0 0 24 24" fill="#f4a3b8"><ellipse cx="12" cy="16" rx="5.2" ry="4.4"/><circle cx="5.6" cy="9.6" r="2.4"/><circle cx="9.6" cy="5.4" r="2.5"/><circle cx="14.4" cy="5.4" r="2.5"/><circle cx="18.4" cy="9.6" r="2.4"/></svg>';
-function catsHtml(){ return `<div class="cats" id="cats" role="img" aria-label="두 고양이 · hai chú mèo">${PAWS.map(([x,y],i)=>`<span class="paw" style="left:${x}%;top:${y}%;animation-delay:${i*.7}s;transform:rotate(${i%2?14:-14}deg)">${PAW_SVG}</span>`).join("")}<img class="cr" src="cat-right.webp" alt=""><img class="cl" src="cat-left.webp" alt=""><span class="hint">tap ♡</span></div>`; }
-function bindCats(){ const c=$("cats"); if(!c) return;
-  c.onclick=()=>{ c.classList.remove("love"); void c.offsetWidth; c.classList.add("love"); setTimeout(()=>c.classList.remove("love"),1500);
-    for(let i=0;i<5;i++){ const h=document.createElement("span"); h.className="heart"; h.textContent="♥"; h.style.setProperty("--dx",(Math.random()*80-40)+"px"); h.style.animationDelay=(i*.15)+"s"; c.appendChild(h); setTimeout(()=>h.remove(),2200); } }; }
 function start(){ sec();
   stopAll(); setTitle("",null); $("speed").hidden=true;
   $("body").innerHTML=`
@@ -1764,9 +1740,8 @@ function start(){ sec();
    ${isTeacher()?`<button class="all" id="tview" style="margin-bottom:12px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg><span><b>학생 기록 보기</b><span>선생님 전용 · 학생별 진도와 잠금 해제</span></span></button>`:""}
    ${lvlBtn({badge:"I",ko:"TOPIK I",vn:"TOPIK I · Sơ cấp",mm:"1급 · 2급 (듣기 · 읽기)",c:"read"})}
    ${lvlBtn({id:"t2",badge:"II",ko:"TOPIK II",vn:"TOPIK II · Trung - cao cấp",mm:"3급 ~ 6급 (듣기 · 쓰기 · 읽기)",c:"listen"})}
-   ${catsHtml()}
-   <p class="note" style="margin-top:14px">버전 ${APP_VERSION}</p>`;
-  $("t2").onclick=topik2; bindCats();
+   <p class="note" style="margin-top:18px">버전 ${APP_VERSION}</p>`;
+  $("t2").onclick=topik2;
   bindUserBar(); if($("tview")) $("tview").onclick=teacher;
   foot("");
 }
