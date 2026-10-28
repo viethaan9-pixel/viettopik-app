@@ -246,7 +246,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .letter.unread{background:#2a1a22}:root:not([data-theme="light"]) .mailfab{background:#3a1f2a;color:#f3a9c0}}
 .rvtag{display:inline-block;margin:0 0 8px;padding:4px 10px;border-radius:999px;background:#FFF1D6;color:#9A5B00;font-size:12.5px;font-weight:700}
 .rvcard{text-align:left;width:100%;border-color:#F2C46B;background:#FFF9EC}.rvcard h3{margin:0}
-.rvall{border-color:#F2C46B;background:#FFF9EC;margin-top:12px}
+.rvall{border-color:#F2C46B;background:#FFF9EC;margin-top:12px}.rvall.soft{border-style:dashed;background:transparent}
 .rvdone{width:100%;text-align:left}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .rvcard,:root:not([data-theme="light"]) .rvall{background:#2e2716}:root:not([data-theme="light"]) .rvtag{background:#3a2e12;color:#f2c46b}}
 .menu{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
@@ -390,7 +390,7 @@ function lsKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ co
 function lsSnapshot(){ const p={}; lsKeys().forEach(k=>{ try{ p[k]=localStorage.getItem(k); }catch(e){} }); return p; }
 function lsClear(){ lsKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
 let UNLOCK_ALL=false, GUEST=false;
-const APP_VERSION="10/28 틀린 문제까지 풀어야 열림";
+const APP_VERSION="10/28 틀린 문제 한 번 더 풀면 열림";
 const TEACHER_ID="viethaan9";
 /* ---------- data ---------- */
 // type: next(이어질 말) · act(이어서 할 행동) · same(내용과 같은 것) · main(중심 생각)
@@ -1145,7 +1145,7 @@ function setMode(m){ lsSet("tpk-mode",m); const inR=d=>m==="4"?d>=T4_FROM:d<T4_F
 const LOCK='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:4px"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
 // a subject of a Ngày is "done" only when every question is answered AND every wrong one was solved again (다시 풀기)
 function subjInfo(raw,key,n){ try{ const s=JSON.parse(raw||"null"); const r=(s&&s[key])||{}, f=(s&&s.fix)||{};
-  const ans=Object.keys(r).length, left=Object.keys(r).filter(i=>r[i]===false&&!f[i]).length;
+  const ans=Object.keys(r).length, left=Object.keys(r).filter(i=>r[i]===false&&!(i in f)).length;
   return {ans,left,all:ans>=n,done:ans>=n&&!left}; }catch(e){ return {ans:0,left:0,all:false,done:false}; } }
 const lInfo=d=>subjInfo(localStorage.getItem("tpk-day"+d),"res",DAYS[d]?DAYS[d].q.length:1e9);
 const rInfo=d=>subjInfo(localStorage.getItem("tpk-read"+d),"res",READ[d]?READ[d].q.length:1e9);
@@ -1170,7 +1170,7 @@ function dayTabs(o){
   const chip=d=>g(d)?`<em class="gr gr-${g(d).replace("+","p")}">${g(d)}</em>`:"";
   const tabs=ks.map(d=>{ const st=o.done(d)?"open":dayState(d);
     if(st==="open") return `<button class="day" data-d="${d}" aria-current="${d==o.cur}"><b>${o.days[d].title}${chip(d)}</b><span>${o.days[d].sub}</span></button>`;
-    return `<button class="day lock" data-why="${d}" title="Ngày ${d-1}에서 두 과목을 다 풀고 틀린 문제도 다시 풀면 열려요"><b>${LOCK}${o.days[d].title}${chip(d)}</b><span>잠김 · Khóa</span></button>`; }).join("");
+    return `<button class="day lock" data-why="${d}" title="Ngày ${d-1}에서 두 과목을 다 풀고 틀린 문제를 한 번 더 풀면 열려요"><b>${LOCK}${o.days[d].title}${chip(d)}</b><span>잠김 · Khóa</span></button>`; }).join("");
   const next=(ks[ks.length-1]||0)+1;
   const more=MODE()==="4"?`<div class="day soon"><b>${dayState(next)==="open"?"":LOCK}Ngày ${next}</b><span>준비 중 · Sắp có</span></div>`:"";
   return `<nav class="days">${tabs}${more}</nav>`;
@@ -1183,8 +1183,8 @@ function whyLocked(d){
   if(WDAYS[p]) L.push(["쓰기 · Viết",wInfo(p)]);
   const need=Math.min(2,L.length);
   return `<div class="fb no" style="margin-top:10px"><b>🔒 Ngày ${d}는 아직 잠겨 있어요 · Ngày ${d} chưa mở</b>
-    Ngày ${p}에서 ${need===L.length&&need<2?"아래 과목을":`${L.length}과목 중 ${need}과목을`} 끝까지 다 풀고, 틀린 문제도 「다시 풀기」로 모두 맞혀야 열려요.<span class="vn">Phải làm xong ${need}/${L.length} môn của Ngày ${p} và làm lại cho đúng hết các câu sai thì mới mở được.</span>
-    <div style="margin-top:8px">${L.map(([n,x])=>`${x.done?"✅":"⬜"} ${n}${x.done?"":x.all?` · 🔁 틀린 문제 ${x.left}개 남음 · còn ${x.left} câu sai`:` · ${x.ans}/${n.startsWith("쓰기")?WDAYS[p].length:(n.startsWith("듣기")?DAYS[p]:READ[p]).q.length}문제 풂`}`).join("<br>")}</div></div>`;
+    Ngày ${p}에서 ${need===L.length&&need<2?"아래 과목을":`${L.length}과목 중 ${need}과목을`} 끝까지 다 풀고, 틀린 문제를 「다시 풀기」로 한 번 더 풀어야 열려요.<span class="vn">Phải làm xong ${need}/${L.length} môn của Ngày ${p} và làm lại các câu sai một lần nữa thì mới mở được.</span>
+    <div style="margin-top:8px">${L.map(([n,x])=>`${x.done?"✅":"⬜"} ${n}${x.done?"":x.all?` · 🔁 틀린 문제 ${x.left}개 다시 풀기 · làm lại ${x.left} câu sai`:` · ${x.ans}/${n.startsWith("쓰기")?WDAYS[p].length:(n.startsWith("듣기")?DAYS[p]:READ[p]).q.length}문제 풂`}`).join("<br>")}</div></div>`;
 }
 document.addEventListener("click",e=>{
   const w=e.target.closest(".day[data-why]"); if(w){ const box=$("lockmsg")||Object.assign(document.createElement("div"),{id:"lockmsg"}); box.innerHTML=whyLocked(+w.dataset.why); w.closest("nav").after(box); box.scrollIntoView({block:"nearest",behavior:"smooth"}); }
@@ -1230,7 +1230,7 @@ function home(){ sec("listen");
      <div style="display:flex;gap:10px;align-items:center;margin-top:10px"><div class="bar"><i style="width:${done/qs.length*100}%"></i></div><span class="eyebrow">${done}문제 풂</span></div></section>
    <div class="howto"><div><b>① 듣고 풀기</b>대본 없이 듣고 답 고르기<br><span>Nghe và chọn</span></div><div><b>② 근거 찾기</b>정답 근거 문장 누르기<br><span>Tìm câu căn cứ</span></div></div>
    <button class="all" id="startAll" style="margin-top:14px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span><b>1번부터 차례로 풀기</b><span>20문제 · 문제마다 ①② 단계</span></span></button>
-   ${allDone(ST.res,qs.length)&&toFix(ST.res,ST.fix,qs.length).length?rvHomeBtn(toFix(ST.res,ST.fix,qs.length).length):""}
+   ${allDone(ST.res,qs.length)&&toFix(ST.res,ST.fix,qs.length).length?rvHomeBtn(toFix(ST.res,ST.fix,qs.length).length,notTried(ST.res,ST.fix,qs.length).length):""}
    <button class="vset" id="vset">${ICON.sp}<span><b>목소리 설정</b> · Chọn giọng nam / nữ</span></button>
    <div class="sec"><b>유형별 · Theo dạng</b><button id="tips" style="color:var(--accent);font-weight:700;font-size:13px">유형별 공략법</button></div>
    ${sets().map((s,i)=>{const ids=[];for(let k=s.r[0];k<=s.r[1];k++)ids.push(k);
@@ -1256,16 +1256,19 @@ function showTips(){ sec("listen");
    After a Ngày, the wrong questions can be solved again. The first score stays as it was;
    a fixed question is kept in .fix, and the choices are reshuffled so the right answer sits in a new spot. */
 function reshuf(prev,a,n){ let o; for(let t=0;t<16;t++){ o=shuffle([...Array(n).keys()]); if(prev==null||o.indexOf(a)!==prev) break; } return o; }
-const toFix=(res,fix,n)=>[...Array(n).keys()].filter(i=>res[i]===false&&!(fix&&fix[i]));
+const toFix=(res,fix,n)=>[...Array(n).keys()].filter(i=>res[i]===false&&!(fix&&fix[i]));      // still not right
+const notTried=(res,fix,n)=>[...Array(n).keys()].filter(i=>res[i]===false&&!(fix&&i in fix)); // never retried
 const allDone=(res,n)=>[...Array(n).keys()].every(i=>res[i]!=null);
 function reviewCard(left,total,rv){ // shown on result screens
   if(rv&&!left) return `<div class="fb ok rvdone"><b>🎉 틀린 문제를 모두 고쳤어요!</b><span class="vn">Đã sửa hết các câu sai!</span></div>`;
+  if(rv) return `<div class="tcard rvcard"><h3>👍 다시 풀기 끝! · Xong phần làm lại</h3><div class="vn">Đã làm lại xong — Ngày sau sẽ được mở (nếu đủ 2 môn).</div>
+    <div class="tip" style="margin-top:6px">아직 ${left}문제가 틀렸어요. 원하면 한 번 더 풀어 보세요.<span class="vn" style="display:block">Còn ${left} câu sai — muốn thì làm thêm lần nữa.</span></div></div>`;
   if(!left) return "";
-  return `<div class="tcard rvcard"><h3>🔁 ${rv?`아직 ${left}문제 남았어요`:`틀린 ${left}문제 다시 풀기`}</h3><div class="vn">${rv?`Còn ${left} câu chưa đúng — làm lại nhé.`:`Làm lại ${left} câu sai.`}</div>
+  return `<div class="tcard rvcard"><h3>🔁 틀린 ${left}문제 다시 풀기</h3><div class="vn">Làm lại ${left} câu sai — làm xong mới mở Ngày sau.</div>
     <div class="tip" style="margin-top:6px">${total?"보기 순서가 바뀌어서 정답 자리가 달라져요. 처음 점수는 그대로 남아요.":"처음 점수는 그대로 남아요."}<span class="vn" style="display:block">${total?"Thứ tự đáp án được xáo lại. ":""}Điểm lần đầu vẫn giữ nguyên.</span></div></div>`;
 }
 const rvBtn=n=>`<button class="btn pri" id="re">🔁 다시 풀기 ${n}문제</button>`;
-const rvHomeBtn=n=>`<button class="all rvall" id="rvgo"><span style="font-size:22px">🔁</span><span><b>틀린 문제 다시 풀기 · ${n}문제</b><span>Làm lại câu sai · 정답 위치가 바뀌어요</span></span></button>`;
+const rvHomeBtn=(n,need)=>`<button class="all rvall ${need?"":"soft"}" id="rvgo"><span style="font-size:22px">🔁</span><span><b>틀린 문제 다시 풀기 · ${n}문제</b><span>${need?"다음 Ngày를 열려면 한 번 더 풀어요 · Làm lại để mở Ngày sau":"한 번 더 연습하기 (선택) · Luyện thêm (tùy chọn)"} · 정답 위치가 바뀌어요</span></span></button>`;
 
 /* ---------- question flow ---------- */
 let run=[],ri=0,step=0,ord=null,answered=null,runRes={},RV=false;
@@ -1976,7 +1979,7 @@ function wHome(){ sec("write");
     <div class="vn" style="margin-top:6px">Đọc bài, viết vào ㉠ và ㉡. Câu 1~10 giữ đúng thể văn; câu 11~20 viết thể "-다", chú ý từ nối trước sau.</div></div>`:`<div class="tcard" style="margin-top:4px"><h3>이렇게 공부하세요</h3><div class="vn">Cách học</div>
     <ul><li>괄호 안의 말을 문장에 맞게 바꿔 쓰세요. 쓰고 「확인」을 누르면 바로 채점돼요.</li><li>틀리면 정답과 문법 포인트를 꼭 읽어 보세요.</li><li>1~10번은 실용문(-습니다 / 해요), 11~20번은 설명문(-다)이에요.</li></ul>
     <div class="vn" style="margin-top:6px">Chia từ trong ngoặc cho hợp với câu, bấm 「확인」 để chấm ngay. Sai thì đọc kỹ đáp án và điểm ngữ pháp.</div></div>`}
-   ${allDone(WS.n3,NQ().length)&&toFix(WS.n3,WS.fix,NQ().length).length?rvHomeBtn(toFix(WS.n3,WS.fix,NQ().length).length).replace("정답 위치가 바뀌어요","한 번 더 써 보세요"):""}
+   ${allDone(WS.n3,NQ().length)&&toFix(WS.n3,WS.fix,NQ().length).length?rvHomeBtn(toFix(WS.n3,WS.fix,NQ().length).length,notTried(WS.n3,WS.fix||{},NQ().length).length).replace("정답 위치가 바뀌어요","한 번 더 써 보세요"):""}
    <div class="sec"><b>세트 · Bộ bài</b></div>
    ${(is51Day()?WSETS51:WSETS).map((s,i)=>{const ids=[];for(let k=s.r[0];k<=s.r[1];k++)ids.push(k); const R=WS[s.k];
      return `<button class="grp" data-s="${i}"><span class="n">${s.label}</span><span class="t"><b>${s.ko}</b><span class="vn">${s.vn}</span></span>
@@ -2001,19 +2004,20 @@ const isFree=()=>WDAY>=NOBRACKET_FROM;
 function renderN3(){ sec("write");
   const k=W.ids[W.i], q=NQ()[k], last=W.i===W.ids.length-1, free=isFree();
   if(q.k) return render51(k,q,last);
-  let hint=!free;
+  const rv=W.rv, showB=!free||rv;   // 다시 풀기: the (bracket) word is always shown
+  let hint=showB;
   if(!WS.h) WS.h={};
   setTitle(`Ngày ${WDAY} 쓰기 · ${k+1}번`,wHome); $("speed").hidden=true;
   const [pre,post]=q.s.split("___");
   $("body").innerHTML=`${wProg()}
-   <div class="qhead"><span class="qno">${String(k+1).padStart(2,"0")}</span><span class="chip">${k<10?"실용문":"설명문"}</span>${free?`<span class="chip star">⭐ 힌트 없이 도전</span>`:""}</div>
-   <div class="instr">${free?"빈칸에 알맞은 말을 쓰십시오.<span class=\"vn\">Điền từ phù hợp vào chỗ trống.</span>":"괄호 안의 말을 알맞게 바꿔 쓰십시오.<span class=\"vn\">Chia từ trong ngoặc cho phù hợp với câu.</span>"}</div>
-   <div class="sent">${esc(pre)}<span class="blank" id="bl">${free?"(　　　)":`(${esc(q.b)})`}</span>${esc(post)}</div>
-   ${free?`<button class="hintbtn" id="hb">💡 힌트 보기 · Xem gợi ý</button>`:""}
+   <div class="qhead"><span class="qno">${String(k+1).padStart(2,"0")}</span><span class="chip">${k<10?"실용문":"설명문"}</span>${free&&!rv?`<span class="chip star">⭐ 힌트 없이 도전</span>`:""}</div>
+   <div class="instr">${!showB?"빈칸에 알맞은 말을 쓰십시오.<span class=\"vn\">Điền từ phù hợp vào chỗ trống.</span>":"괄호 안의 말을 알맞게 바꿔 쓰십시오.<span class=\"vn\">Chia từ trong ngoặc cho phù hợp với câu.</span>"}</div>
+   <div class="sent">${esc(pre)}<span class="blank" id="bl">${!showB?"(　　　)":`(${esc(q.b)})`}</span>${esc(post)}</div>
+   ${!showB?`<button class="hintbtn" id="hb">💡 힌트 보기 · Xem gợi ý</button>`:""}
    <input class="inp" id="in" lang="ko" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" placeholder="여기에 쓰세요 · Viết vào đây">
    <div id="fb"></div>`;
   const inp=$("in");
-  if(free) $("hb").onclick=()=>{ hint=true; $("bl").textContent=`(${q.b})`; $("hb").outerHTML=`<div class="tip" style="margin-top:8px">💡 힌트: <b>${esc(q.b)}</b> 를 알맞게 바꿔 쓰세요. · Chia từ <b>${esc(q.b)}</b>.</div>`; inp.focus(); };
+  if($("hb")) $("hb").onclick=()=>{ hint=true; $("bl").textContent=`(${q.b})`; $("hb").outerHTML=`<div class="tip" style="margin-top:8px">💡 힌트: <b>${esc(q.b)}</b> 를 알맞게 바꿔 쓰세요. · Chia từ <b>${esc(q.b)}</b>.</div>`; inp.focus(); };
   const done=(ok,v,self)=>{
     if(W.rv) WS.fix[k]=ok; else { WS.n3[k]=ok; WS.n3a[k]=v; WS.h[k]=hint; } wsave(); W.res[k]=ok;
     const star=ok&&free&&!hint; if($("hb")) $("hb").remove();
@@ -2026,7 +2030,7 @@ function renderN3(){ sec("write");
     const v=give?"":inp.value.trim(); if(!give&&!v){inp.focus();return;}
     if(give) return done(false,"",false);
     if(q.a.some(x=>norm(x)===norm(v))) return done(true,v,false);
-    if(free&&!hint){ // another wording may also be right: let the student compare and decide
+    if(free&&!hint&&!rv){ // another wording may also be right: let the student compare and decide
       inp.disabled=true; if($("hb")) $("hb").remove();
       $("fb").innerHTML=`<div class="fb"><b>모범 답안과 비교해 보세요 · So sánh với đáp án mẫu</b>내 답: <strong>${esc(v)}</strong><br>모범 답안: <strong>${esc(q.a.join(" / "))}</strong> (괄호 말: ${esc(q.b)})<div class="tip" style="margin-top:6px">뜻과 문법이 맞으면 「맞았어요」를 누르세요.<span class="vn" style="display:block">Nếu đúng nghĩa và ngữ pháp thì bấm 「Đúng」.</span></div></div>`;
       foot(`<button class="btn sec" id="sn">틀렸어요 · Sai</button><button class="btn pri" id="sy">맞았어요 · Đúng</button>`);
@@ -2052,6 +2056,7 @@ function render51(k,q,last){
    <div class="qhead"><span class="qno">${String(k+1).padStart(2,"0")}</span><span class="chip">${is51?"51번 · 실용문":"52번 · 설명문"}</span></div>
    <div class="instr">다음 글의 ㉠과 ㉡에 알맞은 말을 각각 쓰십시오.<span class="vn">Viết từ/cụm từ phù hợp vào ㉠ và ㉡. ${is51?"Giữ đúng thể văn của bài (습니다 / 해요 / 반말).":"Viết theo thể 「-다」."}</span></div>
    <div class="pass p51">${q.h?`<div class="ph">${esc(q.h)}</div>`:""}<div class="pb">${q.x.map(l=>`<p>${mk(l)}</p>`).join("")}</div></div>
+   ${W.rv&&q.p?`<div class="tip" style="margin:8px 0">💡 힌트 · Gợi ý: <b>${esc(q.p)}</b></div>`:""}
    <div class="blank2"><b>㉠</b><input class="inp" id="i1" lang="ko" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="㉠ 여기에 쓰세요 · Viết ㉠"></div>
    <div class="blank2"><b>㉡</b><input class="inp" id="i2" lang="ko" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" placeholder="㉡ 여기에 쓰세요 · Viết ㉡"></div>
    <div id="fb"></div>`;
@@ -2098,7 +2103,7 @@ function wResult(){ sec("write");
   const ids=Object.keys(W.res).map(Number), ok=ids.filter(i=>W.res[i]).length, wrong=ids.filter(i=>!W.res[i]);
   const name=i=>`${i+1}번`;
   const stars=isFree()?ids.filter(i=>W.res[i]&&!(WS.h||{})[i]).length:0;
-  $("body").innerHTML=`<div class="done"><div class="eyebrow">Ngày ${WDAY} 쓰기 · KẾT QUẢ</div><div class="big">${ok} / ${ids.length}</div>${isFree()?`<div class="chip star" style="font-size:13px">⭐ 힌트 없이 맞힌 문제 ${stars}개</div>`:""}
+  $("body").innerHTML=`<div class="done"><div class="eyebrow">Ngày ${WDAY} 쓰기 · KẾT QUẢ</div><div class="big">${ok} / ${ids.length}</div>${isFree()&&!W.rv?`<div class="chip star" style="font-size:13px">⭐ 힌트 없이 맞힌 문제 ${stars}개</div>`:""}
     <div style="color:var(--muted);font-size:14px">${wrong.length?`틀린 문제: ${wrong.map(name).join(", ")}`:"모두 맞았어요!"}</div>${reviewCard(left.length,0,W.rv)}</div>
     ${W.k==="n3"&&wrong.length?`<div class="tcard"><h3>틀린 문장 정답</h3><ul>${wrong.map(i=>`<li>${i+1}번 · ${esc(NQ()[i].b)} → <b>${esc(NQ()[i].a[0])}</b> <span class="vn">${esc(NQ()[i].p)}</span></li>`).join("")}</ul></div>`:""}`;
   foot(`<button class="btn sec" id="h">쓰기 처음으로</button>${left.length?rvBtn(left.length):""}`);
@@ -2604,7 +2609,7 @@ function rHome(){ sec("read");
    ${dayTabs({subj:"read",days:READ,cur:RDAY,done:d=>dayDone("tpk-read",d,READ[d]?READ[d].q.length:1e9)})}
    <section class="hero"><div class="eyebrow">맞힌 문제 · CÂU ĐÚNG</div><div class="big">${ok}<small> / ${qs.length}</small></div>
      <div style="display:flex;gap:10px;align-items:center;margin-top:10px"><div class="bar"><i style="width:${done/qs.length*100}%"></i></div><span class="eyebrow">${done}문제 풂</span></div></section>
-   ${allDone(RS.res,qs.length)&&toFix(RS.res,RS.fix,qs.length).length?rvHomeBtn(toFix(RS.res,RS.fix,qs.length).length):""}
+   ${allDone(RS.res,qs.length)&&toFix(RS.res,RS.fix,qs.length).length?rvHomeBtn(toFix(RS.res,RS.fix,qs.length).length,notTried(RS.res,RS.fix||{},qs.length).length):""}
    <div class="sec"><b>유형별 · Theo dạng</b></div>
    ${rsets().map((s,i)=>{const ids=[];for(let k=s.r[0];k<=s.r[1];k++)ids.push(k);
      return `<button class="grp" data-s="${i}"><span class="n">${s.label}</span><span class="t"><b>${s.ko}</b><span class="vn">${s.vn}</span></span>
