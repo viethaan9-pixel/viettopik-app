@@ -12,5 +12,15 @@ service cloud.firestore {
                     && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['unlockAll']));
       allow delete: if isTeacher();
     }
+    // feedback mailbox: a signed-in student may send a short letter; only the teacher can read it
+    match /feedback/{id} {
+      allow create: if request.auth != null
+                    && request.resource.data.uid == request.auth.uid
+                    && request.resource.data.text is string
+                    && request.resource.data.text.size() > 0
+                    && request.resource.data.text.size() <= 400
+                    && request.resource.data.read == false;
+      allow read, update, delete: if isTeacher();
+    }
   }
 }

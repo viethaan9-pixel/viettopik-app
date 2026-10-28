@@ -225,6 +225,25 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .tstats b{display:block;font-size:22px;font-weight:800;line-height:1.1}.tstats span{font-size:11px;color:var(--muted)}
 .stu .rk{display:inline-grid;place-items:center;min-width:22px;height:22px;margin-right:6px;border-radius:50%;background:var(--line);font-size:12px;vertical-align:1px}
 .stu .ago{font-size:11.5px;font-weight:600;color:var(--muted);margin-left:4px}.stu .ago.on{color:#2F7A45}
+
+.mlogo .mailbtn{margin-right:-4px}.mlogo .mailbtn+.contact{margin-left:8px}
+.mailcard{text-align:left}.mailcard .mailic{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;background:#FDE7EE;color:#D2557A;margin-bottom:8px}
+.mailcard textarea{height:auto;min-height:140px;padding:12px 14px;resize:vertical;line-height:1.6}
+.fbcnt{text-align:right;font-size:12.5px;color:var(--muted);margin-top:4px}.fbcnt.full{color:#C0392B;font-weight:700}
+.mailfab{display:flex;align-items:center;gap:10px;width:100%;padding:12px 14px;margin:0 0 10px;border-radius:16px;border:1.5px solid #E9A3B8;background:#FDECF2;color:#B83A62;font:inherit;animation:mailbob 1.6s ease-in-out infinite}
+.mailfab[hidden]{display:none}
+.mailfab b{font-size:15px}.mailfab .fbc{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:#D2557A;color:#fff;font-size:12px;font-weight:800}
+@keyframes mailbob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+.maillink{display:flex;align-items:center;gap:8px;width:100%;padding:8px 12px;margin:0 0 10px;border-radius:12px;border:1px dashed var(--line);background:transparent;color:var(--muted);font:inherit;font-size:13px}
+.maillink svg{width:16px;height:16px}
+.tbadge{margin-left:auto;display:inline-flex;align-items:center;gap:4px;color:#D2557A;animation:mailbob 1.6s ease-in-out infinite}.tbadge[hidden]{display:none}
+.tbadge .fbc{min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:#D2557A;color:#fff;font-size:11.5px;font-weight:800;display:inline-grid;place-items:center}
+.letter p{margin:8px 0 0;white-space:pre-wrap;word-break:break-word;font-size:15px;line-height:1.65}
+.letter.unread{border-color:#E9A3B8;background:linear-gradient(#FFF7FA,#FFF7FA)}
+.letter .lh{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.letter .lh small{color:var(--muted)}
+.mailic.sm{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;background:#FDE7EE;color:#D2557A}.mailic.sm svg{width:16px;height:16px}
+.newtag{margin-left:auto;font-style:normal;font-size:10.5px;font-weight:800;color:#fff;background:#D2557A;border-radius:6px;padding:1px 6px}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .letter.unread{background:#2a1a22}:root:not([data-theme="light"]) .mailfab{background:#3a1f2a;color:#f3a9c0}}
 .menu{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
 .mcard{display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:16px 14px;border-radius:var(--r);background:var(--surface);border:1.5px solid var(--line);text-align:left;min-height:168px}
 .mcard .ic{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);margin-bottom:10px}
@@ -366,7 +385,7 @@ function lsKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ co
 function lsSnapshot(){ const p={}; lsKeys().forEach(k=>{ try{ p[k]=localStorage.getItem(k); }catch(e){} }); return p; }
 function lsClear(){ lsKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
 let UNLOCK_ALL=false, GUEST=false;
-const APP_VERSION="10/28 학생 수 실시간";
+const APP_VERSION="10/28 의견함";
 const TEACHER_ID="viethaan9";
 /* ---------- data ---------- */
 // type: next(이어질 말) · act(이어서 할 행동) · same(내용과 같은 것) · main(중심 생각)
@@ -1888,8 +1907,8 @@ function start(){ sec();
   stopAll(); setTitle("",null); $("speed").hidden=true;
   $("body").innerHTML=`
    ${userBar()}
-   <section class="mlogo"><img src="logo.png" alt=""><div><b>TOPIK 연습</b><div class="eyebrow">어떤 시험을 준비해요? · BẠN ÔN THI GÌ?</div></div><a class="contact" href="https://www.facebook.com/profile.php?id=61594346458669" target="_blank" rel="noopener" aria-label="선생님께 문의하기 · Liên hệ giáo viên" title="선생님께 문의하기 · Liên hệ giáo viên"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.8-.8L3 21l1.9-5.2A8.4 8.4 0 0 1 12 3.1a8.4 8.4 0 0 1 9 8.4z"/></svg></a></section>
-   ${isTeacher()?`<button class="all" id="tview" style="margin-bottom:12px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg><span><b>학생 기록 보기</b><span>선생님 전용 · 학생별 진도와 잠금 해제</span></span></button>`:""}
+   <section class="mlogo"><img src="logo.png" alt=""><div><b>TOPIK 연습</b><div class="eyebrow">어떤 시험을 준비해요? · BẠN ÔN THI GÌ?</div></div><button class="contact mailbtn" id="smail" aria-label="의견함 · Hòm thư góp ý" title="의견함 · Hòm thư góp ý">${MAIL}</button><a class="contact" href="https://www.facebook.com/profile.php?id=61594346458669" target="_blank" rel="noopener" aria-label="선생님께 문의하기 · Liên hệ giáo viên" title="선생님께 문의하기 · Liên hệ giáo viên"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.8-.8L3 21l1.9-5.2A8.4 8.4 0 0 1 12 3.1a8.4 8.4 0 0 1 9 8.4z"/></svg></a></section>
+   ${isTeacher()?`<button class="all" id="tview" style="margin-bottom:12px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg><span><b>학생 기록 보기</b><span>선생님 전용 · 학생별 진도와 잠금 해제</span></span><span class="fbnew tbadge" hidden>${MAIL}<span class="fbc">0</span></span></button>`:""}
    <div id="lvls" class="${CAT_INTRO?"intro":""}">
    ${catSlot("brown",lvlBtn({badge:"I",ko:"TOPIK I",vn:"TOPIK I · Sơ cấp",mm:"1급 · 2급 (듣기 · 읽기)",c:"brown"}))}
    ${catSlot("blue",lvlBtn({id:"t2",badge:"II",ko:"TOPIK II",vn:"TOPIK II · Trung - cao cấp",mm:"3급 ~ 6급 (듣기 · 쓰기 · 읽기)",c:"listen"}))}
@@ -1898,7 +1917,9 @@ function start(){ sec();
   CAT_INTRO=false;
   $("t2").onclick=()=>{ const c=document.querySelector(".lcat.blue"); if(!c||matchMedia("(prefers-reduced-motion: reduce)").matches) return topik2();
     c.classList.remove("hop"); void c.offsetWidth; c.classList.add("hop"); setTimeout(topik2,420); };
-  bindUserBar(); if($("tview")) $("tview").onclick=teacher;
+  bindUserBar(); if($("tview")) $("tview").onclick=()=>teacher();
+  if($("smail")) $("smail").onclick=()=>isTeacher()?inbox():mailbox();
+  if(isTeacher()){ fbWatch(); fbPaint(); }
   foot("");
 }
 function topik2(){ sec();
@@ -2733,6 +2754,45 @@ function progCells(p){
     return ["쓰기",d,s]; });
   return [L,R,W];
 }
+
+/* ---------- feedback mailbox (hòm thư góp ý) ---------- */
+const MAIL='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3.5 6.5 12 13l8.5-6.5"/></svg>';
+const FB_MAX=200;
+const fbLen=t=>Array.from(String(t).normalize("NFC")).length;
+function mailbox(){ sec(); stopAll(); setTitle("의견함 · Hòm thư góp ý",start); $("speed").hidden=true;
+  if(!window.CLOUD||!CLOUD.user){
+    $("body").innerHTML=`<div class="tcard mailcard" style="margin-top:4px"><div class="mailic">${MAIL}</div><h3>의견함 · Hòm thư góp ý</h3><p class="tip">의견을 보내려면 먼저 로그인해 주세요.<span class="vn" style="display:block">Hãy đăng nhập để gửi ý kiến cho cô.</span></p></div>`;
+    foot(`<button class="btn pri" id="mlog">로그인 · Đăng nhập</button>`); $("mlog").onclick=()=>{ GUEST=false; LOGIN_TAB="in"; showLogin(); }; return; }
+  $("body").innerHTML=`<div class="tcard mailcard" style="margin-top:4px"><div class="mailic">${MAIL}</div><h3>선생님께 한마디 · Gửi cô vài lời</h3>
+     <p class="tip">수업 소감, 바라는 점, 어려운 점을 자유롭게 써 주세요. 선생님만 읽어요. 베트남어(성조 포함)로 써도 돼요.<span class="vn" style="display:block">Cảm nghĩ, mong muốn hay khó khăn khi học — viết thoải mái nhé. Chỉ cô đọc được. Viết tiếng Việt có dấu cũng được.</span></p>
+     <textarea id="fbt" class="inp" rows="6" lang="vi" placeholder="여기에 쓰세요 · Viết ở đây (tối đa ${FB_MAX} chữ)"></textarea>
+     <div class="fbcnt"><span id="fbn">0</span> / ${FB_MAX}</div><div id="fbmsg"></div></div>`;
+  const ta=$("fbt"), n=$("fbn");
+  const upd=()=>{ let v=ta.value; if(fbLen(v)>FB_MAX){ v=Array.from(v.normalize("NFC")).slice(0,FB_MAX).join(""); ta.value=v; } n.textContent=fbLen(v); n.parentNode.classList.toggle("full",fbLen(v)>=FB_MAX); $("fbsend").disabled=!v.trim(); };
+  ta.addEventListener("input",upd); ta.addEventListener("compositionend",upd);
+  foot(`<button class="btn pri" id="fbsend" disabled>보내기 · Gửi</button>`);
+  $("fbsend").onclick=async()=>{ const v=ta.value.normalize("NFC").trim(); if(!v) return; const b=$("fbsend"); b.disabled=true; b.textContent="보내는 중… · Đang gửi…";
+    try{ await CLOUD.sendFeedback(v); ta.value=""; upd(); $("fbmsg").innerHTML=`<div class="fb ok" style="margin-top:10px"><b>보냈어요! 고마워요 💌</b><span class="vn">Đã gửi! Cảm ơn bạn nhé.</span></div>`; }
+    catch(e){ $("fbmsg").innerHTML=`<div class="fb no" style="margin-top:10px">보내지 못했어요. (${esc(e.code||e.message||e)})<span class="vn">Gửi không được, thử lại sau nhé.</span></div>`; }
+    b.textContent="보내기 · Gửi"; b.disabled=!ta.value.trim(); };
+  ta.focus();
+}
+// teacher side: live list of letters, unread count shown as a letter icon
+const FBX={list:[],unsub:null};
+const fbUnread=()=>FBX.list.filter(m=>!m.read).length;
+function fbWatch(){ if(FBX.unsub||!isTeacher()||!CLOUD.watchFeedback) return;
+  FBX.unsub=CLOUD.watchFeedback(l=>{ FBX.list=l; fbPaint(); if($("title").textContent==="의견함 · 받은 편지") inbox(true); },e=>console.warn(e)); }
+function fbPaint(){ const n=fbUnread();
+  document.querySelectorAll(".fbnew").forEach(el=>{ el.hidden=!n; const c=el.querySelector(".fbc"); if(c) c.textContent=n; }); }
+function inbox(live){ const back=()=>teacher();
+  if(!live){ sec(); stopAll(); setTitle("의견함 · 받은 편지",back); $("speed").hidden=true; foot(""); }
+  const when=t=>{ try{ const d=t&&t.toDate?t.toDate():null; return d?`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`:"방금"; }catch(e){ return "-"; } };
+  const L=FBX.list;
+  $("body").innerHTML=`<p class="tip" style="margin-top:0">받은 편지 ${L.length}통 · 새 편지 ${fbUnread()}통 · 열어 보면 「읽음」으로 바뀌어요.</p>`+
+    (L.length?L.map(m=>`<div class="tcard letter ${m.read?"":"unread"}"><div class="lh"><span class="mailic sm">${MAIL}</span><b>${esc(m.name||m.id||"-")}</b><small>${esc(m.id||"")} · ${when(m.created)}</small>${m.read?"":`<em class="newtag">NEW</em>`}</div><p>${esc(m.text||"")}</p></div>`).join(""):`<div class="tcard">아직 받은 편지가 없어요.</div>`);
+  // opening the inbox marks the letters as read
+  L.filter(m=>!m.read).forEach(m=>CLOUD.markRead(m.fid).catch(()=>{}));
+}
 let TW=null, TW_N=null;
 async function teacher(given){
   const live=Array.isArray(given);
@@ -2754,7 +2814,10 @@ async function teacher(given){
   const ago=u=>{ const t=seen(u); if(!t) return "기록 없음"; const m=Math.round((now-t)/6e4); return m<1?"방금":m<60?m+"분 전":m<1440?Math.round(m/60)+"시간 전":Math.round(m/1440)+"일 전"; };
   const when=t=>{ try{ const d=t&&t.toDate?t.toDate():null; return d?`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`:"-"; }catch(e){ return "-"; } };
   const added=TW_N!=null&&list.length>TW_N?list.length-TW_N:0; TW_N=list.length;
-  $("body").innerHTML=`${added?`<div class="fb ok" style="margin:0 0 10px"><b>🎉 새 학생 ${added}명 가입!</b>인원수가 자동으로 늘어났어요.</div>`:""}<div class="tstats"><div><b>${list.length}</b><span>가입한 학생 · 실시간</span></div><div><b>${cToday}</b><span>오늘 접속</span></div><div><b>${cWeek}</b><span>7일 접속</span></div><div><b>${cNew}</b><span>7일 새 가입</span></div></div>
+  fbWatch();
+  $("body").innerHTML=`<button class="fbnew mailfab" id="tmail" ${fbUnread()?"":"hidden"}>${MAIL}<span class="fbc">${fbUnread()}</span><b>새 편지 · Thư mới</b></button>
+   <button class="maillink" id="tmail2">${MAIL} 의견함 열기 · 받은 편지 ${FBX.list.length}통</button>
+   ${added?`<div class="fb ok" style="margin:0 0 10px"><b>🎉 새 학생 ${added}명 가입!</b>인원수가 자동으로 늘어났어요.</div>`:""}<div class="tstats"><div><b>${list.length}</b><span>가입한 학생 · 실시간</span></div><div><b>${cToday}</b><span>오늘 접속</span></div><div><b>${cWeek}</b><span>7일 접속</span></div><div><b>${cNew}</b><span>7일 새 가입</span></div></div>
    <p class="tip" style="margin-top:0">버전 ${APP_VERSION} · 최근 접속한 학생이 위에 있어요 · 칸 안의 숫자는 「푼 문제 / 전체」, 아래는 맞힌 개수예요.</p>`+(list.length?list.map((u,ri)=>{
     const p=u.p||{};
     return `<div class="tcard stu"><div class="sh"><div><b><span class="rk">${ri+1}</span>${esc(u.name||"-")} <span class="ago ${now-seen(u)<864e5?"on":""}">${ago(u)}</span></b><small>${esc(u.id||"")} · 마지막 접속 ${when(seen(u)?{toDate:()=>new Date(seen(u))}:null)} · 가입 ${when(u.created)} · ${p["tpk-track"]==="4"?"TOPIK 4부터 (시험 통과)":p["tpk-track"]==="3"?"TOPIK 3부터":"시작 전"}${(t=>{try{const o=JSON.parse(t);return o?" · 시험 "+o.ok+"/10":""}catch(e){return ""}})(p["tpk-ptest"])}</small></div>
@@ -2765,6 +2828,7 @@ async function teacher(given){
     const v=b.dataset.v==="1"; b.disabled=true;
     try{ await CLOUD.setUnlock(b.dataset.uid,v); if(!TW) teacher(); }catch(e){ b.disabled=false; alert("바꾸지 못했어요: "+(e.code||e.message)); }
   });
+  $("tmail").onclick=()=>inbox(); $("tmail2").onclick=()=>inbox();
   if(live) $("body").scrollTop=keepY;
 }
 
@@ -2775,7 +2839,7 @@ setTimeout(()=>{ if(!window.CLOUD&&!GUEST) afterBoot(()=>showLogin("로그인 �
 /* ---------- Firebase: accounts + saving progress ---------- */
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import {getFirestore,doc,getDoc,setDoc,collection,getDocs,serverTimestamp,onSnapshot} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import {getFirestore,doc,getDoc,setDoc,collection,getDocs,serverTimestamp,onSnapshot,addDoc,query,orderBy,limit} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 const app=initializeApp({
   apiKey:"AIzaSyDGeZpmvBdMvUCBL3CWXsx-tngWmfly7UQ",
   authDomain:"topikviet-b44f0.firebaseapp.com",
@@ -2817,6 +2881,10 @@ const C=window.CLOUD={
   async list(){ const s=await getDocs(collection(db,"users")); return s.docs.map(d=>({uid:d.id,...d.data()})); },
   // live list for the teacher view: calls cb again whenever a student signs up or studies
   watch(cb,err){ return onSnapshot(collection(db,"users"),s=>cb(s.docs.map(d=>({uid:d.id,...d.data()}))),err); },
+  // feedback mailbox: students write, only the teacher can read
+  sendFeedback(text){ return addDoc(collection(db,"feedback"),{uid:C.user.uid,id:C.user.id,name:C.user.name||C.user.id,text,read:false,created:serverTimestamp()}); },
+  watchFeedback(cb,err){ return onSnapshot(query(collection(db,"feedback"),orderBy("created","desc"),limit(300)),s=>cb(s.docs.map(d=>({fid:d.id,...d.data()}))),err); },
+  markRead(fid){ return setDoc(doc(db,"feedback",fid),{read:true},{merge:true}); },
   setUnlock(uid,v){ return setDoc(doc(db,"users",uid),{unlockAll:!!v},{merge:true}); }
 };
 addEventListener("visibilitychange",()=>{ if(document.visibilityState==="hidden"&&timer) C.flush().catch(()=>{}); });
