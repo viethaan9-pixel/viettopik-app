@@ -361,7 +361,7 @@ function lsKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ co
 function lsSnapshot(){ const p={}; lsKeys().forEach(k=>{ try{ p[k]=localStorage.getItem(k); }catch(e){} }); return p; }
 function lsClear(){ lsKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
 let UNLOCK_ALL=false, GUEST=false;
-const APP_VERSION="10/28 TOPIK 3·4 나누기";
+const APP_VERSION="10/28 시험 포기 버튼";
 const TEACHER_ID="viethaan9";
 /* ---------- data ---------- */
 // type: next(이어질 말) · act(이어서 할 행동) · same(내용과 같은 것) · main(중심 생각)
@@ -1858,14 +1858,16 @@ function placeQ(){ sec(); stopAll(); const [k,d,n]=PLACE[PT.i], last=PT.i===PLAC
     setTimeout(()=>{ if(PT.i<PLACE.length&&$("pbtn")===pb&&left===2) pb.click(); },400); }
   $("chs").querySelectorAll(".ch").forEach(b=>b.onclick=()=>{ stopAll(); const ok=+b.dataset.i===q.a; PT.ans.push(ok); if(ok) PT.ok++;
     if(last) placeResult(); else { PT.i++; placeQ(); $("body").scrollTop=0; } });
-  foot("");
+  foot(`<button class="btn sec" id="ptgive">포기 · Bỏ cuộc</button>`);
+  $("ptgive").onclick=()=>{ if(!confirm("시험을 포기하고 TOPIK 3부터 시작할까요? · Bỏ cuộc và học từ TOPIK 3?")) return;
+    stopAll(); while(PT.ans.length<PLACE.length) PT.ans.push(false); PT.gaveUp=true; placeResult(); };
 }
 function placeResult(){ sec(); stopAll(); const pass=PT.ok>=9; setTitle("TOPIK 4 시험 결과",null); $("speed").hidden=true;
   lsSet("tpk-ptest",JSON.stringify({ok:PT.ok,at:Date.now()}));
   if(pass){ lsSet("tpk-track","4"); setMode("4"); } else if(!TRACK()){ lsSet("tpk-track","3"); setMode("3"); }
   $("body").innerHTML=`<section class="hero" style="text-align:center"><div class="eyebrow">맞힌 문제 · CÂU ĐÚNG</div><div class="big">${PT.ok}<small> / ${PLACE.length}</small></div>
     <div style="margin-top:10px;font-size:22px">${PT.ans.map(x=>x?"🟢":"⚪").join("")}</div></section>
-    <div class="fb ${pass?"ok":"no"}" style="margin-top:12px"><b>${pass?"통과! TOPIK 4 (Ngày 11)부터 시작해요":"아쉬워요. TOPIK 3 (Ngày 1)부터 시작해요"}</b>${pass?"TOPIK 3로 돌아가고 싶으면 메뉴 위의 「TOPIK 3」 버튼을 누르세요.":"9문제 이상 맞혀야 해요. TOPIK 3를 공부한 뒤 메뉴의 「TOPIK 4」를 눌러 다시 볼 수 있어요."}
+    <div class="fb ${pass?"ok":"no"}" style="margin-top:12px"><b>${pass?"통과! TOPIK 4 (Ngày 11)부터 시작해요":PT.gaveUp?"괜찮아요! TOPIK 3 (Ngày 1)부터 차근차근 해요 · Không sao, học từ đầu nhé!":"아쉬워요. TOPIK 3 (Ngày 1)부터 시작해요"}</b>${pass?"TOPIK 3로 돌아가고 싶으면 메뉴 위의 「TOPIK 3」 버튼을 누르세요.":"9문제 이상 맞혀야 해요. TOPIK 3를 공부한 뒤 메뉴의 「TOPIK 4」를 눌러 다시 볼 수 있어요."}
     <span class="vn">${pass?"Đạt! Bắt đầu từ TOPIK 4 (Ngày 11). Muốn quay lại thì bấm nút 「TOPIK 3」 ở menu.":"Cần đúng ít nhất 9 câu. Học TOPIK 3 rồi bấm 「TOPIK 4」 ở menu để thi lại."}</span></div>`;
   foot(`<button class="btn pri" id="ptdone">${pass?"TOPIK 4 시작 · Bắt đầu":"TOPIK 3 시작 · Bắt đầu"}</button>`); $("ptdone").onclick=menu;
 }
