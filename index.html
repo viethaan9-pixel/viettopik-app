@@ -150,8 +150,36 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .lvl .mm{display:block;margin-top:4px;font-size:12.5px;color:var(--muted)}
 .lvl .go{margin-left:auto;flex:none;color:var(--accent);font-size:22px;font-weight:700}
 .lvl:not(:disabled){border-color:var(--accent)}
-.lvl:disabled{opacity:.55;cursor:default}
+.lvl:disabled{cursor:default}
+.lvl:disabled .badge,.lvl:disabled b,.lvl:disabled .vn,.lvl:disabled .mm{opacity:.55}
 .lvl .soon{margin-left:auto;flex:none;font-size:11.5px;font-weight:700;padding:4px 9px;border-radius:99px;background:var(--line);color:var(--muted)}
+/* cats on the level picker: brown waits on TOPIK I, blue on TOPIK II. They step out after each login. */
+:root{--c-brown:#8A5A3C;--c-brown-soft:#F3E4D8}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--c-brown:#D9A27E;--c-brown-soft:#3A2A20}}
+:root[data-theme="dark"]{--c-brown:#D9A27E;--c-brown-soft:#3A2A20}
+.lvlw{position:relative;margin-top:104px}
+.lvlw .lvl{position:relative;z-index:1;margin-bottom:0}
+.lvlw+.lvlw{margin-top:112px}
+.lcat{position:absolute;z-index:2;right:14px;bottom:calc(100% - 16px);height:124px;pointer-events:none;transform-origin:50% 100%;filter:drop-shadow(0 4px 6px rgba(0,0,0,.18))}
+.lcat.blue{right:22px;height:128px}
+.lcat img{height:100%;width:auto;display:block}
+.lcat.brown img{animation:idleB 4.8s ease-in-out infinite;transform-origin:50% 100%}
+.lcat.blue img{animation:idleW 2.6s ease-in-out infinite;transform-origin:50% 100%}
+@keyframes idleB{0%,100%{transform:scaleY(1)}50%{transform:scaleY(1.015)}}
+@keyframes idleW{0%,100%{transform:rotate(0) translateY(0)}25%{transform:rotate(-2deg) translateY(-2px)}50%{transform:rotate(0) translateY(0)}75%{transform:rotate(1.5deg) translateY(-1px)}}
+.intro .lcat{animation:stepOut .95s cubic-bezier(.2,.9,.3,1.2) both}
+.intro .lcat.brown{animation-delay:.25s}
+.intro .lcat.blue{animation-delay:.75s}
+@keyframes stepOut{0%{transform:translateY(35%) scale(.55,.75);opacity:0}30%{opacity:1}60%{transform:translateY(-14%) scale(1.06,.94)}78%{transform:translateY(0) scale(.97,1.03)}100%{transform:translateY(0) scale(1)}}
+.spark{position:absolute;z-index:2;left:50%;top:18%;width:10px;height:10px;pointer-events:none;opacity:0}
+.spark::before{content:"✦";position:absolute;font-size:14px;line-height:1;color:var(--sc)}
+.intro .spark{animation:spark .8s ease-out both}
+@keyframes spark{0%{opacity:0;transform:translate(0,0) scale(.3)}25%{opacity:1}100%{opacity:0;transform:translate(var(--sx),var(--sy)) scale(1.1)}}
+.lcat.hop{animation:hop .45s ease-out}
+@keyframes hop{0%,100%{transform:translateY(0)}45%{transform:translateY(-22%) scale(1.04,.96)}}
+.lvlw.blue .lvl{border-color:var(--c-listen);box-shadow:0 0 0 0 rgba(43,79,168,.35);animation:waitGlow 2.6s ease-in-out infinite}
+@keyframes waitGlow{0%,100%{box-shadow:0 0 0 0 rgba(90,120,210,.0)}50%{box-shadow:0 0 0 6px rgba(90,120,210,.16)}}
+@media (prefers-reduced-motion:reduce){.lcat,.lcat img,.spark,.lvlw.blue .lvl{animation:none!important}.spark{display:none}}
 .menu{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
 .mcard{display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:16px 14px;border-radius:var(--r);background:var(--surface);border:1.5px solid var(--line);text-align:left;min-height:168px}
 .mcard .ic{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);margin-bottom:10px}
@@ -293,7 +321,7 @@ function lsKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ co
 function lsSnapshot(){ const p={}; lsKeys().forEach(k=>{ try{ p[k]=localStorage.getItem(k); }catch(e){} }); return p; }
 function lsClear(){ lsKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
 let UNLOCK_ALL=false, GUEST=false;
-const APP_VERSION="10/28 듣기 25일 (2)";
+const APP_VERSION="10/28 고양이 등장";
 const TEACHER_ID="viethaan9";
 /* ---------- data ---------- */
 // type: next(이어질 말) · act(이어서 할 행동) · same(내용과 같은 것) · main(중심 생각)
@@ -1732,16 +1760,26 @@ function menu(){ sec();
 }
 /* ---------- level picker: TOPIK I / TOPIK II → 3·4급 / 5·6급 ---------- */
 const lvlBtn=(o)=>`<button class="lvl" ${o.id?`id="${o.id}"`:"disabled"} style="${o.c?`--accent:var(--c-${o.c});--accent-soft:var(--c-${o.c}-soft)`:""}"><span class="badge">${o.badge}</span><span><b>${o.ko}</b><span class="vn">${o.vn}</span><span class="mm">${o.mm}</span></span>${o.id?`<span class="go">›</span>`:`<span class="soon">준비 중 · Sắp có</span>`}</button>`;
+let CAT_INTRO=false;   // set on login → the two cats step out once
+function catSlot(kind,btn){
+  const col=kind==="brown"?"#D9A27E":"#8EA6E6";
+  const sp=[[-46,-34],[40,-40],[-58,4],[54,0],[-20,-56],[22,-58]].map(([x,y],i)=>`<i class="spark" style="--sx:${x}px;--sy:${y}px;--sc:${col};animation-delay:${(kind==="brown"?.75:1.25)+i*.03}s"></i>`).join("");
+  return `<div class="lvlw ${kind}"><div class="lcat ${kind}"><img src="cat-${kind}.webp" alt="">${sp}</div>${btn}</div>`;
+}
 function start(){ sec();
   stopAll(); setTitle("",null); $("speed").hidden=true;
   $("body").innerHTML=`
    ${userBar()}
    <section class="mlogo"><img src="logo.png" alt=""><div><b>TOPIK 연습</b><div class="eyebrow">어떤 시험을 준비해요? · BẠN ÔN THI GÌ?</div></div><a class="contact" href="https://www.facebook.com/profile.php?id=61594346458669" target="_blank" rel="noopener" aria-label="선생님께 문의하기 · Liên hệ giáo viên" title="선생님께 문의하기 · Liên hệ giáo viên"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.8-.8L3 21l1.9-5.2A8.4 8.4 0 0 1 12 3.1a8.4 8.4 0 0 1 9 8.4z"/></svg></a></section>
    ${isTeacher()?`<button class="all" id="tview" style="margin-bottom:12px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg><span><b>학생 기록 보기</b><span>선생님 전용 · 학생별 진도와 잠금 해제</span></span></button>`:""}
-   ${lvlBtn({badge:"I",ko:"TOPIK I",vn:"TOPIK I · Sơ cấp",mm:"1급 · 2급 (듣기 · 읽기)",c:"read"})}
-   ${lvlBtn({id:"t2",badge:"II",ko:"TOPIK II",vn:"TOPIK II · Trung - cao cấp",mm:"3급 ~ 6급 (듣기 · 쓰기 · 읽기)",c:"listen"})}
+   <div id="lvls" class="${CAT_INTRO?"intro":""}">
+   ${catSlot("brown",lvlBtn({badge:"I",ko:"TOPIK I",vn:"TOPIK I · Sơ cấp",mm:"1급 · 2급 (듣기 · 읽기)",c:"brown"}))}
+   ${catSlot("blue",lvlBtn({id:"t2",badge:"II",ko:"TOPIK II",vn:"TOPIK II · Trung - cao cấp",mm:"3급 ~ 6급 (듣기 · 쓰기 · 읽기)",c:"listen"}))}
+   </div>
    <p class="note" style="margin-top:18px">버전 ${APP_VERSION}</p>`;
-  $("t2").onclick=topik2;
+  CAT_INTRO=false;
+  $("t2").onclick=()=>{ const c=document.querySelector(".lcat.blue"); if(!c||matchMedia("(prefers-reduced-motion: reduce)").matches) return topik2();
+    c.classList.remove("hop"); void c.offsetWidth; c.classList.add("hop"); setTimeout(topik2,420); };
   bindUserBar(); if($("tview")) $("tview").onclick=teacher;
   foot("");
 }
@@ -2489,7 +2527,7 @@ function showLogin(err){
   };
   $("af").onsubmit=e=>{ e.preventDefault(); go(); };
   $("apw").onkeydown=e=>{ if(e.key==="Enter"&&!e.isComposing){ e.preventDefault(); go(); } };
-  $("guest").onclick=()=>{ GUEST=true; load(); wload(); rload(); start(); };
+  $("guest").onclick=()=>{ GUEST=true; CAT_INTRO=true; load(); wload(); rload(); start(); };
   foot(`<button class="btn pri" id="ago">${up?"가입하기 · Đăng ký":"들어가기 · Vào học"}</button>`); $("ago").onclick=go;
 }
 // called by the cloud module whenever the signed-in user changes
@@ -2497,7 +2535,7 @@ window.onCloudUser=async u=>{
   if(!u){ if(!GUEST) showLogin(); return; }
   GUEST=false; bootScreen("기록을 불러오는 중 · Đang tải kết quả…");
   try{ await CLOUD.pull(); }catch(e){ console.warn(e); }
-  load(); wload(); rload(); start();
+  CAT_INTRO=true; load(); wload(); rload(); start();
 };
 function userBar(){
   if(GUEST) return `<div class="ubar"><span>로그인 안 함 · 이 폰에만 저장</span><button id="ulog">로그인 · Đăng nhập</button></div>`;
