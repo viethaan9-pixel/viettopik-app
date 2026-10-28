@@ -366,7 +366,7 @@ function lsKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ co
 function lsSnapshot(){ const p={}; lsKeys().forEach(k=>{ try{ p[k]=localStorage.getItem(k); }catch(e){} }); return p; }
 function lsClear(){ lsKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
 let UNLOCK_ALL=false, GUEST=false;
-const APP_VERSION="10/28 학생 기록 접속순";
+const APP_VERSION="10/28 학생 수 실시간";
 const TEACHER_ID="viethaan9";
 /* ---------- data ---------- */
 // type: next(이어질 말) · act(이어서 할 행동) · same(내용과 같은 것) · main(중심 생각)
@@ -2733,10 +2733,18 @@ function progCells(p){
     return ["쓰기",d,s]; });
   return [L,R,W];
 }
-async function teacher(){
-  sec(); stopAll(); setTitle("학생 기록",start); $("speed").hidden=true; foot(`<button class="btn sec" id="tr">새로고침 · Tải lại</button>`); $("tr").onclick=teacher;
-  $("body").innerHTML=`<p class="tip">불러오는 중…</p>`;
-  let list=[]; try{ list=await CLOUD.list(); }catch(e){ $("body").innerHTML=`<div class="fb no">학생 기록을 못 불러왔어요. Firestore 보안 규칙을 확인해 주세요. (${esc(e.code||e.message||e)})</div>`; return; }
+let TW=null, TW_N=null;
+async function teacher(given){
+  const live=Array.isArray(given);
+  if(live&&$("title").textContent!=="학생 기록"){ if(TW){ TW(); TW=null; } return; }   // teacher left this screen
+  if(!live){
+    if(TW){ TW(); TW=null; } TW_N=null;
+    sec(); stopAll(); setTitle("학생 기록",()=>{ if(TW){ TW(); TW=null; } start(); }); $("speed").hidden=true; foot(`<button class="btn sec" id="tr">새로고침 · Tải lại</button>`); $("tr").onclick=()=>teacher();
+    $("body").innerHTML=`<p class="tip">불러오는 중…</p>`;
+    if(CLOUD.watch){ TW=CLOUD.watch(l=>teacher(l),e=>{ $("body").innerHTML=`<div class="fb no">학생 기록을 못 불러왔어요. (${esc(e.code||e.message||e)})</div>`; }); return; }
+  }
+  let list=[]; if(live) list=given; else { try{ list=await CLOUD.list(); }catch(e){ $("body").innerHTML=`<div class="fb no">학생 기록을 못 불러왔어요. Firestore 보안 규칙을 확인해 주세요. (${esc(e.code||e.message||e)})</div>`; return; } }
+  const keepY=$("body").scrollTop;
   const ms=t=>{ try{ return t&&t.toMillis?t.toMillis():0; }catch(e){ return 0; } };
   const seen=u=>Math.max(ms(u.lastSeen),ms(u.updated));   // last visit (login) or last answer, whichever is later
   list=list.filter(u=>u.id!==TEACHER_ID).sort((a,b)=>seen(b)-seen(a));
@@ -2745,7 +2753,8 @@ async function teacher(){
   const cNew=list.filter(u=>ms(u.created)>=now-7*864e5).length;
   const ago=u=>{ const t=seen(u); if(!t) return "기록 없음"; const m=Math.round((now-t)/6e4); return m<1?"방금":m<60?m+"분 전":m<1440?Math.round(m/60)+"시간 전":Math.round(m/1440)+"일 전"; };
   const when=t=>{ try{ const d=t&&t.toDate?t.toDate():null; return d?`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`:"-"; }catch(e){ return "-"; } };
-  $("body").innerHTML=`<div class="tstats"><div><b>${list.length}</b><span>가입한 학생</span></div><div><b>${cToday}</b><span>오늘 접속</span></div><div><b>${cWeek}</b><span>7일 접속</span></div><div><b>${cNew}</b><span>7일 새 가입</span></div></div>
+  const added=TW_N!=null&&list.length>TW_N?list.length-TW_N:0; TW_N=list.length;
+  $("body").innerHTML=`${added?`<div class="fb ok" style="margin:0 0 10px"><b>🎉 새 학생 ${added}명 가입!</b>인원수가 자동으로 늘어났어요.</div>`:""}<div class="tstats"><div><b>${list.length}</b><span>가입한 학생 · 실시간</span></div><div><b>${cToday}</b><span>오늘 접속</span></div><div><b>${cWeek}</b><span>7일 접속</span></div><div><b>${cNew}</b><span>7일 새 가입</span></div></div>
    <p class="tip" style="margin-top:0">버전 ${APP_VERSION} · 최근 접속한 학생이 위에 있어요 · 칸 안의 숫자는 「푼 문제 / 전체」, 아래는 맞힌 개수예요.</p>`+(list.length?list.map((u,ri)=>{
     const p=u.p||{};
     return `<div class="tcard stu"><div class="sh"><div><b><span class="rk">${ri+1}</span>${esc(u.name||"-")} <span class="ago ${now-seen(u)<864e5?"on":""}">${ago(u)}</span></b><small>${esc(u.id||"")} · 마지막 접속 ${when(seen(u)?{toDate:()=>new Date(seen(u))}:null)} · 가입 ${when(u.created)} · ${p["tpk-track"]==="4"?"TOPIK 4부터 (시험 통과)":p["tpk-track"]==="3"?"TOPIK 3부터":"시작 전"}${(t=>{try{const o=JSON.parse(t);return o?" · 시험 "+o.ok+"/10":""}catch(e){return ""}})(p["tpk-ptest"])}</small></div>
@@ -2754,8 +2763,9 @@ async function teacher(){
     </div>`;}).join(""):`<div class="tcard">아직 가입한 학생이 없어요.</div>`);
   $("body").querySelectorAll(".lockbtn").forEach(b=>b.onclick=async()=>{
     const v=b.dataset.v==="1"; b.disabled=true;
-    try{ await CLOUD.setUnlock(b.dataset.uid,v); teacher(); }catch(e){ b.disabled=false; alert("바꾸지 못했어요: "+(e.code||e.message)); }
+    try{ await CLOUD.setUnlock(b.dataset.uid,v); if(!TW) teacher(); }catch(e){ b.disabled=false; alert("바꾸지 못했어요: "+(e.code||e.message)); }
   });
+  if(live) $("body").scrollTop=keepY;
 }
 
 load(); wload(); rload(); bootScreen();
@@ -2765,7 +2775,7 @@ setTimeout(()=>{ if(!window.CLOUD&&!GUEST) afterBoot(()=>showLogin("로그인 �
 /* ---------- Firebase: accounts + saving progress ---------- */
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import {getFirestore,doc,getDoc,setDoc,collection,getDocs,serverTimestamp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import {getFirestore,doc,getDoc,setDoc,collection,getDocs,serverTimestamp,onSnapshot} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 const app=initializeApp({
   apiKey:"AIzaSyDGeZpmvBdMvUCBL3CWXsx-tngWmfly7UQ",
   authDomain:"topikviet-b44f0.firebaseapp.com",
@@ -2805,6 +2815,8 @@ const C=window.CLOUD={
   schedule(){ if(!C.user||C.applying) return; clearTimeout(timer); timer=setTimeout(()=>C.flush(),1200); },
   async flush(){ clearTimeout(timer); if(!C.user) return; await setDoc(doc(db,"users",C.user.uid),{p:lsSnapshot(),updated:serverTimestamp()},{merge:true}); },
   async list(){ const s=await getDocs(collection(db,"users")); return s.docs.map(d=>({uid:d.id,...d.data()})); },
+  // live list for the teacher view: calls cb again whenever a student signs up or studies
+  watch(cb,err){ return onSnapshot(collection(db,"users"),s=>cb(s.docs.map(d=>({uid:d.id,...d.data()}))),err); },
   setUnlock(uid,v){ return setDoc(doc(db,"users",uid),{unlockAll:!!v},{merge:true}); }
 };
 addEventListener("visibilitychange",()=>{ if(document.visibilityState==="hidden"&&timer) C.flush().catch(()=>{}); });
