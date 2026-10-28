@@ -220,6 +220,11 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .mswitch button[aria-pressed="true"]{border-color:var(--c-listen);background:var(--c-listen-soft)}
 .mswitch button.lk{opacity:.7}
 .ptq .opt{display:block;width:100%;text-align:left}
+.tstats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:2px 0 12px}
+.tstats div{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 6px;text-align:center}
+.tstats b{display:block;font-size:22px;font-weight:800;line-height:1.1}.tstats span{font-size:11px;color:var(--muted)}
+.stu .rk{display:inline-grid;place-items:center;min-width:22px;height:22px;margin-right:6px;border-radius:50%;background:var(--line);font-size:12px;vertical-align:1px}
+.stu .ago{font-size:11.5px;font-weight:600;color:var(--muted);margin-left:4px}.stu .ago.on{color:#2F7A45}
 .menu{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
 .mcard{display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:16px 14px;border-radius:var(--r);background:var(--surface);border:1.5px solid var(--line);text-align:left;min-height:168px}
 .mcard .ic{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);margin-bottom:10px}
@@ -361,7 +366,7 @@ function lsKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ co
 function lsSnapshot(){ const p={}; lsKeys().forEach(k=>{ try{ p[k]=localStorage.getItem(k); }catch(e){} }); return p; }
 function lsClear(){ lsKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
 let UNLOCK_ALL=false, GUEST=false;
-const APP_VERSION="10/28 시험 포기 버튼";
+const APP_VERSION="10/28 학생 기록 접속순";
 const TEACHER_ID="viethaan9";
 /* ---------- data ---------- */
 // type: next(이어질 말) · act(이어서 할 행동) · same(내용과 같은 것) · main(중심 생각)
@@ -2732,11 +2737,18 @@ async function teacher(){
   sec(); stopAll(); setTitle("학생 기록",start); $("speed").hidden=true; foot(`<button class="btn sec" id="tr">새로고침 · Tải lại</button>`); $("tr").onclick=teacher;
   $("body").innerHTML=`<p class="tip">불러오는 중…</p>`;
   let list=[]; try{ list=await CLOUD.list(); }catch(e){ $("body").innerHTML=`<div class="fb no">학생 기록을 못 불러왔어요. Firestore 보안 규칙을 확인해 주세요. (${esc(e.code||e.message||e)})</div>`; return; }
-  list=list.filter(u=>u.id!==TEACHER_ID).sort((a,b)=>String(a.name||a.id).localeCompare(String(b.name||b.id),"ko"));
+  const ms=t=>{ try{ return t&&t.toMillis?t.toMillis():0; }catch(e){ return 0; } };
+  const seen=u=>Math.max(ms(u.lastSeen),ms(u.updated));   // last visit (login) or last answer, whichever is later
+  list=list.filter(u=>u.id!==TEACHER_ID).sort((a,b)=>seen(b)-seen(a));
+  const now=Date.now(), day0=new Date(); day0.setHours(0,0,0,0);
+  const cToday=list.filter(u=>seen(u)>=day0.getTime()).length, cWeek=list.filter(u=>seen(u)>=now-7*864e5).length;
+  const cNew=list.filter(u=>ms(u.created)>=now-7*864e5).length;
+  const ago=u=>{ const t=seen(u); if(!t) return "기록 없음"; const m=Math.round((now-t)/6e4); return m<1?"방금":m<60?m+"분 전":m<1440?Math.round(m/60)+"시간 전":Math.round(m/1440)+"일 전"; };
   const when=t=>{ try{ const d=t&&t.toDate?t.toDate():null; return d?`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`:"-"; }catch(e){ return "-"; } };
-  $("body").innerHTML=`<p class="tip" style="margin-top:0">버전 ${APP_VERSION} · 학생 ${list.length}명 · 칸 안의 숫자는 「푼 문제 / 전체」, 아래는 맞힌 개수예요.</p>`+(list.length?list.map(u=>{
+  $("body").innerHTML=`<div class="tstats"><div><b>${list.length}</b><span>가입한 학생</span></div><div><b>${cToday}</b><span>오늘 접속</span></div><div><b>${cWeek}</b><span>7일 접속</span></div><div><b>${cNew}</b><span>7일 새 가입</span></div></div>
+   <p class="tip" style="margin-top:0">버전 ${APP_VERSION} · 최근 접속한 학생이 위에 있어요 · 칸 안의 숫자는 「푼 문제 / 전체」, 아래는 맞힌 개수예요.</p>`+(list.length?list.map((u,ri)=>{
     const p=u.p||{};
-    return `<div class="tcard stu"><div class="sh"><div><b>${esc(u.name||"-")}</b><small>${esc(u.id||"")} · 마지막 ${when(u.updated)} · ${p["tpk-track"]==="4"?"TOPIK 4부터 (시험 통과)":p["tpk-track"]==="3"?"TOPIK 3부터":"시작 전"}${(t=>{try{const o=JSON.parse(t);return o?" · 시험 "+o.ok+"/10":""}catch(e){return ""}})(p["tpk-ptest"])}</small></div>
+    return `<div class="tcard stu"><div class="sh"><div><b><span class="rk">${ri+1}</span>${esc(u.name||"-")} <span class="ago ${now-seen(u)<864e5?"on":""}">${ago(u)}</span></b><small>${esc(u.id||"")} · 마지막 접속 ${when(seen(u)?{toDate:()=>new Date(seen(u))}:null)} · 가입 ${when(u.created)} · ${p["tpk-track"]==="4"?"TOPIK 4부터 (시험 통과)":p["tpk-track"]==="3"?"TOPIK 3부터":"시작 전"}${(t=>{try{const o=JSON.parse(t);return o?" · 시험 "+o.ok+"/10":""}catch(e){return ""}})(p["tpk-ptest"])}</small></div>
       <button class="lockbtn ${u.unlockAll?"on":""}" data-uid="${esc(u.uid)}" data-v="${u.unlockAll?0:1}">${u.unlockAll?"🔓 전부 열림":"🔒 잠금 해제"}</button></div>
       ${progCells(p).map(row=>`<div class="prow"><span class="pl">${row[0][0]}</span>${row.map(([,d,s])=>`<span class="pc ${s.n>=s.total?"full":s.n?"part":""}"><i>Ngày ${d}</i>${s.n}/${s.total}<em>✓${s.ok}${s.star!=null?` ⭐${s.star}`:""}</em></span>`).join("")}</div>`).join("")}
     </div>`;}).join(""):`<div class="tcard">아직 가입한 학생이 없어요.</div>`);
@@ -2788,6 +2800,7 @@ const C=window.CLOUD={
     C.applying=true;
     try{ lsClear(); Object.keys(p).forEach(k=>{ if(k.startsWith("tpk-")&&p[k]!=null) localStorage.setItem(k,p[k]); }); }
     finally{ C.applying=false; }
+    if(C.user.id!==TEACHER_ID) setDoc(r,{lastSeen:serverTimestamp()},{merge:true}).catch(()=>{});
   },
   schedule(){ if(!C.user||C.applying) return; clearTimeout(timer); timer=setTimeout(()=>C.flush(),1200); },
   async flush(){ clearTimeout(timer); if(!C.user) return; await setDoc(doc(db,"users",C.user.uid),{p:lsSnapshot(),updated:serverTimestamp()},{merge:true}); },
