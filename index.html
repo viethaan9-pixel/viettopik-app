@@ -244,6 +244,11 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .mailic.sm{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;background:#FDE7EE;color:#D2557A}.mailic.sm svg{width:16px;height:16px}
 .newtag{margin-left:auto;font-style:normal;font-size:10.5px;font-weight:800;color:#fff;background:#D2557A;border-radius:6px;padding:1px 6px}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .letter.unread{background:#2a1a22}:root:not([data-theme="light"]) .mailfab{background:#3a1f2a;color:#f3a9c0}}
+.rvtag{display:inline-block;margin:0 0 8px;padding:4px 10px;border-radius:999px;background:#FFF1D6;color:#9A5B00;font-size:12.5px;font-weight:700}
+.rvcard{text-align:left;width:100%;border-color:#F2C46B;background:#FFF9EC}.rvcard h3{margin:0}
+.rvall{border-color:#F2C46B;background:#FFF9EC;margin-top:12px}
+.rvdone{width:100%;text-align:left}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .rvcard,:root:not([data-theme="light"]) .rvall{background:#2e2716}:root:not([data-theme="light"]) .rvtag{background:#3a2e12;color:#f2c46b}}
 .menu{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
 .mcard{display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:16px 14px;border-radius:var(--r);background:var(--surface);border:1.5px solid var(--line);text-align:left;min-height:168px}
 .mcard .ic{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);margin-bottom:10px}
@@ -385,7 +390,7 @@ function lsKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ co
 function lsSnapshot(){ const p={}; lsKeys().forEach(k=>{ try{ p[k]=localStorage.getItem(k); }catch(e){} }); return p; }
 function lsClear(){ lsKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
 let UNLOCK_ALL=false, GUEST=false;
-const APP_VERSION="10/28 의견함";
+const APP_VERSION="10/28 틀린 문제 다시 풀기";
 const TEACHER_ID="viethaan9";
 /* ---------- data ---------- */
 // type: next(이어질 말) · act(이어서 할 행동) · same(내용과 같은 것) · main(중심 생각)
@@ -1031,7 +1036,7 @@ const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random(
 const circ=["①","②","③","④"];
 // choices are shuffled every time; renum() rewrites ①~④ inside explanations to match the shuffled order
 const renum=(t,o)=>o?String(t).replace(/[①②③④]+/g,run=>[...run].map(c=>circ[o.indexOf(circ.indexOf(c))]).sort().join("")):t;
-let DAY=1, ST={res:{},read:{},ev:{}}, rate=1;
+let DAY=1, ST={res:{},read:{},ev:{},fix:{},pos:{}}, rate=1;
 const KEY=()=>"tpk-day"+DAY;
 function swapKeys(a,b){ try{ const A=localStorage.getItem(a), B=localStorage.getItem(b); if(B!=null) localStorage.setItem(a,B); else localStorage.removeItem(a); if(A!=null) localStorage.setItem(b,A); else localStorage.removeItem(b); }catch(e){} }
 // one-time moves when days are re-ordered by difficulty (tpk-mv = how many moves are done)
@@ -1049,7 +1054,7 @@ function migrate(){ try{
   if(v<10){ try{ const k=d=>"tpk-day"+d, g=d=>localStorage.getItem(k(d)), put=(d,x)=>{ if(x!=null) localStorage.setItem(k(d),x); else localStorage.removeItem(k(d)); }; const a=g(22),b=g(23),c=g(24),e=g(25); put(22,b); put(23,c); put(24,e); put(25,a); }catch(e){} v=10; }   // listening: teacher's Ngày 25 (hardest) moved to the last day
   localStorage.setItem("tpk-mv",String(v));
 }catch(e){} }
-function load(){ migrate(); ST={res:{},read:{},ev:{}}; try{ if(localStorage.getItem("tpk-lv")!=="2"){ const old=localStorage.getItem("tpk-day1")||localStorage.getItem("tpk-day2"); localStorage.removeItem("tpk-day1"); if(old) localStorage.setItem("tpk-day2",old); else localStorage.removeItem("tpk-day2"); localStorage.setItem("tpk-lv","2"); } }catch(e){} try{const s=JSON.parse(localStorage.getItem(KEY())||"null"); if(s) ST=Object.assign(ST,s);}catch(e){} try{rate=+(localStorage.getItem("tpk-rate")||1)||1}catch(e){} }
+function load(){ migrate(); ST={res:{},read:{},ev:{},fix:{},pos:{}}; try{ if(localStorage.getItem("tpk-lv")!=="2"){ const old=localStorage.getItem("tpk-day1")||localStorage.getItem("tpk-day2"); localStorage.removeItem("tpk-day1"); if(old) localStorage.setItem("tpk-day2",old); else localStorage.removeItem("tpk-day2"); localStorage.setItem("tpk-lv","2"); } }catch(e){} try{const s=JSON.parse(localStorage.getItem(KEY())||"null"); if(s) ST=Object.assign(ST,s);}catch(e){} try{rate=+(localStorage.getItem("tpk-rate")||1)||1}catch(e){} }
 function save(){ try{localStorage.setItem(KEY(),JSON.stringify(ST))}catch(e){} }
 const Q=()=>DAYS[DAY].q;
 
@@ -1216,6 +1221,7 @@ function home(){ sec("listen");
      <div style="display:flex;gap:10px;align-items:center;margin-top:10px"><div class="bar"><i style="width:${done/qs.length*100}%"></i></div><span class="eyebrow">${done}문제 풂</span></div></section>
    <div class="howto"><div><b>① 듣고 풀기</b>대본 없이 듣고 답 고르기<br><span>Nghe và chọn</span></div><div><b>② 근거 찾기</b>정답 근거 문장 누르기<br><span>Tìm câu căn cứ</span></div></div>
    <button class="all" id="startAll" style="margin-top:14px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span><b>1번부터 차례로 풀기</b><span>20문제 · 문제마다 ①② 단계</span></span></button>
+   ${allDone(ST.res,qs.length)&&toFix(ST.res,ST.fix,qs.length).length?rvHomeBtn(toFix(ST.res,ST.fix,qs.length).length):""}
    <button class="vset" id="vset">${ICON.sp}<span><b>목소리 설정</b> · Chọn giọng nam / nữ</span></button>
    <div class="sec"><b>유형별 · Theo dạng</b><button id="tips" style="color:var(--accent);font-weight:700;font-size:13px">유형별 공략법</button></div>
    ${sets().map((s,i)=>{const ids=[];for(let k=s.r[0];k<=s.r[1];k++)ids.push(k);
@@ -1224,7 +1230,7 @@ function home(){ sec("listen");
    <p class="note">목소리는 휴대폰의 한국어 음성(TTS)이에요. 실제 시험 녹음과 억양·속도가 다를 수 있어요.${canSpeak?"":" 이 브라우저는 음성을 지원하지 않아요. 대본을 보며 풀어 주세요."}</p>`;
   $("body").querySelectorAll(".day[data-d]").forEach(b=>b.onclick=()=>{DAY=+b.dataset.d;load();home();});
   $("startAll").onclick=()=>startRun([...Array(qs.length).keys()]);
-  $("tips").onclick=showTips;
+  $("tips").onclick=showTips; if($("rvgo")) $("rvgo").onclick=()=>startRun(toFix(ST.res,ST.fix,qs.length),true);
   $("vset").onclick=voiceSet;
   $("body").querySelectorAll(".grp").forEach(b=>b.onclick=()=>{const s=sets()[+b.dataset.s];const ids=[];for(let k=s.r[0];k<=s.r[1];k++)ids.push(k);startRun(ids);});
   foot(`<button class="btn pri" id="go">${done&&done<qs.length?"이어서 풀기":"듣기 시작"}</button>`);
@@ -1237,9 +1243,24 @@ function showTips(){ sec("listen");
   foot(`<button class="btn sec" id="h">처음으로</button>`); $("h").onclick=home;
 }
 
+/* ---------- review round (다시 풀기) ----------
+   After a Ngày, the wrong questions can be solved again. The first score stays as it was;
+   a fixed question is kept in .fix, and the choices are reshuffled so the right answer sits in a new spot. */
+function reshuf(prev,a,n){ let o; for(let t=0;t<16;t++){ o=shuffle([...Array(n).keys()]); if(prev==null||o.indexOf(a)!==prev) break; } return o; }
+const toFix=(res,fix,n)=>[...Array(n).keys()].filter(i=>res[i]===false&&!(fix&&fix[i]));
+const allDone=(res,n)=>[...Array(n).keys()].every(i=>res[i]!=null);
+function reviewCard(left,total,rv){ // shown on result screens
+  if(rv&&!left) return `<div class="fb ok rvdone"><b>🎉 틀린 문제를 모두 고쳤어요!</b><span class="vn">Đã sửa hết các câu sai!</span></div>`;
+  if(!left) return "";
+  return `<div class="tcard rvcard"><h3>🔁 ${rv?`아직 ${left}문제 남았어요`:`틀린 ${left}문제 다시 풀기`}</h3><div class="vn">${rv?`Còn ${left} câu chưa đúng — làm lại nhé.`:`Làm lại ${left} câu sai.`}</div>
+    <div class="tip" style="margin-top:6px">${total?"보기 순서가 바뀌어서 정답 자리가 달라져요. 처음 점수는 그대로 남아요.":"처음 점수는 그대로 남아요."}<span class="vn" style="display:block">${total?"Thứ tự đáp án được xáo lại. ":""}Điểm lần đầu vẫn giữ nguyên.</span></div></div>`;
+}
+const rvBtn=n=>`<button class="btn pri" id="re">🔁 다시 풀기 ${n}문제</button>`;
+const rvHomeBtn=n=>`<button class="all rvall" id="rvgo"><span style="font-size:22px">🔁</span><span><b>틀린 문제 다시 풀기 · ${n}문제</b><span>Làm lại câu sai · 정답 위치가 바뀌어요</span></span></button>`;
+
 /* ---------- question flow ---------- */
-let run=[],ri=0,step=0,ord=null,answered=null,runRes={};
-function startRun(ids){ run=ids; ri=0; runRes={}; openQ(); }
+let run=[],ri=0,step=0,ord=null,answered=null,runRes={},RV=false;
+function startRun(ids,rv){ run=ids; ri=0; runRes={}; RV=!!rv; openQ(); }
 function openQ(){ step=0; answered=null; ord=null; renderQ(); }
 function curQ(){ return Q()[run[ri]]; }
 function renderQ(){ sec("listen");
@@ -1248,7 +1269,7 @@ function renderQ(){ sec("listen");
   setTitle(`${DAYS[DAY].title} · ${qi+1}번`,true); $("speed").hidden=false;
   const hasAns=answered!==null;
   $("body").innerHTML=`
-   <div class="prog"><span>${ri+1} / ${run.length}</span><div class="bar"><i style="width:${(ri+step/2)/run.length*100}%"></i></div></div>
+   ${RV?`<div class="rvtag">🔁 다시 풀기 · Làm lại câu sai</div>`:""}<div class="prog"><span>${ri+1} / ${run.length}</span><div class="bar"><i style="width:${(ri+step/2)/run.length*100}%"></i></div></div>
    <div class="steps" id="steps">${["듣고 풀기","근거 찾기"].map((s,i)=>`<button data-s="${i}" aria-current="${i===step?"step":"false"}" class="${(i===0&&hasAns)||(i===1&&ST.ev[qi])?"ok":""}" ${i>0&&!hasAns?"disabled":""}><i>${i+1}</i>${s}</button>`).join("")}</div>
    <div class="qhead"><span class="qno">${String(qi+1).padStart(2,"0")}</span><span class="chip">${q.sp==="F"?T.ko.replace("남자","여자"):T.ko}</span></div>
    <div class="instr">${q.sp==="F"?T.q.replace("남자","여자"):T.q}<span class="vn">${q.sp==="F"?T.qvn.replace("người đàn ông","người phụ nữ"):T.qvn}</span></div>
@@ -1257,7 +1278,7 @@ function renderQ(){ sec("listen");
   [stepListen,stepEvidence][step](q,qi);
 }
 function stepListen(q,qi){
-  if(!ord) ord=shuffle([0,1,2,3]);
+  if(!ord) ord=reshuf(ST.pos[qi],q.a,4);
   const hasAns=answered!==null;
   $("stage").innerHTML=`
    <div class="player"><button class="playbtn" id="pbtn" aria-label="듣기">${ICON.play}</button><div class="wave" id="wave"><i></i><i></i><i></i><i></i><i></i></div>
@@ -1276,12 +1297,12 @@ function stepListen(q,qi){
   if(hasAns){ mark(answered); return; }
   chs.forEach(b=>b.onclick=()=>{
     stopAll(); answered=+b.dataset.i; const ok=answered===q.a;
-    ST.res[qi]=ok; runRes[qi]=ok; save(); mark(answered);
+    if(RV) ST.fix[qi]=ok; else ST.res[qi]=ok; ST.pos[qi]=ord.indexOf(q.a); runRes[qi]=ok; save(); mark(answered);
     $("steps").querySelector('[data-s="0"]').classList.add("ok");
     $("steps").querySelectorAll("button").forEach(x=>x.disabled=false);
   });
   foot(`<button class="btn sec" id="skip">잘 모르겠어요</button>`);
-  $("skip").onclick=()=>{ answered=-1; ST.res[qi]=false; runRes[qi]=false; save(); mark(null); $("steps").querySelectorAll("button").forEach(x=>x.disabled=false); };
+  $("skip").onclick=()=>{ answered=-1; if(RV) ST.fix[qi]=false; else ST.res[qi]=false; ST.pos[qi]=ord.indexOf(q.a); runRes[qi]=false; save(); mark(null); $("steps").querySelectorAll("button").forEach(x=>x.disabled=false); };
   setTimeout(()=>{ if(!hasAns&&step===0) playLines(q.l); },400);
 }
 function scriptHtml(q,opts={}){
@@ -1308,17 +1329,20 @@ function stepEvidence(q,qi){
   });
   foot(`<button class="btn sec" id="sh">근거 보기</button>`); $("sh").onclick=()=>reveal(false);
 }
+function fixL(){ const n=Q().length; return allDone(ST.res,n)?toFix(ST.res,ST.fix,n):Object.keys(runRes).map(Number).filter(i=>!runRes[i]&&!ST.fix[i]); }
 function result(){ sec("listen");
-  setTitle("결과",true);
+  setTitle(RV?"다시 풀기 결과":"결과",true);
   const ids=Object.keys(runRes).map(Number), ok=ids.filter(i=>runRes[i]).length;
   const byT={}; ids.forEach(i=>{const t=Q()[i].t; byT[t]=byT[t]||[0,0]; byT[t][1]++; if(runRes[i]) byT[t][0]++;});
   const wrong=ids.filter(i=>!runRes[i]);
   $("body").innerHTML=`<div class="done"><div class="eyebrow">${DAYS[DAY].title} · KẾT QUẢ</div><div class="big">${ok} / ${ids.length}</div>
     <div style="color:var(--muted);font-size:14px">${wrong.length?`틀린 문제: ${wrong.map(i=>i+1+"번").join(", ")}`:"모두 맞았어요!"}</div>
     ${Object.keys(byT).map(t=>`<div class="tb"><span class="chip" style="text-align:center">${TYPES[t].ko}</span><div class="bar"><i style="width:${byT[t][0]/byT[t][1]*100}%"></i></div><span>${byT[t][0]}/${byT[t][1]}</span></div>`).join("")}
+    ${reviewCard(fixL().length,1,RV)}
     ${wrong.length?`<div class="tcard" style="text-align:left;width:100%"><h3>${TYPES[Q()[wrong[0]].t].ko} 공략법</h3><ul>${TYPES[Q()[wrong[0]].t].tips.map(t=>`<li>${esc(t)}</li>`).join("")}</ul></div>`:""}</div>`;
-  foot(`<button class="btn sec" id="h">처음으로</button>${wrong.length?`<button class="btn pri" id="re">틀린 ${wrong.length}문제 다시</button>`:""}`);
-  $("h").onclick=home; if($("re")) $("re").onclick=()=>startRun(wrong);
+  const left=fixL();
+  foot(`<button class="btn sec" id="h">처음으로</button>${left.length?rvBtn(left.length):""}`);
+  $("h").onclick=home; if($("re")) $("re").onclick=()=>startRun(left,true);
 }
 
 /* ---------- writing data ---------- */
@@ -1943,6 +1967,7 @@ function wHome(){ sec("write");
     <div class="vn" style="margin-top:6px">Đọc bài, viết vào ㉠ và ㉡. Câu 1~10 giữ đúng thể văn; câu 11~20 viết thể "-다", chú ý từ nối trước sau.</div></div>`:`<div class="tcard" style="margin-top:4px"><h3>이렇게 공부하세요</h3><div class="vn">Cách học</div>
     <ul><li>괄호 안의 말을 문장에 맞게 바꿔 쓰세요. 쓰고 「확인」을 누르면 바로 채점돼요.</li><li>틀리면 정답과 문법 포인트를 꼭 읽어 보세요.</li><li>1~10번은 실용문(-습니다 / 해요), 11~20번은 설명문(-다)이에요.</li></ul>
     <div class="vn" style="margin-top:6px">Chia từ trong ngoặc cho hợp với câu, bấm 「확인」 để chấm ngay. Sai thì đọc kỹ đáp án và điểm ngữ pháp.</div></div>`}
+   ${allDone(WS.n3,NQ().length)&&toFix(WS.n3,WS.fix,NQ().length).length?rvHomeBtn(toFix(WS.n3,WS.fix,NQ().length).length).replace("정답 위치가 바뀌어요","한 번 더 써 보세요"):""}
    <div class="sec"><b>세트 · Bộ bài</b></div>
    ${(is51Day()?WSETS51:WSETS).map((s,i)=>{const ids=[];for(let k=s.r[0];k<=s.r[1];k++)ids.push(k); const R=WS[s.k];
      return `<button class="grp" data-s="${i}"><span class="n">${s.label}</span><span class="t"><b>${s.ko}</b><span class="vn">${s.vn}</span></span>
@@ -1950,15 +1975,16 @@ function wHome(){ sec("write");
    <button class="btn sec" id="wreset" style="height:40px;font-size:13px;color:var(--muted);margin-top:6px;width:100%">쓰기 기록 지우기 · Xóa kết quả</button>`;
   $("body").querySelectorAll(".grp").forEach(b=>b.onclick=()=>{const s=(is51Day()?WSETS51:WSETS)[+b.dataset.s];const ids=[];for(let k=s.r[0];k<=s.r[1];k++)ids.push(k);wStart(s.k,ids);});
   $("body").querySelectorAll(".day[data-d]").forEach(b=>b.onclick=()=>{ WDAY=+b.dataset.d; wload(); wHome(); });
-  $("wreset").onclick=()=>{ if(confirm(`쓰기 Ngày ${WDAY} 기록을 지울까요?`)){ WS={n3:{},n3a:{},p:{},pa:{}}; wsave(); wHome(); } };
+  if($("rvgo")) $("rvgo").onclick=()=>wStart("n3",toFix(WS.n3,WS.fix||{},NQ().length),true);
+  $("wreset").onclick=()=>{ if(confirm(`쓰기 Ngày ${WDAY} 기록을 지울까요?`)){ WS={n3:{},n3a:{},p:{},pa:{},fix:{}}; wsave(); wHome(); } };
   const left=[...Array(20).keys()].filter(i=>WS.n3[i]==null);
   foot(`<button class="btn pri" id="go">${left.length?(left.length<20?"이어서 풀기":"1번부터 풀기"):"처음부터 다시 풀기"}</button>`);
   $("go").onclick=()=>wStart("n3",left.length?left:[...Array(20).keys()]);
 }
 let W={k:"n3",ids:[],i:0,res:{}};
-function wStart(k,ids){ W={k,ids,i:0,res:{}}; renderN3(); }
+function wStart(k,ids,rv){ W={k,ids,i:0,res:{},rv:!!rv}; if(!WS.fix) WS.fix={}; renderN3(); }
 function wNext(){ const last=W.i===W.ids.length-1; if(last) wResult(); else { W.i++; renderN3(); $("body").scrollTop=0; } }
-function wProg(){ return `<div class="prog"><span>${W.i+1} / ${W.ids.length}</span><div class="bar"><i style="width:${W.i/W.ids.length*100}%"></i></div></div>`; }
+function wProg(){ return `${W.rv?`<div class="rvtag">🔁 다시 풀기 · Làm lại câu sai</div>`:""}<div class="prog"><span>${W.i+1} / ${W.ids.length}</span><div class="bar"><i style="width:${W.i/W.ids.length*100}%"></i></div></div>`; }
 
 // Ngày 1~3: the base word is shown in brackets (review). Ngày 4~: no brackets, "힌트 보기" reveals it; solving without the hint earns ⭐.
 const NOBRACKET_FROM=4;
@@ -1980,7 +2006,7 @@ function renderN3(){ sec("write");
   const inp=$("in");
   if(free) $("hb").onclick=()=>{ hint=true; $("bl").textContent=`(${q.b})`; $("hb").outerHTML=`<div class="tip" style="margin-top:8px">💡 힌트: <b>${esc(q.b)}</b> 를 알맞게 바꿔 쓰세요. · Chia từ <b>${esc(q.b)}</b>.</div>`; inp.focus(); };
   const done=(ok,v,self)=>{
-    WS.n3[k]=ok; WS.n3a[k]=v; WS.h[k]=hint; wsave(); W.res[k]=ok;
+    if(W.rv) WS.fix[k]=ok; else { WS.n3[k]=ok; WS.n3a[k]=v; WS.h[k]=hint; } wsave(); W.res[k]=ok;
     const star=ok&&free&&!hint; if($("hb")) $("hb").remove();
     inp.disabled=true; inp.classList.add(ok?"ok":"no");
     const bl=$("bl"); bl.textContent=ok?v:q.a[0]; bl.classList.add(ok?"fill":"miss");
@@ -2024,7 +2050,7 @@ function render51(k,q,last){
   const match=(v,a)=>!!v&&a.some(x=>norm(x)===norm(v));
   const finish=(oks,vs)=>{
     const ok=oks[0]&&oks[1];
-    WS.n3[k]=ok; WS.n3a[k]=vs; WS.b2[k]=oks; wsave(); W.res[k]=ok;
+    if(W.rv) WS.fix[k]=ok; else { WS.n3[k]=ok; WS.n3a[k]=vs; WS.b2[k]=oks; } wsave(); W.res[k]=ok;
     [i1,i2].forEach((el,j)=>{ el.disabled=true; el.classList.add(oks[j]?"ok":"no"); const m=$("m"+(j+1)); if(m){ m.textContent=oks[j]&&vs[j]?vs[j]:A[j][0]; m.classList.add(oks[j]?"fill":"miss"); } });
     const n=oks.filter(Boolean).length;
     $("fb").innerHTML=`<div class="fb ${ok?"ok":"no"}"><b>${ok?"둘 다 맞았어요 · Đúng cả hai":n?"하나 맞았어요 · Đúng 1/2":"모범 답안을 보세요 · Xem đáp án mẫu"}</b>
@@ -2058,15 +2084,16 @@ function render51(k,q,last){
 }
 
 function wResult(){ sec("write");
-  setTitle("쓰기 결과",wHome); $("speed").hidden=true;
+  setTitle(W.rv?"쓰기 · 다시 풀기 결과":"쓰기 결과",wHome); $("speed").hidden=true;
+  const wn=NQ().length, left=allDone(WS.n3,wn)?toFix(WS.n3,WS.fix,wn):Object.keys(W.res).map(Number).filter(i=>!W.res[i]&&!(WS.fix||{})[i]);
   const ids=Object.keys(W.res).map(Number), ok=ids.filter(i=>W.res[i]).length, wrong=ids.filter(i=>!W.res[i]);
   const name=i=>`${i+1}번`;
   const stars=isFree()?ids.filter(i=>W.res[i]&&!(WS.h||{})[i]).length:0;
   $("body").innerHTML=`<div class="done"><div class="eyebrow">Ngày ${WDAY} 쓰기 · KẾT QUẢ</div><div class="big">${ok} / ${ids.length}</div>${isFree()?`<div class="chip star" style="font-size:13px">⭐ 힌트 없이 맞힌 문제 ${stars}개</div>`:""}
-    <div style="color:var(--muted);font-size:14px">${wrong.length?`틀린 문제: ${wrong.map(name).join(", ")}`:"모두 맞았어요!"}</div></div>
+    <div style="color:var(--muted);font-size:14px">${wrong.length?`틀린 문제: ${wrong.map(name).join(", ")}`:"모두 맞았어요!"}</div>${reviewCard(left.length,0,W.rv)}</div>
     ${W.k==="n3"&&wrong.length?`<div class="tcard"><h3>틀린 문장 정답</h3><ul>${wrong.map(i=>`<li>${i+1}번 · ${esc(NQ()[i].b)} → <b>${esc(NQ()[i].a[0])}</b> <span class="vn">${esc(NQ()[i].p)}</span></li>`).join("")}</ul></div>`:""}`;
-  foot(`<button class="btn sec" id="h">쓰기 처음으로</button>${wrong.length?`<button class="btn pri" id="re">틀린 ${wrong.length}문제 다시</button>`:""}`);
-  $("h").onclick=wHome; if($("re")) $("re").onclick=()=>wStart(W.k,wrong);
+  foot(`<button class="btn sec" id="h">쓰기 처음으로</button>${left.length?rvBtn(left.length):""}`);
+  $("h").onclick=wHome; if($("re")) $("re").onclick=()=>wStart("n3",left,true);
 }
 
 /* ---------- vocab ---------- */
@@ -2551,7 +2578,7 @@ const READ={
 /* ---------- reading state ---------- */
 let RDAY=1, RS={res:{}};
 const RKEY=()=>"tpk-read"+RDAY;
-function rload(){ RS={res:{}}; try{const s=JSON.parse(localStorage.getItem(RKEY())||"null"); if(s) RS=Object.assign(RS,s);}catch(e){} }
+function rload(){ RS={res:{},fix:{},pos:{}}; try{const s=JSON.parse(localStorage.getItem(RKEY())||"null"); if(s) RS=Object.assign(RS,s);}catch(e){} }
 function rsave(){ try{localStorage.setItem(RKEY(),JSON.stringify(RS))}catch(e){} }
 const RQ=()=>READ[RDAY].q;
 const ul=s=>esc(s).replace(/⟦(.+?)⟧/g,'<u class="ul">$1</u>');
@@ -2568,17 +2595,19 @@ function rHome(){ sec("read");
    ${dayTabs({subj:"read",days:READ,cur:RDAY,done:d=>dayDone("tpk-read",d,READ[d]?READ[d].q.length:1e9)})}
    <section class="hero"><div class="eyebrow">맞힌 문제 · CÂU ĐÚNG</div><div class="big">${ok}<small> / ${qs.length}</small></div>
      <div style="display:flex;gap:10px;align-items:center;margin-top:10px"><div class="bar"><i style="width:${done/qs.length*100}%"></i></div><span class="eyebrow">${done}문제 풂</span></div></section>
+   ${allDone(RS.res,qs.length)&&toFix(RS.res,RS.fix,qs.length).length?rvHomeBtn(toFix(RS.res,RS.fix,qs.length).length):""}
    <div class="sec"><b>유형별 · Theo dạng</b></div>
    ${rsets().map((s,i)=>{const ids=[];for(let k=s.r[0];k<=s.r[1];k++)ids.push(k);
      return `<button class="grp" data-s="${i}"><span class="n">${s.label}</span><span class="t"><b>${s.ko}</b><span class="vn">${s.vn}</span></span>
        <span class="dots">${ids.map(k=>`<i class="${RS.res[k]===true?"k":RS.res[k]===false?"w":""}"></i>`).join("")}</span></button>`}).join("")}`;
   $("body").querySelectorAll(".day[data-d]").forEach(b=>b.onclick=()=>{RDAY=+b.dataset.d;rload();rHome();});
+  if($("rvgo")) $("rvgo").onclick=()=>rStart(toFix(RS.res,RS.fix||{},qs.length),true);
   $("body").querySelectorAll(".grp").forEach(b=>b.onclick=()=>{const s=rsets()[+b.dataset.s];const ids=[];for(let k=s.r[0];k<=s.r[1];k++)ids.push(k);rStart(ids);});
   foot(`<button class="btn pri" id="go">${done&&done<qs.length?"이어서 풀기":"1번부터 풀기"}</button>`);
   $("go").onclick=()=>{ const left=[...Array(qs.length).keys()].filter(i=>RS.res[i]==null); rStart(left.length?left:[...Array(qs.length).keys()]); };
 }
 let R={ids:[],i:0,res:{}};
-function rStart(ids){ R={ids,i:0,res:{}}; renderR(); }
+function rStart(ids,rv){ R={ids,i:0,res:{},rv:!!rv}; renderR(); }
 function rBox(q){
   if(q.k==="s") return `<div class="sent">${ul(q.x)}</div>`;
   if(q.k==="h") return `<div class="headline">${esc(q.x)}</div>`;
@@ -2590,9 +2619,10 @@ function rBox(q){
 }
 function renderR(){ sec("read");
   const k=R.ids[R.i], q=RQ()[k], last=R.i===R.ids.length-1, I=RI[q.i];
-  const ro=q.k==="ins"?[0,1,2,3]:shuffle([0,1,2,3]);
+  if(!RS.fix) RS.fix={}; if(!RS.pos) RS.pos={};
+  const ro=q.k==="ins"?[0,1,2,3]:reshuf(RS.pos[k],q.a,4);
   setTitle(`${READ[RDAY].title} 읽기 · ${k+1}번`,rHome); $("speed").hidden=true;
-  $("body").innerHTML=`<div class="prog"><span>${R.i+1} / ${R.ids.length}</span><div class="bar"><i style="width:${R.i/R.ids.length*100}%"></i></div></div>
+  $("body").innerHTML=`${R.rv?`<div class="rvtag">🔁 다시 풀기 · Làm lại câu sai</div>`:""}<div class="prog"><span>${R.i+1} / ${R.ids.length}</span><div class="bar"><i style="width:${R.i/R.ids.length*100}%"></i></div></div>
    <div class="qhead"><span class="qno">${String(k+1).padStart(2,"0")}</span><span class="chip">${esc(q.t)}</span></div>
    <div class="instr">${q.who?I.q.replace("어머니",q.who):I.q}<span class="vn">${q.who==="나"?I.v.replace("'người mẹ'","nhân vật 'tôi'"):I.v}</span></div>
    ${rBox(q)}
@@ -2600,7 +2630,7 @@ function renderR(){ sec("read");
    <div id="fb"></div>`;
   const chs=[...$("chs").querySelectorAll(".ch")];
   const mark=pick=>{
-    const ok=pick===q.a; RS.res[k]=ok; R.res[k]=ok; rsave();
+    const ok=pick===q.a; if(R.rv) RS.fix[k]=ok; else RS.res[k]=ok; RS.pos[k]=ro.indexOf(q.a); R.res[k]=ok; rsave();
     chs.forEach(b=>{ b.disabled=true; const j=+b.dataset.i; if(j===q.a) b.classList.add("ok"); if(pick!=null&&j===pick&&!ok) b.classList.add("no"); });
     $("fb").innerHTML=`<div class="fb ${ok?"ok":"no"}"><b>${ok?"정답이에요":"정답은 "+circ[ro.indexOf(q.a)]}</b>${esc(renum(q.ex,ro))}<span class="vn">${esc(renum(q.exv,ro))}</span></div>`;
     foot(`<button class="btn pri" id="nx">${last?"결과 보기":"다음 문제"}</button>`);
@@ -2611,14 +2641,15 @@ function renderR(){ sec("read");
   foot(`<button class="btn sec" id="skip">잘 모르겠어요</button>`); $("skip").onclick=()=>mark(null);
 }
 function rResult(){ sec("read");
-  setTitle("읽기 결과",rHome); $("speed").hidden=true;
+  setTitle(R.rv?"읽기 · 다시 풀기 결과":"읽기 결과",rHome); $("speed").hidden=true;
+  const n=RQ().length, left=allDone(RS.res,n)?toFix(RS.res,RS.fix,n):Object.keys(R.res).map(Number).filter(i=>!R.res[i]&&!RS.fix[i]);
   const ids=Object.keys(R.res).map(Number), ok=ids.filter(i=>R.res[i]).length, wrong=ids.filter(i=>!R.res[i]);
   const byT={}; ids.forEach(i=>{const s=rsets().find(s=>i>=s.r[0]&&i<=s.r[1]).ko; byT[s]=byT[s]||[0,0]; byT[s][1]++; if(R.res[i]) byT[s][0]++;});
   $("body").innerHTML=`<div class="done"><div class="eyebrow">${READ[RDAY].title} 읽기 · KẾT QUẢ</div><div class="big">${ok} / ${ids.length}</div>
     <div style="color:var(--muted);font-size:14px">${wrong.length?`틀린 문제: ${wrong.map(i=>i+1+"번").join(", ")}`:"모두 맞았어요!"}</div>
-    ${Object.keys(byT).map(t=>`<div class="tb"><span class="chip" style="text-align:center">${t}</span><div class="bar"><i style="width:${byT[t][0]/byT[t][1]*100}%"></i></div><span>${byT[t][0]}/${byT[t][1]}</span></div>`).join("")}</div>`;
-  foot(`<button class="btn sec" id="h">읽기 처음으로</button>${wrong.length?`<button class="btn pri" id="re">틀린 ${wrong.length}문제 다시</button>`:""}`);
-  $("h").onclick=rHome; if($("re")) $("re").onclick=()=>rStart(wrong);
+    ${Object.keys(byT).map(t=>`<div class="tb"><span class="chip" style="text-align:center">${t}</span><div class="bar"><i style="width:${byT[t][0]/byT[t][1]*100}%"></i></div><span>${byT[t][0]}/${byT[t][1]}</span></div>`).join("")}${reviewCard(left.length,1,R.rv)}</div>`;
+  foot(`<button class="btn sec" id="h">읽기 처음으로</button>${left.length?rvBtn(left.length):""}`);
+  $("h").onclick=rHome; if($("re")) $("re").onclick=()=>rStart(left,true);
 }
 
 /* ---------- account: login / sign-up / teacher view ---------- */
