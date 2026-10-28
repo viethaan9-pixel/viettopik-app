@@ -163,14 +163,14 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .lvlw{position:relative;margin-top:104px}
 .lvlw .lvl{position:relative;z-index:1;margin-bottom:0}
 .lvlw+.lvlw{margin-top:112px}
-.lcat{position:absolute;z-index:2;right:14px;bottom:calc(100% - 16px);height:124px;pointer-events:none;transform-origin:50% 100%;filter:drop-shadow(0 4px 6px rgba(0,0,0,.18))}
+.lcat{position:absolute;z-index:2;right:14px;bottom:calc(100% - 16px);height:124px;pointer-events:none;transform-origin:50% 100%;will-change:transform,opacity;filter:drop-shadow(0 3px 5px rgba(0,0,0,.14))}
 .lcat.blue{right:22px;height:128px}
-.lcat img{height:100%;width:auto;display:block}
-.lcat.brown img{animation:idleB 4.8s ease-in-out infinite;transform-origin:50% 100%}
-.lcat.blue img{animation:idleW 2.6s ease-in-out infinite;transform-origin:50% 100%}
+.lcat img{height:100%;width:auto;display:block;will-change:transform;image-rendering:auto;-webkit-backface-visibility:hidden;backface-visibility:hidden}
+.lcat.brown img{animation:idleB 4.8s cubic-bezier(.45,0,.55,1) infinite;transform-origin:50% 100%}
+.lcat.blue img{animation:idleW 3.4s cubic-bezier(.45,0,.55,1) infinite;transform-origin:50% 100%}
 @keyframes idleB{0%,100%{transform:scaleY(1)}50%{transform:scaleY(1.015)}}
-@keyframes idleW{0%,100%{transform:rotate(0) translateY(0)}25%{transform:rotate(-2deg) translateY(-2px)}50%{transform:rotate(0) translateY(0)}75%{transform:rotate(1.5deg) translateY(-1px)}}
-.intro .lcat{animation:stepOut .95s cubic-bezier(.2,.9,.3,1.2) both}
+@keyframes idleW{0%,100%{transform:rotate(0) translateY(0)}25%{transform:rotate(-1.6deg) translateY(-1.5px)}50%{transform:rotate(0) translateY(0)}75%{transform:rotate(1.2deg) translateY(-.8px)}}
+.intro .lcat{animation:stepOut 1.1s cubic-bezier(.22,1,.36,1) both}
 .intro .lcat.brown{animation-delay:.25s}
 .intro .lcat.blue{animation-delay:.75s}
 @keyframes stepOut{0%{transform:translateY(35%) scale(.55,.75);opacity:0}30%{opacity:1}60%{transform:translateY(-14%) scale(1.06,.94)}78%{transform:translateY(0) scale(.97,1.03)}100%{transform:translateY(0) scale(1)}}
@@ -325,7 +325,7 @@ function lsKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ co
 function lsSnapshot(){ const p={}; lsKeys().forEach(k=>{ try{ p[k]=localStorage.getItem(k); }catch(e){} }); return p; }
 function lsClear(){ lsKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
 let UNLOCK_ALL=false, GUEST=false;
-const APP_VERSION="10/28 발자국 배경";
+const APP_VERSION="10/28 고양이 부드럽게";
 const TEACHER_ID="viethaan9";
 /* ---------- data ---------- */
 // type: next(이어질 말) · act(이어서 할 행동) · same(내용과 같은 것) · main(중심 생각)
