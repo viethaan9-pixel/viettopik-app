@@ -165,6 +165,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .lvlw+.lvlw{margin-top:112px}
 .lcat{position:absolute;z-index:2;right:14px;bottom:calc(100% - 16px);height:124px;pointer-events:none;transform-origin:50% 100%;will-change:transform,opacity;filter:drop-shadow(0 3px 5px rgba(0,0,0,.14))}
 .lcat.blue{right:22px;height:128px}
+.lcat.brown{right:auto;left:14px}
 .lcat img{height:100%;width:auto;display:block;will-change:transform;image-rendering:auto;-webkit-backface-visibility:hidden;backface-visibility:hidden}
 .lcat.brown img{animation:idleB 4.8s cubic-bezier(.45,0,.55,1) infinite;transform-origin:50% 100%}
 .lcat.blue img{animation:idleW 3.4s cubic-bezier(.45,0,.55,1) infinite;transform-origin:50% 100%}
@@ -284,6 +285,9 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .mcard .ic{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);margin-bottom:10px}
 .mcard b{font-size:20px;font-weight:800}
 .mcard .mm{margin-top:auto;padding-top:10px;font-size:12px;color:var(--muted);line-height:1.45}
+.mcard.wide{grid-column:1/-1;flex-direction:row;align-items:center;gap:14px;min-height:0;padding:14px;--accent:var(--c-write);--accent-soft:var(--c-write-soft)}
+.mcard.wide .ic{margin:0;flex:none;font-size:20px}.mcard.wide .wt{display:flex;flex-direction:column;gap:1px;min-width:0}.mcard.wide .mm{padding-top:4px}
+.mcard.wide .go{margin-left:auto;flex:none;color:var(--accent);font-size:22px;font-weight:700}
 .mcard:disabled{opacity:.5;cursor:default}
 .sent{margin-top:12px;padding:16px;border-radius:var(--r);background:var(--surface);border:1px solid var(--line);font-size:17px;line-height:1.9}
 .blank{display:inline-block;min-width:80px;padding:0 8px;margin:0 3px;border-bottom:2px solid var(--accent);color:var(--accent);font-weight:700;text-align:center;line-height:1.5}
@@ -420,7 +424,7 @@ function lsKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ co
 function lsSnapshot(){ const p={}; lsKeys().forEach(k=>{ try{ p[k]=localStorage.getItem(k); }catch(e){} }); return p; }
 function lsClear(){ lsKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
 let UNLOCK_ALL=false, GUEST=false;
-const APP_VERSION="10/29 53번 원문 답안";
+const APP_VERSION="10/29 53번 3·4급 안으로";
 const TEACHER_ID="viethaan9";
 /* ---------- data ---------- */
 // type: next(이어질 말) · act(이어서 할 행동) · same(내용과 같은 것) · main(중심 생각)
@@ -1904,8 +1908,9 @@ function menu(){ sec();
     <button class="mcard" data-m="write"><span class="ic">${IC.write}</span><b>쓰기</b><span class="vn">Viết</span><span class="mm">Ngày ${WDAY} · ${is51Day()?"51·52번 실전":"문장 연습"} ${NQ().length}문제<br>${wdone?`맞힌 문제 ${wok} / ${NQ().length}`:"아직 시작 전"}</span></button>
     <button class="mcard" data-m="read"><span class="ic">${IC.read}</span><b>읽기</b><span class="vn">Đọc</span><span class="mm">${READ[RDAY].title} · ${RQ().length}문제<br>${Object.keys(RS.res).length?`맞힌 문제 ${Object.values(RS.res).filter(Boolean).length} / ${RQ().length}`:"아직 시작 전"}</span></button>
     <button class="mcard" data-m="vocab"><span class="ic">${IC.vocab}</span><b>단어장</b><span class="vn">Từ vựng</span><span class="mm">${(v=>v.length>2?`Ngày ${v[0]}~${v[v.length-1]}`:v.map(d=>`Ngày ${d}`).join(" · "))(vDays())} · ${nw}개<br>누르면 발음을 들어요</span></button>
+    <button class="mcard wide" data-m="w53"><span class="ic">⭐</span><span class="wt"><b>쓰기 53번</b><span class="vn">Viết câu 53 · Nhìn biểu đồ viết 200~300 chữ</span><span class="mm">${W53.length}문제 · 원고지 · 자동 검사${(c=>c?` · 검사한 문제 ${c}개`:"")(Object.keys(w53Load().c).length)}</span></span><span class="go">›</span></button>
    </div>`;
-  $("body").querySelectorAll(".mcard[data-m]").forEach(b=>b.onclick=()=>({listen:home,write:wHome,read:rHome,vocab:vocab})[b.dataset.m]());
+  $("body").querySelectorAll(".mcard[data-m]").forEach(b=>b.onclick=()=>({listen:home,write:wHome,read:rHome,vocab:vocab,w53:w53Home})[b.dataset.m]());
   $("body").querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{ const m=b.dataset.mode;
     if(m==="4"&&!t4Open()) return placeIntro(menu);
     setMode(m); menu(); });
@@ -2205,7 +2210,7 @@ function chartSvg(c){
    ${c.mid?`<text x="${(X(0)+X(c.labels.length-1))/2-14}" y="${Math.min(Y(S[0].values[0]),Y(S[0].values[S[0].values.length-1]))-4}" text-anchor="end" font-size="14" font-weight="800" fill="${mu}">${esc(c.mid)}</text>`:""}
    ${S.length>1?S.map((s,k)=>`<g transform="translate(${x0+k*110},${H+8})"><rect width="14" height="4" y="-3" rx="2" fill="${cols[k]}"/><text x="20" y="2" font-size="12" fill="${fg}">${esc(s.name)}</text></g>`).join(""):""}</svg>`;
 }
-function w53Home(){ sec("write"); stopAll(); setTitle("⭐ 쓰기 53번",topik2); $("speed").hidden=true;
+function w53Home(){ sec("write"); stopAll(); setTitle("⭐ 쓰기 53번",menu); $("speed").hidden=true;
   const st=w53Load();
   $("body").innerHTML=`<div class="tcard" style="margin-top:4px"><h3>53번 · 그래프 보고 글쓰기</h3><div class="vn">Câu 53 · Nhìn biểu đồ viết đoạn văn 200~300 chữ</div>
     <ul><li>그래프·표의 내용을 <b>200~300자</b>로 정리해요. 띄어쓰기도 1자로 세요.</li><li>모든 문장은 <b>「-다」체</b>로 끝내요. (했다 · 나타났다 · 예상된다)</li><li>내 생각은 쓰지 않아요. 그래프에 있는 내용만 써요.</li><li>순서: 조사 소개 → 결과(변화·순위) → 원인 또는 전망</li></ul>
@@ -2274,9 +2279,8 @@ function topik2(){ sec();
   $("body").innerHTML=`
    <div class="eyebrow" style="margin:2px 0 12px">목표 등급을 고르세요 · CHỌN CẤP ĐỘ MỤC TIÊU</div>
    ${lvlBtn({id:"l34",badge:"3·4급",ko:"3급 · 4급",vn:"Cấp 3 · 4 — lộ trình của cô",mm:`선생님 수업 ${n}일 · 듣기 · 쓰기 · 읽기 · 단어장`,c:"listen"})}
-   ${lvlBtn({id:"l53",badge:"⭐ 53",ko:"쓰기 53번",vn:"Câu 53 · Viết theo biểu đồ",mm:`자료 보고 200~300자 · ${W53.length}문제 · 원고지 · 자동 검사`,c:"write"})}
    ${lvlBtn({badge:"5·6급",ko:"5급 · 6급",vn:"Cấp 5 · 6 — cao cấp",mm:"고급 수업은 나중에 열려요 · Sẽ mở sau",c:"write"})}`;
-  $("l34").onclick=menu; $("l53").onclick=w53Home;
+  $("l34").onclick=menu;
   foot("");
 }
 
