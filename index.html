@@ -260,6 +260,20 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .w53mine mark,.w53h mark{background:#FFE08A;color:inherit;border-radius:3px;padding:0 2px}.w53mine u,.w53h u{text-decoration:underline wavy #C0392B;text-underline-offset:3px}
 .w53model p{margin:8px 0 0;font-size:15px;line-height:1.85}.w53model small{color:var(--muted);font-weight:500}
 .w53res{text-align:left}
+.gjtop{display:flex;align-items:center;justify-content:space-between;margin-top:14px}.gjtop b{font-size:14px}
+.gjsw{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}.gjsw button{padding:5px 12px;font:inherit;font-size:12.5px;background:transparent;color:var(--muted)}
+.gjsw button[aria-pressed="true"]{background:var(--accent);color:#fff;font-weight:700}
+.gj{margin-top:8px;padding:8px 26px 8px 6px;border-radius:12px;background:#FFFDF6;border:1.5px solid #E7D9B8;cursor:text}
+.gj[hidden]{display:none}
+.gjr{position:relative;display:grid;grid-template-columns:repeat(20,1fr);border-left:1px solid #E2B9A6;margin-bottom:5px}
+.gjc{aspect-ratio:1;border:1px solid #E2B9A6;border-left:0;display:grid;place-items:center;font-size:clamp(10px,3.6vw,15px);line-height:1;color:#2b2b2b;font-family:"Noto Serif KR","Nanum Myeongjo",serif;overflow:hidden;white-space:nowrap}
+.gjc.two{font-size:clamp(7.5px,2.6vw,11px);letter-spacing:-.04em}
+.gjc.cur{background:#FFE8A3;box-shadow:inset 0 -2px 0 #D49A00}
+.gjr.over .gjc{border-color:#F0A5A5;background:#FFF3F3}
+.gjm{position:absolute;right:-24px;top:50%;transform:translateY(-50%);font-style:normal;font-size:9.5px;color:#B07A5F;font-weight:700}
+.w53t.gjin{min-height:96px;font-size:14px}
+.gjtip{margin-top:6px}.gjtip[hidden]{display:none}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .gj{background:#24211a;border-color:#4a4130}:root:not([data-theme="light"]) .gjc{color:#eee;border-color:#6b4d40}:root:not([data-theme="light"]) .gjr{border-left-color:#6b4d40}:root:not([data-theme="light"]) .gjc.cur{background:#5a4a14}}
 .menu{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
 .mcard{display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:16px 14px;border-radius:var(--r);background:var(--surface);border:1.5px solid var(--line);text-align:left;min-height:168px}
 .mcard .ic{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);margin-bottom:10px}
@@ -401,7 +415,7 @@ function lsKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ co
 function lsSnapshot(){ const p={}; lsKeys().forEach(k=>{ try{ p[k]=localStorage.getItem(k); }catch(e){} }); return p; }
 function lsClear(){ lsKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
 let UNLOCK_ALL=false, GUEST=false;
-const APP_VERSION="10/28 쓰기 53번";
+const APP_VERSION="10/28 53번 원고지";
 const TEACHER_ID="viethaan9";
 /* ---------- data ---------- */
 // type: next(이어질 말) · act(이어서 할 행동) · same(내용과 같은 것) · main(중심 생각)
@@ -2016,6 +2030,40 @@ function w53Check(q,text){
   out.items=W53_CHECK.filter(c=>!c.k||need.has(c.k)).map(c=>({...c,ok:c.re.test(t)}));
   return out;
 }
+/* 원고지 (manuscript grid) like the TOPIK answer sheet: 20 cells per line.
+   rules: 1 Hangul / punctuation / space per cell · digits & Latin two per cell · each paragraph starts with one empty cell ·
+   a space never starts a line · punctuation that would start a line shares the last cell of the previous line */
+const GJ_COLS=20;
+function gjLayout(text){
+  const t=String(text).normalize("NFC"), rows=[[]], map=[]; let r=0;
+  const put=(ch,idx)=>{ if(rows[r].length>=GJ_COLS){ rows.push([]); r++; } rows[r].push({ch,idx}); return [r,rows[r].length-1]; };
+  const paras=t.split("\n"); let base=0;
+  paras.forEach((para,pi)=>{
+    if(pi>0){ if(rows[r].length){ rows.push([]); r++; } }
+    if(para.length) put("",-1);                      // paragraph indent
+    const cs=Array.from(para); let off=0;
+    for(let i=0;i<cs.length;i++){
+      const ch=cs[i], idx=base+off;
+      if(/[0-9A-Za-z]/.test(ch)&&/[0-9A-Za-z]/.test(cs[i+1]||"")){ const pos=put(ch+cs[i+1],idx); map[idx]=pos; map[idx+cs[i+1].length]=pos; off+=ch.length+cs[i+1].length; i++; continue; }
+      if(ch===" "&&rows[r].length>=GJ_COLS){ map[idx]=[r,GJ_COLS-1]; off+=1; rows.push([]); r++; continue; }  // space at line start: skip
+      if(/[.,!?]/.test(ch)&&rows[r].length>=GJ_COLS){ const last=rows[r][GJ_COLS-1]; last.ch+=ch; map[idx]=[r,GJ_COLS-1]; off+=ch.length; continue; }
+      map[idx]=put(ch,idx); off+=ch.length;
+    }
+    base+=para.length+1;
+  });
+  return {rows,map,cells:rows.reduce((a,x)=>a+x.length,0)};
+}
+function gjHtml(text,caret,minRows){
+  const L=gjLayout(text), n=Math.max(minRows,L.rows.length+(L.rows[L.rows.length-1].length>=GJ_COLS?1:0));
+  let cr=-1,cc=-1; // caret cell = the cell after the char just before the caret
+  if(caret!=null){ let k=caret-1; while(k>=0&&L.map[k]==null) k--; if(k<0){ cr=0; cc=0; } else { const [a,b]=L.map[k]; cr=a; cc=b+1; if(cc>=GJ_COLS){ cr++; cc=0; } } }
+  let h="";
+  for(let i=0;i<n;i++){ const row=L.rows[i]||[], over=(i+1)*GJ_COLS>W53_MAX;
+    h+=`<div class="gjr ${over?"over":""}">`+Array.from({length:GJ_COLS},(_,j)=>{ const c=row[j]; const ch=c?c.ch:""; const two=ch.length>1&&/[0-9A-Za-z]/.test(ch);
+      return `<span class="gjc${i===cr&&j===cc?" cur":""}${two?" two":""}">${esc(ch)}</span>`; }).join("")+
+      `${(i+1)%5===0?`<em class="gjm">${(i+1)*GJ_COLS}</em>`:""}</div>`; }
+  return {html:h,cells:L.cells,lines:L.rows.filter(x=>x.length).length};
+}
 function w53Load(){ try{ return JSON.parse(localStorage.getItem("tpk-w53")||"null")||{a:{},c:{}}; }catch(e){ return {a:{},c:{}}; } }
 function w53Save(o){ try{ localStorage.setItem("tpk-w53",JSON.stringify(o)); }catch(e){} }
 function chartSvg(c){
@@ -2049,13 +2097,25 @@ function w53Q(i){ sec("write"); stopAll(); const q=W53[i], st=w53Load();
   $("body").innerHTML=`<div class="instr">다음을 참고하여 '${esc(q.topic)}'에 대한 글을 200~300자로 쓰십시오. 단, 글의 제목을 쓰지 마십시오.<span class="vn">Dựa vào nội dung dưới đây, viết đoạn văn 200~300 chữ về '${esc(q.vn)}'. Không viết tiêu đề.</span></div>
    <div class="pass w53p"><div class="pb"><div class="w53src">조사 기관: ${esc(q.src)}</div>${q.charts.map(c=>`<div class="w53c"><b>${esc(c.title)}</b>${chartSvg(c)}</div>`).join("")}
     ${q.notes.map(([h,t])=>`<div class="w53n"><span class="chip">${esc(h)}</span> ${esc(t)}</div>`).join("")}</div></div>
+   <div class="gjtop"><b>답안지 · Phiếu trả lời</b><div class="gjsw"><button id="gjon" aria-pressed="true">원고지</button><button id="gjoff" aria-pressed="false">일반</button></div></div>
+   <div class="gj" id="gj" aria-hidden="true"></div>
    <textarea id="w53t" class="inp w53t" rows="9" lang="ko" spellcheck="false" placeholder="여기에 쓰세요 · Viết ở đây (200~300자)"></textarea>
+   <div class="tip gjtip" id="gjtip">위 원고지에 글이 칸칸이 들어가요. 문단을 바꾸려면 줄바꿈(Enter)을 하세요. 숫자는 두 자씩 한 칸이에요.<span class="vn" style="display:block">Chữ sẽ tự vào từng ô. Xuống dòng (Enter) để sang đoạn mới. Số: 2 chữ số 1 ô.</span></div>
    <div class="w53bar"><div class="bar"><i id="w53bi"></i></div><span id="w53n">0 / 300자</span></div>
    <div id="w53r"></div><div id="w53m"></div>`;
   const ta=$("w53t"); ta.value=(st.a[i]||"");
-  const upd=()=>{ const n=w53Len(ta.value); $("w53n").textContent=`${n} / ${W53_MAX}자`; const bi=$("w53bi"); bi.style.width=Math.min(100,n/W53_MAX*100)+"%";
+  let gjMode=(()=>{ try{ return localStorage.getItem("tpk-gj")!=="0"; }catch(e){ return true; } })();
+  const gjDraw=()=>{ if(!gjMode) return; const g=gjHtml(ta.value,document.activeElement===ta?ta.selectionEnd:null,15); $("gj").innerHTML=g.html; $("gjinfo")&&($("gjinfo").textContent=`원고지 ${g.lines}줄`); };
+  const gjSet=on=>{ gjMode=on; try{ localStorage.setItem("tpk-gj",on?"1":"0"); }catch(e){}
+    $("gj").hidden=!on; $("gjtip").hidden=!on; ta.classList.toggle("gjin",on); ta.rows=on?4:9;
+    $("gjon").setAttribute("aria-pressed",on); $("gjoff").setAttribute("aria-pressed",!on); gjDraw(); };
+  $("gjon").onclick=()=>gjSet(true); $("gjoff").onclick=()=>gjSet(false);
+  $("gj").onclick=()=>{ ta.focus(); ta.setSelectionRange(ta.value.length,ta.value.length); gjDraw(); };
+  ["keyup","click","select","focus","blur"].forEach(ev=>ta.addEventListener(ev,gjDraw));
+  document.addEventListener("selectionchange",()=>{ if(document.activeElement===ta) gjDraw(); });
+  const upd=()=>{ gjDraw(); const n=w53Len(ta.value); $("w53n").textContent=`${n} / ${W53_MAX}자`; const bi=$("w53bi"); bi.style.width=Math.min(100,n/W53_MAX*100)+"%";
     const cls=n>W53_MAX?"over":n>=W53_MIN?"ok":""; $("w53n").className=cls; bi.className=cls; const o=w53Load(); o.a[i]=ta.value; w53Save(o); };
-  ta.addEventListener("input",upd); upd();
+  ta.addEventListener("input",upd); gjSet(gjMode); upd();
   const show=()=>{ const r=w53Check(q,ta.value);
     const L=[];
     L.push([r.len,`글자 수 ${r.n}자 ${r.len?"· 좋아요":r.n<W53_MIN?`· ${W53_MIN-r.n}자 더 쓰세요`:`· ${r.n-W53_MAX}자 줄이세요`}`,"Số chữ 200~300"]);
