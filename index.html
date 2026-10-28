@@ -346,6 +346,9 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.12)}
 .aform label{display:block;margin-top:10px;font-size:13px;font-weight:700;color:var(--muted)}
 .aform .inp{margin-top:6px}
+.aform .remb{display:flex;align-items:flex-start;gap:10px;margin:4px 0 2px;padding:10px 12px;border-radius:12px;background:var(--surface);border:1px solid var(--line);cursor:pointer}
+.remb input{width:20px;height:20px;margin:1px 0 0;accent-color:var(--accent);flex:none}
+.remb span{display:flex;flex-direction:column;gap:2px}.remb b{font-size:14px}.remb small{font-size:11.5px;color:var(--muted);font-family:var(--f-vn)}
 .guest{display:flex;flex-direction:column;align-items:center;width:100%;margin-top:18px;padding:10px;border-radius:12px;font-size:13px;color:var(--muted);text-decoration:underline;text-underline-offset:3px}
 .guest small{text-decoration:none;font-family:var(--f-vn);font-size:11.5px;margin-top:2px}
 .ubar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 2px 8px;font-size:13px;color:var(--muted)}
@@ -424,7 +427,7 @@ function lsKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ co
 function lsSnapshot(){ const p={}; lsKeys().forEach(k=>{ try{ p[k]=localStorage.getItem(k); }catch(e){} }); return p; }
 function lsClear(){ lsKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
 let UNLOCK_ALL=false, GUEST=false;
-const APP_VERSION="10/29 53번 3·4급 안으로";
+const APP_VERSION="10/29 로그인 필수 · 기억하기";
 const TEACHER_ID="viethaan9";
 /* ---------- data ---------- */
 // type: next(이어질 말) · act(이어서 할 행동) · same(내용과 같은 것) · main(중심 생각)
@@ -3050,6 +3053,10 @@ function afterBoot(fn){
   },wait);
 }
 let LOGIN_TAB="in";
+// "아이디·비밀번호 기억하기": kept only in this phone's browser (key is not tpk-*, so it is never synced to the cloud)
+const REM_KEY="vt-remember";
+const remGet=()=>{ try{ const r=JSON.parse(localStorage.getItem(REM_KEY)||"null"); return r&&r.id?{id:r.id,pw:r.p?decodeURIComponent(escape(atob(r.p))):"" ,on:true}:{id:"",pw:"",on:!localStorage.getItem(REM_KEY+"-off")}; }catch(e){ return {id:"",pw:"",on:true}; } };
+const remSet=(on,id,pw)=>{ try{ if(on){ localStorage.setItem(REM_KEY,JSON.stringify({id,p:btoa(unescape(encodeURIComponent(pw)))})); localStorage.removeItem(REM_KEY+"-off"); } else { localStorage.removeItem(REM_KEY); localStorage.setItem(REM_KEY+"-off","1"); } }catch(e){} };
 function showLogin(err){
   sec(); stopAll(); setTitle("",null); $("speed").hidden=true;
   const up=LOGIN_TAB==="up";
@@ -3061,10 +3068,12 @@ function showLogin(err){
     <label>아이디 · Tên đăng nhập<input id="aid" class="inp" autocomplete="username" autocapitalize="off" spellcheck="false" placeholder="영어 소문자·숫자 (예: an2005)" maxlength="20"></label>
     <label>비밀번호 · Mật khẩu<input id="apw" class="inp" type="password" autocomplete="${up?"new-password":"current-password"}" placeholder="6자 이상 · ít nhất 6 ký tự"></label>
     ${up?`<p class="tip">아이디와 비밀번호를 꼭 기억하세요. 다른 폰에서도 이걸로 들어가면 기록이 이어져요.<span class="vn" style="display:block">Hãy nhớ tên đăng nhập và mật khẩu. Đăng nhập trên máy khác vẫn giữ kết quả.</span></p>`:""}
+    <label class="remb"><input type="checkbox" id="arem" ${remGet().on?"checked":""}><span><b>아이디·비밀번호 기억하기</b><small>Lưu tên đăng nhập và mật khẩu trên máy này · 같이 쓰는 폰이면 끄세요</small></span></label>
     <div id="aerr">${err?`<div class="fb no">${esc(err)}</div>`:""}</div>
    </form>
-   <button class="guest" id="guest">로그인 없이 하기 · Dùng không cần đăng nhập<small>기록이 이 폰에만 저장돼요 · Chỉ lưu trên máy này</small></button>`;
+   `;
   $("body").querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{ LOGIN_TAB=b.dataset.t; showLogin(); });
+  { const r=remGet(); if(!up&&r.id){ $("aid").value=r.id; $("apw").value=r.pw; } }
   const go=async()=>{
     const id=$("aid").value.trim().toLowerCase(), pw=$("apw").value, name=up?$("aname").value.trim():"";
     const bad=m=>{ $("aerr").innerHTML=`<div class="fb no">${esc(m)}</div>`; };
@@ -3073,12 +3082,14 @@ function showLogin(err){
     if(pw.length<6) return bad(AERR["auth/weak-password"]);
     if(!window.CLOUD) return bad(AERR["auth/network-request-failed"]);
     const btn=$("ago"); btn.disabled=true; btn.textContent="잠시만요… · Chờ chút…";
-    try{ if(up) await CLOUD.signup(id,name,pw); else await CLOUD.login(id,pw); }
+    try{ if(up) await CLOUD.signup(id,name,pw); else await CLOUD.login(id,pw);
+      remSet($("arem")&&$("arem").checked,id,pw);
+      // also offer the phone's own password manager (Chrome on Android)
+      try{ if(window.PasswordCredential&&$("arem").checked) navigator.credentials.store(new PasswordCredential({id:id,password:pw,name:name||id})).catch(()=>{}); }catch(e){} }
     catch(e){ btn.disabled=false; btn.textContent=up?"가입하기 · Đăng ký":"들어가기 · Vào học"; bad(aerr(e)); }
   };
   $("af").onsubmit=e=>{ e.preventDefault(); go(); };
   $("apw").onkeydown=e=>{ if(e.key==="Enter"&&!e.isComposing){ e.preventDefault(); go(); } };
-  $("guest").onclick=()=>{ GUEST=true; CAT_INTRO=true; load(); wload(); rload(); start(); };
   foot(`<button class="btn pri" id="ago">${up?"가입하기 · Đăng ký":"들어가기 · Vào học"}</button>`); $("ago").onclick=go;
 }
 // called by the cloud module whenever the signed-in user changes
@@ -3193,7 +3204,7 @@ async function teacher(given){
 }
 
 load(); wload(); rload(); bootScreen();
-setTimeout(()=>{ if(!window.CLOUD&&!GUEST) afterBoot(()=>showLogin("로그인 기능을 불러오지 못했어요. 인터넷을 확인하거나 「로그인 없이 하기」로 풀어 주세요. · Không tải được đăng nhập.")); },10000);
+setTimeout(()=>{ if(!window.CLOUD&&!GUEST) afterBoot(()=>showLogin("로그인 기능을 불러오지 못했어요. 인터넷을 확인하고 다시 열어 주세요. · Không tải được đăng nhập, hãy kiểm tra mạng.")); },10000);
 </script>
 <script type="module">
 /* ---------- Firebase: accounts + saving progress ---------- */
