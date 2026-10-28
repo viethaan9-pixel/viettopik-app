@@ -274,6 +274,11 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .w53t.gjin{min-height:96px;font-size:14px}
 .gjtip{margin-top:6px}.gjtip[hidden]{display:none}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .gj{background:#24211a;border-color:#4a4130}:root:not([data-theme="light"]) .gjc{color:#eee;border-color:#6b4d40}:root:not([data-theme="light"]) .gjr{border-left-color:#6b4d40}:root:not([data-theme="light"]) .gjc.cur{background:#5a4a14}}
+.w53tb{width:100%;border-collapse:collapse;margin-top:6px;font-size:14px}.w53tb th,.w53tb td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top;line-height:1.55}
+.w53tb th{width:30%;background:var(--accent-soft);font-weight:700;white-space:nowrap}
+.w53fr{margin-top:10px;border:1px dashed var(--line);border-radius:12px;padding:8px 12px;background:var(--surface)}.w53fr summary{font-weight:700;font-size:14px;cursor:pointer}
+.w53fr ol{margin:8px 0 2px;padding-left:20px;font-size:14px;line-height:1.7}
+.w53model ul{margin:6px 0 0;padding-left:18px;font-size:14px;line-height:1.6}
 .menu{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
 .mcard{display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:16px 14px;border-radius:var(--r);background:var(--surface);border:1.5px solid var(--line);text-align:left;min-height:168px}
 .mcard .ic{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);margin-bottom:10px}
@@ -415,7 +420,7 @@ function lsKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ co
 function lsSnapshot(){ const p={}; lsKeys().forEach(k=>{ try{ p[k]=localStorage.getItem(k); }catch(e){} }); return p; }
 function lsClear(){ lsKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
 let UNLOCK_ALL=false, GUEST=false;
-const APP_VERSION="10/28 53번 원고지";
+const APP_VERSION="10/29 53번 선생님 15문제";
 const TEACHER_ID="viethaan9";
 /* ---------- data ---------- */
 // type: next(이어질 말) · act(이어서 할 행동) · same(내용과 같은 것) · main(중심 생각)
@@ -1984,50 +1989,162 @@ function start(){ sec();
   foot("");
 }
 /* ---------- 쓰기 53번 (그래프 설명 200~300자) · free in-browser checker ---------- */
-// sample problems written by Claude so the screen works; the teacher's own files will replace/extend them
+// 선생님 53번 자료 (2026-10-29). lv: 기초 → 중급 → 실전 (선생님이 정한 난이도 순서)
+// need: which content checks apply · no: words that must not appear (e.g. 증가 in a decrease task)
 const W53=[
- {g:"C+",topic:"반려동물을 키우는 가구의 변화",vn:"Sự thay đổi số hộ gia đình nuôi thú cưng",src:"○○연구소",
-  charts:[{type:"line",title:"반려동물 양육 가구 수",unit:"만 가구",labels:["2015년","2020년","2025년"],values:[457,604,720]},
-          {type:"bar",title:"반려동물을 키우는 이유",unit:"%",labels:["외로움을 덜기 위해","가족 같은 존재라서","아이 정서 교육","기타"],values:[41,33,16,10]}],
-  notes:[["전망","2030년 850만 가구 예상"]],
-  nums:["457","720","41","33","16","850"],
-  model:"○○연구소에서 반려동물을 키우는 가구의 변화에 대해 조사하였다. 조사 결과 반려동물 양육 가구는 2015년 457만 가구에서 2025년 720만 가구로 10년 사이에 크게 증가한 것으로 나타났다. 반려동물을 키우는 이유로는 '외로움을 덜기 위해서'가 41%로 가장 높았고, 그다음으로 '가족 같은 존재라서'가 33%, '아이의 정서 교육을 위해서'가 16%로 뒤를 이었다. 이러한 추세가 계속된다면 2030년에는 반려동물 양육 가구가 850만 가구에 이를 것으로 전망된다."},
- {g:"B",topic:"쇼핑 방법의 변화",vn:"Sự thay đổi cách mua sắm",src:"○○연구원 (성인 1,000명 대상)",
-  charts:[{type:"line2",title:"쇼핑 방법별 이용률",unit:"%",labels:["2016년","2020년","2024년"],series:[{name:"온라인",values:[35,52,68]},{name:"오프라인",values:[65,48,32]}]}],
-  notes:[["원인","① 스마트폰 보급 확대 → 언제 어디서나 구매 가능"],["원인","② 다음 날 받는 빠른 배송 서비스 증가"]],
-  nums:["35","68","65","32"],
-  model:"○○연구원에서 성인 1,000명을 대상으로 쇼핑 방법의 변화에 대해 조사하였다. 그 결과 온라인 쇼핑 이용률은 2016년 35%에서 2024년 68%로 두 배 가까이 증가한 반면, 오프라인 쇼핑 이용률은 65%에서 32%로 절반 이하로 감소하였다. 이러한 변화의 원인으로는 먼저 스마트폰 보급이 확대되어 언제 어디서나 쉽게 물건을 살 수 있게 된 점을 들 수 있다. 또한 주문한 다음 날 물건을 받을 수 있는 빠른 배송 서비스가 늘어난 것도 원인으로 볼 수 있다."},
- {g:"B",topic:"1인 가구의 변화",vn:"Sự thay đổi của hộ gia đình một người",src:"○○기관",
-  charts:[{type:"line",title:"전체 가구 중 1인 가구 비율",unit:"%",labels:["2000년","2010년","2023년"],values:[15.5,23.9,35.5]},
-          {type:"bar",title:"1인 가구의 주된 고민",unit:"%",labels:["경제적 불안","외로움","건강 문제","기타"],values:[38,26,21,15]}],
-  notes:[["전망","2040년 1인 가구 비율 40% 이상 예상"]],
-  nums:["15.5","35.5","38","26","21","40"],
-  model:"○○기관에서 1인 가구의 변화에 대해 조사하였다. 조사 결과 전체 가구 중 1인 가구가 차지하는 비율은 2000년 15.5%에서 2023년 35.5%로 크게 증가한 것으로 나타났다. 1인 가구의 주된 고민으로는 '경제적 불안'이 38%로 가장 많았으며, 이어서 '외로움'이 26%, '건강 문제'가 21%로 그 뒤를 이었다. 이와 같은 추세가 계속된다면 2040년에는 1인 가구의 비율이 40%를 넘을 것으로 예상된다."}
+ {no:1,lv:"기초",g:"C",topic:"인주시립도서관 이용자 수 변화",vn:"Số người dùng thư viện thành phố Inju",
+  table:[["조사 기관",["인주시 문화정책연구소"]],["이용자 수",["2015년 20만 명 → 2025년 35만 명 (약 1.8배 증가)"]],["원인",["· 전자책 대출 서비스 시작","· 주말과 공휴일 개방"]]],
+  frame:["인주시 문화정책연구소에서 ‘______’에 대하여 조사하였다.","그 결과 이용자 수는 2015년에 ______이었으나 2025년에는 ______으로 약 ______배 증가하였다.","이렇게 이용자가 늘어난 이유는 ______ 때문이다.","또한 ______도 원인으로 볼 수 있다."],
+  nums:["20만","35만","1.8"],need:["intro","up","cause2"],
+  model:"인주시 문화정책연구소에서 인주시립도서관의 이용자 수 변화에 대하여 조사하였다. 그 결과 이용자 수는 2015년에 20만 명이었으나 2025년에는 35만 명으로 약 1.8배 증가하였다. 이렇게 이용자가 늘어난 이유는 전자책 대출 서비스가 시작되어 집에서도 책을 빌릴 수 있게 되었기 때문이다. 또한 주말과 공휴일에도 도서관을 개방하면서 평일에 시간을 내기 어려운 사람들이 도서관을 찾게 된 것도 원인으로 볼 수 있다.",
+  points:["조사 기관과 조사 대상을 첫 문장에 쓴다.","수치는 자료에 있는 그대로 옮긴다 (20만 명, 35만 명, 1.8배).","원인 두 가지를 모두 쓴다. 하나만 쓰면 감점된다.","문체는 반드시 ‘-다’체로 쓴다. ‘-습니다’를 쓰면 감점된다.","자기 의견이나 자료에 없는 내용은 쓰지 않는다."],
+  expr:["~에 대하여 조사하였다 / 조사한 결과는 다음과 같다","N년에 ~이었으나 N년에는 ~으로 증가하였다","약 ~배 증가하였다 / 늘어났다","이렇게 ~은/는 이유는 ~기 때문이다","또한 ~도 원인으로 볼 수 있다"]},
+ {no:4,lv:"기초",g:"C",topic:"인주시 자전거 대여소 이용 건수 변화",vn:"Số lượt thuê xe đạp ở thành phố Inju",
+  table:[["조사 기관",["인주시 교통문화연구소"]],["이용 건수",["2018년 30만 건 → 2024년 90만 건 (3배 증가)"]],["원인",["· 대여소 수가 50곳에서 200곳으로 증가","· 휴대폰 앱으로 간편하게 대여 가능"]]],
+  frame:["인주시 교통문화연구소에서 ‘______’에 대하여 조사하였다.","그 결과 이용 건수는 2018년에 ______이었으나 2024년에는 ______으로 ______배 증가하였다.","이렇게 이용이 늘어난 이유는 ______ 때문이다.","또한 ______도 원인으로 볼 수 있다."],
+  nums:["30만","90만","50","200"],need:["intro","up","cause2"],
+  model:"인주시 교통문화연구소에서 인주시 자전거 대여소의 이용 건수 변화에 대하여 조사하였다. 그 결과 이용 건수는 2018년에 30만 건이었으나 2024년에는 90만 건으로 세 배 증가하였다. 이렇게 이용이 늘어난 이유는 대여소가 50곳에서 200곳으로 늘어나 시민들이 가까운 곳에서 자전거를 빌릴 수 있게 되었기 때문이다. 또한 휴대폰 앱으로 간편하게 자전거를 빌릴 수 있게 된 것도 원인으로 볼 수 있다.",
+  points:["조사 기관과 조사 대상을 첫 문장에 쓴다.","수치를 자료 그대로 옮긴다 (30만 건, 90만 건, 3배).","원인 두 가지를 모두 쓴다.","‘-다’체 유지, 제목 쓰지 않기, 200~300자."],
+  expr:["~에 대하여 조사하였다","N년에 ~이었으나 N년에는 ~으로 ~배 증가하였다","이렇게 ~이/가 늘어난 이유는 ~기 때문이다","~게 되었기 때문이다","또한 ~도 원인으로 볼 수 있다"]},
+ {no:5,lv:"기초",g:"C",topic:"인주시 종이 신문 구독 가구 수 변화",vn:"Số hộ đặt báo giấy ở thành phố Inju (giảm)",
+  table:[["조사 기관",["인주시 미디어연구센터"]],["구독 가구 수",["2014년 12만 가구 → 2024년 3만 가구 (4분의 1 수준으로 감소)"]],["원인",["· 휴대폰으로 뉴스를 보는 사람 증가","· 신문 구독료 인상"]]],
+  frame:["인주시 미디어연구센터에서 ‘______’에 대하여 조사하였다.","그 결과 구독 가구 수는 2014년 ______에서 2024년 ______으로 크게 ______.","이렇게 구독 가구가 줄어든 이유는 ______ 때문이다.","또한 ______도 원인으로 볼 수 있다."],
+  tip:"증가 자료와 달리 ‘감소하였다 / 줄어들었다 / ~분의 ~ 수준으로 떨어졌다’를 씁니다.",
+  nums:["12만","3만","4분의 1"],need:["intro","down","cause2"],ban:[["증가하였","감소 자료예요 → ‘감소하였다 / 줄어들었다’"]],
+  model:"인주시 미디어연구센터에서 인주시의 종이 신문 구독 가구 수 변화에 대하여 조사하였다. 그 결과 구독 가구 수는 2014년 12만 가구에서 2024년 3만 가구로 크게 감소하였다. 이는 10년 만에 4분의 1 수준으로 줄어든 것이다. 이렇게 구독 가구가 줄어든 이유는 휴대폰으로 뉴스를 보는 사람이 많아졌기 때문이다. 또한 신문 구독료가 올라 부담을 느끼는 가구가 늘어난 것도 원인으로 볼 수 있다.",
+  points:["감소 자료이므로 ‘감소하였다/줄어들었다’를 쓴다. ‘증가’ 표현을 쓰면 감점이다.","‘4분의 1 수준’처럼 자료에 있는 비교 표현을 살려 쓴다.","원인 두 가지를 모두 쓴다.","‘-다’체 유지, 제목 쓰지 않기, 200~300자."],
+  expr:["N에서 N으로 크게 감소하였다 / 줄어들었다","~년 만에 ~분의 ~ 수준으로 떨어졌다","이렇게 ~이/가 줄어든 이유는 ~기 때문이다","~에 부담을 느끼다","또한 ~도 원인으로 볼 수 있다"]},
+ {no:6,lv:"기초",g:"C",topic:"외국인 유학생이 한국 생활에서 느끼는 어려움",vn:"Khó khăn của du học sinh trong cuộc sống ở Hàn (khảo sát)",
+  table:[["조사 기관",["인주대학교 국제교류원"]],["조사 대상",["인주대학교 외국인 유학생 500명"]],["조사 결과",["1위 한국어로 발표하기 42%","2위 친구 사귀기 31%","3위 집 구하기 18%","기타 9%"]],["필요한 지원",["· 한국어 말하기 수업 확대","· 한국 학생과의 교류 프로그램"]]],
+  frame:["인주대학교 국제교류원에서 유학생 500명을 대상으로 ‘______’에 대하여 조사하였다.","그 결과 ______이/가 ______%로 가장 많았고, 그다음은 ______이/가 ______%였다.","이어서 ______이/가 ______%로 나타났다.","이러한 어려움을 해결하기 위해서는 ______이/가 필요하다."],
+  tip:"설문 자료는 1위부터 순서대로 쓰고, 마지막에 ‘~이 필요하다 / ~해야 할 것이다’로 마무리합니다.",
+  nums:["500명","42","31","18"],need:["intro","rank","support"],
+  model:"인주대학교 국제교류원에서 외국인 유학생 500명을 대상으로 한국 생활에서 느끼는 어려움에 대하여 조사하였다. 그 결과 한국어로 발표하기가 42%로 가장 많았고, 그다음은 친구 사귀기가 31%였다. 이어서 집 구하기가 18%, 기타가 9%로 나타났다. 이러한 어려움을 해결하기 위해서는 한국어 말하기 수업을 확대할 필요가 있다. 또한 한국 학생과 교류할 수 있는 프로그램을 마련하는 것도 도움이 될 것이다.",
+  points:["조사 대상과 인원(500명)을 반드시 쓴다.","순위를 1위부터 차례대로 쓴다. 숫자와 항목을 바꿔 쓰지 않는다.","마지막에 필요한 지원 두 가지를 쓴다.","‘-다’체 유지, 제목 쓰지 않기, 200~300자."],
+  expr:["N명을 대상으로 ~에 대하여 조사하였다","~이/가 ~%로 가장 많았다","그다음은 ~이/가 ~%였다 / 이어서 ~로 나타났다","이러한 ~을/를 해결하기 위해서는 ~이/가 필요하다","~도 도움이 될 것이다"]},
+ {no:2,lv:"중급",g:"C+",topic:"국내 외국인 유학생 수의 변화",vn:"Sự thay đổi số du học sinh nước ngoài tại Hàn",
+  table:[["조사 기관",["한국교육개발원"]],["유학생 수",["2015년 9만 명 → 2025년 22만 명 (약 2.4배 증가)"]],["출신 지역별 비율",["아시아 2015년 78% → 2025년 68%","유럽·미주 2015년 15% → 2025년 22%","기타 2015년 7% → 2025년 10%"]],["원인",["· 한국 대학의 영어 강의 확대","· 한류 확산으로 한국 문화에 대한 관심 증가"]]],
+  frame:["한국교육개발원에서 ______에 대하여 조사하였다.","(전체 변화 → 비율 변화 → 원인 두 가지 순서로 쓴다.)"],
+  tip:"비율을 쓸 때에는 ‘A는 ~%에서 ~%로 줄어든 반면 B는 ~%에서 ~%로 늘어났다’와 같이 대조해서 씁니다.",
+  nums:["9만","22만","2.4","78","68","15","22"],need:["intro","up","contrast","cause2"],
+  model:"한국교육개발원에서 국내 외국인 유학생 수의 변화에 대하여 조사하였다. 그 결과 유학생 수는 2015년 9만 명에서 2025년 22만 명으로 약 2.4배 증가하였다. 출신 지역별로 보면 아시아 지역 유학생의 비율은 78%에서 68%로 줄어든 반면 유럽과 미주 지역은 15%에서 22%로 늘어났다. 이러한 변화가 나타난 이유는 한국 대학에서 영어 강의가 확대되었기 때문이다. 또한 한류가 확산되면서 한국 문화에 관심을 가지는 학생이 많아진 것도 원인으로 볼 수 있다.",
+  points:["전체 수치 변화를 먼저 쓰고, 그다음에 비율 변화를 쓴다.","비율은 늘어난 쪽과 줄어든 쪽을 ‘반면’으로 대조한다.","원인 두 가지를 모두 쓴다.","‘-다’체 유지, 제목 쓰지 않기, 200~300자."],
+  expr:["N에서 N으로 약 ~배 증가하였다","~별로 보면 / ~을/를 살펴보면","A는 ~에서 ~로 줄어든 반면 B는 ~에서 ~로 늘어났다","이러한 변화가 나타난 이유는 ~기 때문이다","~이/가 확대되다 / 확산되다 / 관심을 가지다"]},
+ {no:7,lv:"중급",g:"C+",topic:"국내 1인 미디어 이용자 수의 변화",vn:"Sự thay đổi số người dùng mạng xã hội cá nhân (1인 미디어)",
+  charts:[{type:"line",title:"1인 미디어 이용자 수",unit:"만 명",labels:["2015년","2025년"],values:[200,1500],mid:"7.5배"},{type:"bar",title:"이용 목적 (2025년)",unit:"%",labels:["정보 검색","오락","학습"],values:[45,35,20]}],
+  table:[["조사 기관",["한국방송통신연구원"]],["원인",["· 누구나 쉽게 영상을 만들 수 있는 환경 마련","· 휴대폰으로 어디서나 시청 가능"]]],
+  frame:["한국방송통신연구원에서 ______에 대하여 조사하였다.","(전체 변화 → 이용 목적 비율 → 원인 두 가지 순서로 쓴다.)"],
+  tip:"비율 자료는 가장 많은 항목부터 차례대로 씁니다. 그래프에 있는 수치를 바꾸거나 빠뜨리지 않도록 주의하십시오.",
+  nums:["200만","1,500만|1500만","7.5","45","35","20"],need:["intro","up","rank","cause2"],
+  model:"한국방송통신연구원에서 국내 1인 미디어 이용자 수의 변화에 대하여 조사하였다. 그 결과 이용자 수는 2015년 200만 명에서 2025년 1,500만 명으로 약 7.5배 증가하였다. 이용 목적을 살펴보면 정보 검색이 45%로 가장 많았고 오락이 35%, 학습이 20%로 그 뒤를 이었다. 이와 같이 이용자가 늘어난 이유는 누구나 쉽게 영상을 만들 수 있는 환경이 마련되었기 때문이다. 또한 휴대폰으로 어디서나 영상을 볼 수 있게 된 것도 원인으로 볼 수 있다.",
+  points:["전체 변화(수치·배수)를 먼저 쓴다.","비율은 높은 항목부터 차례대로 쓴다.","원인 두 가지를 모두 쓴다.","‘-다’체 유지, 제목 쓰지 않기, 200~300자."],
+  expr:["N에서 N으로 약 ~배 증가하였다","~을/를 살펴보면 ~이/가 ~%로 가장 많았다","~이/가 ~%, ~이/가 ~%로 그 뒤를 이었다","이와 같이 ~이/가 늘어난 이유는 ~기 때문이다","또한 ~도 원인으로 볼 수 있다"]},
+ {no:8,lv:"중급",g:"C+",topic:"가구 월평균 외식비의 변화",vn:"Sự thay đổi chi phí ăn ngoài trung bình mỗi tháng của hộ gia đình",
+  charts:[{type:"line",title:"가구 월평균 외식비",unit:"만 원",labels:["2014년","2024년"],values:[25,42],mid:"1.7배"},{type:"bar2",title:"연령대별 외식비",unit:"만",labels:["20~30대","40~50대"],series:[{name:"2014년",values:[18,30]},{name:"2024년",values:[40,42]}]}],
+  table:[["조사 기관",["한국소비생활연구원"]],["원인",["· 맞벌이 가구 증가로 집에서 요리할 시간 부족","· 배달 서비스 이용 편리해짐"]]],
+  frame:["한국소비생활연구원에서 ______에 대하여 조사하였다.","(전체 변화 → 연령대별 비교 → 원인 두 가지 순서로 쓴다.)"],
+  tip:"연령대별 자료는 ‘A는 ~에서 ~로 늘어난 데 비해 B는 ~에서 ~로 늘어나는 데 그쳤다’처럼 증가 폭을 비교해서 씁니다.",
+  nums:["25만","42만","1.7","18만","40만","30만"],need:["intro","up","contrast","cause2"],
+  model:"한국소비생활연구원에서 가구 월평균 외식비의 변화에 대하여 조사하였다. 그 결과 외식비는 2014년 25만 원에서 2024년 42만 원으로 약 1.7배 증가하였다. 연령대별로 살펴보면 20~30대는 18만 원에서 40만 원으로 두 배 이상 늘어난 데 비해 40~50대는 30만 원에서 42만 원으로 늘어나는 데 그쳤다. 이러한 변화가 나타난 이유는 맞벌이 가구가 늘어나 집에서 요리할 시간이 부족해졌기 때문이다. 또한 배달 서비스의 이용이 편리해진 것도 원인으로 볼 수 있다.",
+  points:["전체 변화를 먼저 쓰고 연령대별 비교를 쓴다.","어느 연령대가 더 많이 늘었는지 비교 표현으로 드러낸다.","원인 두 가지를 모두 쓴다.","‘-다’체 유지, 제목 쓰지 않기, 200~300자."],
+  expr:["연령대별로 살펴보면","A는 ~에서 ~로 두 배 이상 늘어난 데 비해","B는 ~로 늘어나는 데 그쳤다","이러한 변화가 나타난 이유는 ~기 때문이다","~이/가 편리해지다 / 부족해지다"]},
+ {no:9,lv:"실전",g:"B",topic:"도서 구매 방식의 변화",vn:"Sự thay đổi cách mua sách (kiểu đảo chiều)",
+  charts:[{type:"line2",title:"도서 구매 방식 비율",unit:"%",labels:["2015년","2020년","2025년"],series:[{name:"온라인 서점",values:[40,58,72]},{name:"오프라인 서점",values:[60,42,28]}]}],
+  table:[["조사 기관",["한국출판문화협회"]],["원인",["· 온라인 서점의 할인과 빠른 배송","· 동네 서점 수의 감소"]],["전망",["2030년 온라인 구매 80% 이상 예상","※ 2020년 전후로 순위가 뒤바뀜"]]],
+  tip:"순위가 뒤바뀐 점을 반드시 한 문장으로 쓰고, 마지막은 전망으로 마무리합니다.",
+  nums:["40","72","60","28","80"],need:["intro","contrast","reverse","cause2","outlook"],
+  model:"한국출판문화협회에서 도서 구매 방식의 변화에 대하여 조사하였다. 조사 결과 온라인 서점을 이용하는 비율은 2015년 40%에서 2025년 72%로 크게 늘어난 반면, 오프라인 서점을 이용하는 비율은 같은 기간 60%에서 28%로 줄어들었다. 특히 2020년을 전후로 두 방식의 순위가 뒤바뀌었다. 이와 같은 변화가 나타난 이유는 온라인 서점이 할인과 빠른 배송을 제공하기 때문이다. 또한 동네 서점의 수가 줄어든 것도 원인으로 볼 수 있다. 앞으로 온라인 구매 비율은 2030년에 80%를 넘어설 것으로 전망된다.",
+  points:["두 항목을 ‘반면’으로 대조한다.","순위가 뒤바뀐 시점(2020년 전후)을 한 문장으로 쓴다.","원인 두 가지와 전망을 모두 쓴다.","300자를 넘기지 않도록 조절한다."],
+  expr:["A는 ~에서 ~로 늘어난 반면 B는 같은 기간 ~에서 ~로 줄어들었다","특히 ~을/를 전후로 순위가 뒤바뀌었다","이와 같은 변화가 나타난 이유는 ~기 때문이다","앞으로 ~을/를 넘어설 것으로 전망된다"]},
+ {no:3,lv:"실전",g:"B+",topic:"인주시 대중교통 이용객 수의 변화",vn:"Sự thay đổi số người đi phương tiện công cộng ở Inju (đề thật)",
+  table:[["조사 기관",["인주시 교통연구원"]],["이용객 수",["지하철 2015년 45만 명 → 2025년 72만 명","시내버스 2015년 68만 명 → 2025년 54만 명"]],["원인",["· 지하철 노선 2개 신설","· 출퇴근 시간 도로 정체 심화"]],["전망",["2030년 지하철 이용객 90만 명 이상 예상"]]],
+  tip:"도입 → 두 항목의 변화(역전) → 원인 2개 → 전망 순서로 씁니다. 전망은 ‘-(으)ㄹ 것으로 전망된다/보인다’로 마무리합니다.",
+  nums:["45만","72만","68만","54만","90만"],need:["intro","contrast","reverse","cause2","outlook"],
+  // 선생님 원문 313자 → 300자를 넘어서 역전 문장을 줄인 판 (294자)
+  model:"인주시 교통연구원에서 인주시 대중교통 이용객 수의 변화에 대하여 조사하였다. 조사 결과 지하철 이용객은 2015년 45만 명에서 2025년 72만 명으로 크게 늘어난 반면, 시내버스 이용객은 같은 기간 68만 명에서 54만 명으로 줄어들었다. 그 결과 2025년에는 지하철 이용객이 버스 이용객을 앞서게 되었다. 이와 같은 변화가 나타난 이유는 지하철 노선이 두 개 늘어났기 때문이다. 또한 출퇴근 시간의 도로 정체가 심해진 것도 원인으로 볼 수 있다. 앞으로 지하철 이용객은 2030년에 90만 명을 넘어설 것으로 전망된다.",
+  points:["두 항목의 변화를 ‘반면’으로 대조해서 쓴다.","순위가 뒤바뀐 점(역전)을 반드시 한 문장으로 쓴다. 이 문장을 빠뜨리면 감점이 크다.","원인 두 가지와 전망을 모두 쓴다.","마지막 문장은 전망으로 마무리한다.","300자를 넘기지 않도록 조절한다."],
+  expr:["A는 ~에서 ~로 늘어난 반면 B는 ~에서 ~로 줄어들었다","같은 기간 / 그 결과","~이었으나 ~에는 A가 B를 앞서게 되었다","이와 같은 변화가 나타난 이유는 ~기 때문이다","앞으로 ~을/를 넘어설 것으로 전망된다 / 보인다"]},
+ {no:10,lv:"실전",g:"B+",topic:"인주시 청년층 전입·전출 인구의 변화",vn:"Dân số thanh niên chuyển đến · chuyển đi ở Inju (đảo chiều)",
+  charts:[{type:"line2",title:"인주시 청년층 전입·전출 인구",unit:"만 명",labels:["2015년","2020년","2025년"],series:[{name:"전입",values:[3,4.5,6]},{name:"전출",values:[5,4.6,4]}]}],
+  table:[["조사 기관",["인주시 인구정책연구원"]],["원인",["· 청년 창업 지원금 확대","· 신규 산업단지 조성"]],["전망",["2030년 전입 8만 명 예상","※ 2020년 전후로 전입이 전출을 앞섬"]]],
+  tip:"자료에 있는 수치와 원인, 전망을 빠짐없이 쓰십시오.",
+  nums:["3만","6만","5만","4만","8만"],need:["intro","up","contrast","reverse","cause2","outlook"],
+  model:"인주시 인구정책연구원에서 인주시 청년층의 전입·전출 인구 변화에 대하여 조사하였다. 조사 결과 전입 인구는 2015년 3만 명에서 2025년 6만 명으로 두 배 증가한 반면, 전출 인구는 같은 기간 5만 명에서 4만 명으로 줄어들었다. 특히 2020년을 전후로 전입 인구가 전출 인구를 앞서게 되었다. 이와 같은 변화가 나타난 이유는 청년 창업 지원금이 확대되었기 때문이다. 또한 신규 산업단지가 조성되어 일자리가 늘어난 것도 원인으로 볼 수 있다. 앞으로 전입 인구는 2030년에 8만 명에 이를 것으로 전망된다.",
+  points:["전입과 전출을 ‘반면’으로 대조한다.","순위가 뒤바뀐 시점(2020년 전후)을 한 문장으로 쓴다.","원인 두 가지와 전망을 모두 쓴다.","300자를 넘기지 않는다."],
+  expr:["A는 ~에서 ~로 두 배 증가한 반면 B는 같은 기간 ~로 줄어들었다","특히 ~을/를 전후로 A가 B를 앞서게 되었다","~이/가 조성되어 ~이/가 늘어나다","앞으로 ~에 이를 것으로 전망된다"]},
+ {no:11,lv:"실전",g:"B+",topic:"국내 전자책 시장의 변화",vn:"Sự thay đổi thị trường sách điện tử trong nước",
+  charts:[{type:"line",title:"국내 전자책 시장 규모",unit:"억 원",labels:["2016년","2025년"],values:[1200,5400],mid:"4.5배"},{type:"bar2",title:"연령대별 이용률",unit:"%",labels:["20~30대","40~50대","60대 이상"],series:[{name:"2016년",values:[22,12,4]},{name:"2025년",values:[58,41,19]}]}],
+  table:[["조사 기관",["한국출판산업진흥원"]],["원인",["· 휴대폰과 태블릿 보급 확대","· 종이책보다 저렴한 가격"]],["전망",["2030년 시장 규모 1조 원 돌파 예상"]]],
+  tip:"자료에 있는 수치와 원인, 전망을 빠짐없이 쓰십시오.",
+  nums:["1,200억|1200억","5,400억|5400억","4.5","22%","58%","12%","41%","4%","19%","1조"],need:["intro","up","most","cause2","outlook"],
+  // 선생님 원문 302자 → 원인 문장을 줄인 판
+  model:"한국출판산업진흥원에서 국내 전자책 시장의 변화에 대하여 조사하였다. 조사 결과 시장 규모는 2016년 1,200억 원에서 2025년 5,400억 원으로 약 4.5배 증가하였다. 연령대별 이용률을 살펴보면 20~30대가 22%에서 58%로 가장 크게 늘었고, 40~50대는 12%에서 41%로, 60대 이상은 4%에서 19%로 증가하였다. 이러한 변화가 나타난 이유는 휴대폰과 태블릿의 보급이 확대되었기 때문이다. 또한 종이책보다 저렴한 가격도 원인으로 볼 수 있다. 앞으로 시장 규모는 2030년에 1조 원을 넘어설 것으로 전망된다.",
+  points:["시장 규모 변화를 먼저 쓰고 연령대별 이용률을 쓴다.","세 연령대를 모두 쓰되 가장 크게 늘어난 집단을 밝힌다.","원인 두 가지와 전망을 모두 쓴다.","300자를 넘지 않도록 조절한다."],
+  expr:["약 ~배 증가하였다","연령대별 이용률을 살펴보면","~이/가 가장 크게 늘었고 ~은/는 ~로 증가하였다","~의 보급이 확대되다","앞으로 ~을/를 넘어설 것으로 전망된다"]},
+ {no:12,lv:"실전",g:"B+",topic:"인주시 1인당 생활 쓰레기 배출량의 변화",vn:"Lượng rác sinh hoạt mỗi người ở Inju (giảm)",
+  charts:[{type:"line",title:"1인당 하루 생활 쓰레기 배출량",unit:"kg",labels:["2015년","2025년"],values:[1.05,0.72],mid:"31% 감소"},{type:"bar2",title:"재활용률 변화",unit:"%",labels:["재활용률"],series:[{name:"2015년",values:[48]},{name:"2025년",values:[67]}]}],
+  table:[["조사 기관",["인주시 환경관리공단"]],["원인",["· 음식물 쓰레기 종량제 시행","· 분리배출 교육과 홍보 강화"]],["전망",["2030년 재활용률 75% 목표"]]],
+  tip:"배출량은 감소, 재활용률은 증가예요. ‘반면’으로 대조하고, 배출량에 ‘증가’ 표현을 쓰지 마십시오.",
+  nums:["1.05","0.72","31%","48%","67%","75%"],need:["intro","down","contrast","cause2","outlook"],
+  model:"인주시 환경관리공단에서 1인당 하루 생활 쓰레기 배출량의 변화에 대하여 조사하였다. 조사 결과 배출량은 2015년 1.05kg에서 2025년 0.72kg으로 31% 감소하였다. 반면 재활용률은 같은 기간 48%에서 67%로 높아졌다. 이와 같은 변화가 나타난 이유는 음식물 쓰레기 종량제가 시행되었기 때문이다. 또한 분리배출에 대한 교육과 홍보가 강화되어 주민들의 참여가 늘어난 것도 원인으로 볼 수 있다. 인주시는 2030년까지 재활용률을 75%까지 높이는 것을 목표로 하고 있다.",
+  points:["배출량은 감소, 재활용률은 증가이므로 ‘반면’으로 대조한다.","감소 자료에 ‘증가’ 표현을 쓰지 않는다.","원인 두 가지와 목표(전망)를 모두 쓴다.","‘-다’체 유지, 200~300자."],
+  expr:["~에서 ~으로 ~% 감소하였다","반면 ~은/는 같은 기간 ~에서 ~로 높아졌다","~이/가 시행되다 / 강화되다","~까지 ~을/를 목표로 하고 있다"]},
+ {no:13,lv:"실전",g:"B+",topic:"방한 외국인 관광객의 변화",vn:"Sự thay đổi khách du lịch nước ngoài đến Hàn",
+  charts:[{type:"line",title:"방한 외국인 관광객 수",unit:"만 명",labels:["2015년","2025년"],values:[1300,2100],mid:"1.6배"},{type:"bar2",title:"방문 목적별 비율",unit:"%",labels:["관광·쇼핑","의료","기타"],series:[{name:"2015년",values:[72,8,20]},{name:"2025년",values:[55,25,20]}]}],
+  table:[["조사 기관",["한국관광연구원"]],["원인",["· 의료 기술에 대한 국제적 신뢰 상승","· 한국 드라마·음악의 인기"]],["전망",["2030년 관광객 3,000만 명 예상"]]],
+  tip:"자료에 있는 수치와 원인, 전망을 빠짐없이 쓰십시오.",
+  nums:["1,300만|1300만","2,100만|2100만","1.6","72%","55%","8%","25%","3,000만|3000만"],need:["intro","up","contrast","cause2","outlook"],
+  model:"한국관광연구원에서 방한 외국인 관광객의 변화에 대하여 조사하였다. 조사 결과 관광객 수는 2015년 1,300만 명에서 2025년 2,100만 명으로 약 1.6배 증가하였다. 방문 목적을 살펴보면 관광과 쇼핑의 비율은 72%에서 55%로 줄어든 반면, 의료 목적은 8%에서 25%로 크게 늘어났다. 이러한 변화가 나타난 이유는 한국 의료 기술에 대한 국제적 신뢰가 높아졌기 때문이다. 또한 한국 드라마와 음악의 인기도 원인으로 볼 수 있다. 앞으로 관광객 수는 2030년에 3,000만 명에 이를 것으로 전망된다.",
+  points:["전체 관광객 수를 먼저 쓰고 목적별 비율을 대조한다.","줄어든 항목과 늘어난 항목을 ‘반면’으로 연결한다.","원인 두 가지와 전망을 모두 쓴다.","300자를 넘기지 않는다."],
+  expr:["약 ~배 증가하였다","방문 목적을 살펴보면","A는 ~에서 ~로 줄어든 반면 B는 ~에서 ~로 크게 늘어났다","~에 대한 신뢰가 높아지다","앞으로 ~에 이를 것으로 전망된다"]},
+ {no:14,lv:"실전",g:"B+",topic:"직장인 점심 식사 방식의 변화",vn:"Sự thay đổi cách ăn trưa của nhân viên văn phòng (3 mục)",
+  charts:[{type:"bar2",title:"직장인 점심 식사 방식",unit:"%",labels:["구내식당","외부 식당","도시락"],series:[{name:"2015년",values:[52,40,8]},{name:"2025년",values:[33,45,22]}]}],
+  table:[["조사 기관",["한국직장문화연구소"]],["조사 대상",["직장인 2,000명"]],["원인",["· 물가 상승으로 식비 부담 증가","· 건강과 식단 관리에 대한 관심"]],["전망",["2030년 도시락 30% 예상","※ 구내식당 이용은 줄고 도시락은 크게 늘어남"]]],
+  tip:"세 항목을 모두 쓰고, 가장 많이 변한 항목(도시락)을 ‘특히’로 강조하십시오.",
+  nums:["2,000명|2000명","52%","33%","40%","45%","8%","22%","30%"],need:["intro","down","contrast","focus","cause2","outlook"],
+  model:"한국직장문화연구소에서 직장인 2,000명을 대상으로 점심 식사 방식의 변화에 대하여 조사하였다. 조사 결과 구내식당을 이용한다는 응답은 2015년 52%에서 2025년 33%로 줄어들었다. 반면 외부 식당은 40%에서 45%로, 도시락은 8%에서 22%로 늘어났다. 특히 도시락을 준비하는 직장인이 세 배 가까이 증가하였다. 이와 같은 변화가 나타난 이유는 물가가 올라 식비 부담이 커졌기 때문이다. 또한 건강과 식단 관리에 대한 관심이 높아진 것도 원인으로 볼 수 있다. 앞으로 도시락 비율은 2030년에 30%에 이를 것으로 보인다.",
+  points:["조사 대상 인원(2,000명)을 쓴다.","세 항목을 모두 쓰고 줄어든 쪽과 늘어난 쪽을 대조한다.","가장 많이 변한 항목(도시락)을 따로 강조한다.","원인 두 가지와 전망을 모두 쓴다."],
+  expr:["N명을 대상으로 ~에 대하여 조사하였다","~다는 응답은 ~에서 ~로 줄어들었다","반면 A는 ~로, B는 ~로 늘어났다","특히 ~이/가 세 배 가까이 증가하였다","앞으로 ~에 이를 것으로 보인다"]},
+ {no:15,lv:"실전",g:"B+",topic:"국내 반려 식물 시장의 변화",vn:"Sự thay đổi thị trường cây cảnh trong nhà (반려 식물)",
+  charts:[{type:"line",title:"국내 반려 식물 시장 규모",unit:"억 원",labels:["2018년","2025년"],values:[2800,7600],mid:"2.7배"},{type:"bar2",title:"구매자 연령 비율",unit:"%",labels:["20~30대","40~50대","60대 이상"],series:[{name:"2018년",values:[31,42,27]},{name:"2025년",values:[46,33,21]}]}],
+  table:[["조사 기관",["한국농업경제연구원"]],["원인",["· 1인 가구의 정서적 안정 욕구","· 실내 공기 질에 대한 관심 증가"]],["전망",["2030년 시장 규모 1조 2천억 원 예상"]]],
+  tip:"자료에 있는 수치와 원인, 전망을 빠짐없이 쓰십시오.",
+  nums:["2,800억|2800억","7,600억|7600억","2.7","31%","46%","42%","33%","27%","21%","1조 2천억"],need:["intro","up","contrast","cause2","outlook"],
+  // 선생님 원문 314자 → 300자 안으로 줄인 판
+  model:"한국농업경제연구원에서 반려 식물 시장의 변화에 대하여 조사하였다. 조사 결과 시장 규모는 2018년 2,800억 원에서 2025년 7,600억 원으로 약 2.7배 증가하였다. 구매자의 연령 비율을 살펴보면 20~30대는 31%에서 46%로 늘어난 반면, 40~50대는 42%에서 33%로, 60대 이상은 27%에서 21%로 줄어들었다. 이러한 변화의 이유는 1인 가구가 정서적 안정을 얻으려 하기 때문이다. 또한 실내 공기 질에 대한 관심 증가도 원인으로 볼 수 있다. 시장 규모는 2030년에 1조 2천억 원에 이를 것으로 전망된다.",
+  points:["시장 규모 변화를 먼저 쓰고 연령 비율을 대조한다.","늘어난 연령대와 줄어든 연령대를 ‘반면’으로 연결한다.","원인 두 가지와 전망을 모두 쓴다.","300자를 넘기지 않는다."],
+  expr:["약 ~배 증가하였다","구매자의 연령 비율을 살펴보면","A는 ~로 늘어난 반면 B는 ~로, C는 ~로 줄어들었다","~을/를 얻으려 하다","앞으로 ~에 이를 것으로 전망된다"]}
+
 ];
+const W53_NEED={
+ intro:{ko:"조사 소개 · Giới thiệu khảo sát",ex:"○○에서 ~에 대하여 조사하였다",t:x=>/조사(하였|했|한 결과|를 실시|되었)|대상으로/.test(x)},
+ up:{ko:"증가 표현 · Diễn tả tăng",ex:"증가하였다 · 늘어났다 · ~배 증가하였다",t:x=>/증가|늘어|늘었|많아/.test(x)},
+ down:{ko:"감소 표현 · Diễn tả giảm",ex:"감소하였다 · 줄어들었다 · ~수준으로 떨어졌다",t:x=>/감소|줄어|줄었|떨어/.test(x)},
+ rank:{ko:"순위 · Thứ tự",ex:"~이/가 ~%로 가장 많았다 · 그다음은 · 그 뒤를 이었다",t:x=>/가장/.test(x)&&/그다음|그 다음|이어서|뒤를 이었/.test(x)},
+ contrast:{ko:"대조·비교 · Đối chiếu",ex:"A는 ~ 반면 B는 ~ · ~에 비해",t:x=>/반면|비해|보다/.test(x)},
+ reverse:{ko:"순위 역전 · Đảo chiều",ex:"순위가 뒤바뀌었다 · A가 B를 앞서게 되었다",t:x=>/뒤바뀌|뒤바뀐|앞서|앞지르|역전/.test(x)},
+ cause2:{ko:"원인 두 가지 · Hai nguyên nhân",ex:"~기 때문이다 / 또한 ~도 원인으로 볼 수 있다",t:x=>(x.match(/때문|원인/g)||[]).length>=2},
+ outlook:{ko:"전망 · Dự báo",ex:"앞으로 ~(으)ㄹ 것으로 전망된다 / 보인다 · ~을/를 목표로 하고 있다",t:x=>/전망|예상|보인다|것이다|목표/.test(x)},
+ most:{ko:"가장 큰 변화 · Thay đổi lớn nhất",ex:"~이/가 가장 크게 늘었다",t:x=>/가장/.test(x)},
+ focus:{ko:"강조 · Nhấn mạnh",ex:"특히 ~이/가 세 배 가까이 증가하였다",t:x=>/특히/.test(x)},
+ support:{ko:"필요한 지원 · Hỗ trợ cần thiết",ex:"~을/를 해결하기 위해서는 ~이/가 필요하다",t:x=>/필요|도움이 될/.test(x)}
+};
 const W53_MIN=200, W53_MAX=300;
 const w53Len=t=>Array.from(String(t).normalize("NFC").replace(/\r?\n/g,"")).length;   // 원고지: spaces count, line breaks don't
 // spoken words → written style (53·54 must be 문어체)
 const W53_SPOKEN=[["근데","그런데"],["너무","매우 / 지나치게"],["진짜","매우"],["정말","매우"],["되게","매우"],["엄청","매우 / 크게"],["좀","조금"],["제일","가장"],["많이많이","크게"],["이랑","와/과"],["랑","와/과"],["한테","에게"],["그래서요","그래서"],["거든","(빼기)"],["잖아","(빼기)"],["이거","이것"],["그거","그것"],["저거","저것"],["뭐","무엇"],["애들","아이들"],["다들","모두"],["그치만","그렇지만"],["아무튼","어쨌든"]];
-const W53_CHECK=[
- {ko:"조사 소개 · Giới thiệu khảo sát",ex:"○○에서 ~을/를 대상으로 ~에 대해 조사하였다",re:/조사(하였|했|한 결과|를 실시|되었)|대상으로/},
- {ko:"결과 제시 · Nêu kết quả",ex:"~(으)로 나타났다 / 조사 결과",re:/나타났|조사 결과|그 결과|으로 조사되었|로 조사되었/},
- {ko:"변화 표현 · Tăng / giảm",ex:"증가하였다 · 감소하였다 · 늘어났다 · 줄어들었다",re:/증가|감소|늘어|줄어|늘었|줄었|상승|하락|높아졌|낮아졌/},
- {ko:"순위·비교 · Thứ tự / so sánh",ex:"가장 높았다 · 그다음으로 · 뒤를 이었다 · 반면",re:/가장|그다음|그 다음|이어서|뒤를 이었|반면|에 비해|보다/},
- {k:"원인",ko:"원인 · Nguyên nhân",ex:"원인으로는 ~을/를 들 수 있다 · ~기 때문이다",re:/원인|때문|이유로는|들 수 있/},
- {k:"전망",ko:"전망 · Dự báo",ex:"~(으)로 전망된다 · 예상된다 · ~에 이를 것이다",re:/전망|예상|보인다|것이다|이를 것/}
-];
 function w53Check(q,text){
   const t=text.normalize("NFC"), n=w53Len(t), out={n,items:[]};
   const sents=t.split(/(?<=[.!?])\s+|\n+/).map(x=>x.trim()).filter(Boolean);
   const notDa=sents.filter(x=>!/다[.!?]?["'」』)]*$/.test(x));
   const polite=sents.filter(x=>/(요|니다|니까)[.!?]?$/.test(x));
   const spoken=[]; W53_SPOKEN.forEach(([w,r])=>{ const re=new RegExp((w.length<=1?"(?<=[가-힣])":"")+w,"g"); if(w==="랑"){ if(/[가-힣]랑[ \.,]/.test(t)&&!/이랑/.test(t)) spoken.push([w,r]); return; } if(t.includes(w)&&!spoken.some(s=>s[0].includes(w))) spoken.push([w,r]); });
-  const me=/(저는|제가|나는|내가|우리는|제 생각|내 생각|생각한다|생각합니다)/.test(t);
-  const numsHit=q.nums.filter(x=>t.includes(x)).length;
+  const me=/(^|[\s,.'"‘“])(저는|제가|나는|내가|우리는)(?=\s)|제 생각|내 생각|생각한다|생각합니다/.test(t);
+  const numsHit=q.nums.filter(x=>x.split("|").some(y=>t.includes(y)||t.includes(y.replace(/만$/,"")))).length;
   out.len=n>=W53_MIN&&n<=W53_MAX; out.notDa=notDa; out.polite=polite; out.spoken=spoken; out.me=me;
   out.nums=[numsHit,q.nums.length];
-  const need=new Set(q.notes.map(x=>x[0]));
-  out.items=W53_CHECK.filter(c=>!c.k||need.has(c.k)).map(c=>({...c,ok:c.re.test(t)}));
+  out.items=q.need.map(k=>({...W53_NEED[k],ok:W53_NEED[k].t(t)}));
+  out.no=(q.ban||[]).filter(([w])=>t.includes(w));
   return out;
 }
 /* 원고지 (manuscript grid) like the TOPIK answer sheet: 20 cells per line.
@@ -2064,14 +2181,22 @@ function gjHtml(text,caret,minRows){
       `${(i+1)%5===0?`<em class="gjm">${(i+1)*GJ_COLS}</em>`:""}</div>`; }
   return {html:h,cells:L.cells,lines:L.rows.filter(x=>x.length).length};
 }
-function w53Load(){ try{ return JSON.parse(localStorage.getItem("tpk-w53")||"null")||{a:{},c:{}}; }catch(e){ return {a:{},c:{}}; } }
-function w53Save(o){ try{ localStorage.setItem("tpk-w53",JSON.stringify(o)); }catch(e){} }
+function w53Load(){ try{ return JSON.parse(localStorage.getItem("tpk-w53v2")||"null")||{a:{},c:{}}; }catch(e){ return {a:{},c:{}}; } }
+function w53Save(o){ try{ localStorage.setItem("tpk-w53v2",JSON.stringify(o)); }catch(e){} }
+const nf=v=>v>=1000?Number(v).toLocaleString("ko-KR"):String(v);
 function chartSvg(c){
   const W=330, fg="var(--ink)", mu="var(--muted)", ac="var(--accent)", ln="var(--line)";
+  if(c.type==="bar2"){
+    const cols=["var(--muted)",ac], mx=Math.max(...c.series.flatMap(s=>s.values)), x0=70, bw=W-x0-50, gh=c.series.length*22+14, H=c.labels.length*gh+26;
+    return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${esc(c.title)}">${c.labels.map((l,i)=>{ const y=i*gh+4;
+      return `<text x="${x0-8}" y="${y+c.series.length*11+4}" text-anchor="end" font-size="12" fill="${fg}">${esc(l)}</text>`+c.series.map((s,k)=>{ const w=Math.max(4,s.values[i]/mx*bw);
+        return `<rect x="${x0}" y="${y+k*22}" width="${w}" height="18" rx="4" fill="${cols[k]}" opacity="${k?0.95:0.45}"/><text x="${x0+w+6}" y="${y+k*22+13}" font-size="12" font-weight="700" fill="${fg}">${nf(s.values[i])}${esc(c.unit)}</text>`; }).join(""); }).join("")}
+      ${c.series.map((s,k)=>`<g transform="translate(${x0+k*90},${H-8})"><rect width="12" height="10" y="-9" rx="2" fill="${cols[k]}" opacity="${k?0.95:0.45}"/><text x="17" y="0" font-size="12" fill="${fg}">${esc(s.name)}</text></g>`).join("")}</svg>`;
+  }
   if(c.type==="bar"){
     const H=c.labels.length*34+8, mx=Math.max(...c.values), x0=118, bw=W-x0-46;
     return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${esc(c.title)}">${c.labels.map((l,i)=>{const y=6+i*34, w=Math.max(4,c.values[i]/mx*bw);
-      return `<text x="${x0-8}" y="${y+18}" text-anchor="end" font-size="12" fill="${fg}">${esc(l)}</text><rect x="${x0}" y="${y+4}" width="${w}" height="20" rx="5" fill="${ac}" opacity="${i?0.55:0.95}"/><text x="${x0+w+6}" y="${y+19}" font-size="12.5" font-weight="700" fill="${fg}">${c.values[i]}${esc(c.unit)}</text>`}).join("")}</svg>`;
+      return `<text x="${x0-8}" y="${y+18}" text-anchor="end" font-size="12" fill="${fg}">${esc(l)}</text><rect x="${x0}" y="${y+4}" width="${w}" height="20" rx="5" fill="${ac}" opacity="${i?0.55:0.95}"/><text x="${x0+w+6}" y="${y+19}" font-size="12.5" font-weight="700" fill="${fg}">${nf(c.values[i])}${esc(c.unit)}</text>`}).join("")}</svg>`;
   }
   const S=c.series||[{name:"",values:c.values}], all=S.flatMap(s=>s.values), mx=Math.max(...all)*1.18, H=170, top=18, bot=H-28, x0=50, x1=W-50;
   const X=i=>x0+(x1-x0)*(c.labels.length===1?0.5:i/(c.labels.length-1)), Y=v=>bot-(v/mx)*(bot-top);
@@ -2079,7 +2204,8 @@ function chartSvg(c){
   return `<svg viewBox="0 0 ${W} ${H+(S.length>1?18:0)}" width="100%" role="img" aria-label="${esc(c.title)}"><line x1="${x0-10}" x2="${x1+10}" y1="${bot}" y2="${bot}" stroke="${ln}"/>
    ${c.labels.map((l,i)=>`<text x="${X(i)}" y="${H-8}" text-anchor="middle" font-size="12" fill="${mu}">${esc(l)}</text>`).join("")}
    ${S.map((s,k)=>`<polyline fill="none" stroke="${cols[k]}" stroke-width="2.6" stroke-linejoin="round" points="${s.values.map((v,i)=>X(i)+","+Y(v)).join(" ")}"/>
-     ${s.values.map((v,i)=>`<circle cx="${X(i)}" cy="${Y(v)}" r="4.2" fill="var(--surface)" stroke="${cols[k]}" stroke-width="2.4"/><text x="${X(i)}" y="${Y(v)-10}" text-anchor="middle" font-size="12.5" font-weight="700" fill="${fg}">${v}${esc(c.unit)}</text>`).join("")}`).join("")}
+     ${s.values.map((v,i)=>`<circle cx="${X(i)}" cy="${Y(v)}" r="4.2" fill="var(--surface)" stroke="${cols[k]}" stroke-width="2.4"/><text x="${X(i)}" y="${Y(v)-10}" text-anchor="middle" font-size="12.5" font-weight="700" fill="${fg}">${nf(v)}${esc(c.unit)}</text>`).join("")}`).join("")}
+   ${c.mid?`<text x="${(X(0)+X(c.labels.length-1))/2-14}" y="${Math.min(Y(S[0].values[0]),Y(S[0].values[S[0].values.length-1]))-4}" text-anchor="end" font-size="14" font-weight="800" fill="${mu}">${esc(c.mid)}</text>`:""}
    ${S.length>1?S.map((s,k)=>`<g transform="translate(${x0+k*110},${H+8})"><rect width="14" height="4" y="-3" rx="2" fill="${cols[k]}"/><text x="20" y="2" font-size="12" fill="${fg}">${esc(s.name)}</text></g>`).join(""):""}</svg>`;
 }
 function w53Home(){ sec("write"); stopAll(); setTitle("⭐ 쓰기 53번",topik2); $("speed").hidden=true;
@@ -2087,16 +2213,17 @@ function w53Home(){ sec("write"); stopAll(); setTitle("⭐ 쓰기 53번",topik2)
   $("body").innerHTML=`<div class="tcard" style="margin-top:4px"><h3>53번 · 그래프 보고 글쓰기</h3><div class="vn">Câu 53 · Nhìn biểu đồ viết đoạn văn 200~300 chữ</div>
     <ul><li>그래프·표의 내용을 <b>200~300자</b>로 정리해요. 띄어쓰기도 1자로 세요.</li><li>모든 문장은 <b>「-다」체</b>로 끝내요. (했다 · 나타났다 · 예상된다)</li><li>내 생각은 쓰지 않아요. 그래프에 있는 내용만 써요.</li><li>순서: 조사 소개 → 결과(변화·순위) → 원인 또는 전망</li></ul>
     <div class="vn" style="margin-top:6px">Viết 200~300 chữ (tính cả dấu cách), đuôi 「-다」, không viết ý kiến riêng. Thứ tự: giới thiệu → kết quả → nguyên nhân / dự báo.</div></div>
-   <div class="sec"><b>문제 · Bài</b><span class="eyebrow">샘플 ${W53.length}문제</span></div>
-   ${W53.map((q,i)=>{ const c=st.c[i]; return `<button class="grp" data-i="${i}"><span class="n">${i+1}</span><span class="t"><b>${esc(q.topic)}</b><span class="vn">${esc(q.vn)}</span></span><span class="w53st">${c?`<em class="gr gr-${q.g.replace("+","p")}">${q.g}</em> ${c.ok?"✅":"✏️"} ${c.n}자`:`<em class="gr gr-${q.g.replace("+","p")}">${q.g}</em>`}</span></button>`; }).join("")}`;
+   ${W53.map((q,i)=>{ const c=st.c[i]; const head=(i===0||W53[i-1].lv!==q.lv)?`<div class="sec"><b>${q.lv} · ${{"기초":"Cơ bản","중급":"Trung cấp","실전":"Thực chiến"}[q.lv]}</b>${i===0?`<span class="eyebrow">${W53.length}문제</span>`:""}</div>`:""; return `${head}<button class="grp" data-i="${i}"><span class="n">${i+1}</span><span class="t"><b>${esc(q.topic)}</b><span class="vn">${esc(q.vn)}</span></span><span class="w53st">${c?`<em class="gr gr-${q.g.replace("+","p")}">${q.g}</em> ${c.ok?"✅":"✏️"} ${c.n}자`:`<em class="gr gr-${q.g.replace("+","p")}">${q.g}</em>`}</span></button>`; }).join("")}`;
   $("body").querySelectorAll(".grp").forEach(b=>b.onclick=()=>w53Q(+b.dataset.i));
   foot("");
 }
 function w53Q(i){ sec("write"); stopAll(); const q=W53[i], st=w53Load();
-  setTitle(`⭐ 53번 · ${i+1}`,w53Home); $("speed").hidden=true;
+  setTitle(`⭐ 53번 · ${i+1} (${q.lv})`,w53Home); $("speed").hidden=true;
   $("body").innerHTML=`<div class="instr">다음을 참고하여 '${esc(q.topic)}'에 대한 글을 200~300자로 쓰십시오. 단, 글의 제목을 쓰지 마십시오.<span class="vn">Dựa vào nội dung dưới đây, viết đoạn văn 200~300 chữ về '${esc(q.vn)}'. Không viết tiêu đề.</span></div>
-   <div class="pass w53p"><div class="pb"><div class="w53src">조사 기관: ${esc(q.src)}</div>${q.charts.map(c=>`<div class="w53c"><b>${esc(c.title)}</b>${chartSvg(c)}</div>`).join("")}
-    ${q.notes.map(([h,t])=>`<div class="w53n"><span class="chip">${esc(h)}</span> ${esc(t)}</div>`).join("")}</div></div>
+   <div class="pass w53p"><div class="pb">${(q.charts||[]).map(c=>`<div class="w53c"><b>${esc(c.title)}</b>${chartSvg(c)}</div>`).join("")}
+    <table class="w53tb">${q.table.map(([h,ls])=>`<tr><th>${esc(h)}</th><td>${ls.map(esc).join("<br>")}</td></tr>`).join("")}</table></div></div>
+   ${q.frame?`<details class="w53fr" ${q.lv==="기초"?"open":""}><summary>📝 쓰기 틀 · Khung câu</summary><ol>${q.frame.map(l=>`<li>${esc(l)}</li>`).join("")}</ol></details>`:""}
+   ${q.tip?`<div class="tip" style="margin-top:8px">※ ${esc(q.tip)}</div>`:""}
    <div class="gjtop"><b>답안지 · Phiếu trả lời</b><div class="gjsw"><button id="gjon" aria-pressed="true">원고지</button><button id="gjoff" aria-pressed="false">일반</button></div></div>
    <div class="gj" id="gj" aria-hidden="true"></div>
    <textarea id="w53t" class="inp w53t" rows="9" lang="ko" spellcheck="false" placeholder="여기에 쓰세요 · Viết ở đây (200~300자)"></textarea>
@@ -2122,7 +2249,8 @@ function w53Q(i){ sec("write"); stopAll(); const q=W53[i], st=w53Load();
     L.push([!r.notDa.length&&!r.polite.length,r.polite.length?`「-요 / -습니다」로 끝난 문장 ${r.polite.length}개 → 「-다」로 바꾸세요`:r.notDa.length?`「-다」로 안 끝난 문장 ${r.notDa.length}개`:"모든 문장이 「-다」로 끝나요","Đuôi câu 「-다」"]);
     L.push([!r.spoken.length,r.spoken.length?`구어체 ${r.spoken.length}개: ${r.spoken.map(([w,s])=>`「${esc(w)}」→ ${esc(s)}`).join(" · ")}`:"구어체 표현이 없어요","Không dùng văn nói"]);
     L.push([!r.me,r.me?"「저는 · 제 생각」 같은 내 의견이 있어요 → 53번은 의견을 쓰지 않아요":"내 의견 없이 썼어요","Không viết ý kiến riêng"]);
-    L.push([r.nums[0]>=Math.ceil(r.nums[1]/2),`그래프 숫자 ${r.nums[0]} / ${r.nums[1]}개 사용${r.nums[0]>=Math.ceil(r.nums[1]/2)?"":" → 숫자를 더 넣으세요"}`,"Dùng số liệu trong biểu đồ"]);
+    r.no.forEach(([w,m])=>L.push([false,`「${esc(w)}」 → ${esc(m)}`,"Dùng sai hướng tăng / giảm"]));
+    L.push([r.nums[0]>=Math.ceil(r.nums[1]/2),`자료 숫자 ${r.nums[0]} / ${r.nums[1]}개 사용${r.nums[0]>=Math.ceil(r.nums[1]/2)?"":" → 숫자를 더 넣으세요"}`,"Dùng số liệu trong biểu đồ"]);
     const okAll=L.every(x=>x[0])&&r.items.every(x=>x.ok);
     const o=w53Load(); o.c[i]={n:r.n,ok:okAll}; w53Save(o);
     let hl=esc(ta.value.normalize("NFC")); r.spoken.forEach(([w])=>{ hl=hl.split(esc(w)).join(`<mark>${esc(w)}</mark>`); });
@@ -2135,7 +2263,9 @@ function w53Q(i){ sec("write"); stopAll(); const q=W53[i], st=w53Load();
       <div class="tip" style="margin-top:8px">자동 검사는 맞춤법은 못 봐요. 모범 답안과 꼭 비교해 보세요.<span class="vn" style="display:block">Máy không kiểm tra chính tả — hãy so với bài mẫu.</span></div></div>`;
     try{ $("w53r").scrollIntoView({block:"start",behavior:"smooth"}); }catch(e){}
   };
-  const model=()=>{ $("w53m").innerHTML=`<div class="tcard w53model"><h3>모범 답안 · Bài mẫu <small>${w53Len(q.model)}자</small></h3><p>${esc(q.model)}</p></div>`; try{ $("w53m").scrollIntoView({block:"start",behavior:"smooth"}); }catch(e){} };
+  const model=()=>{ $("w53m").innerHTML=`<div class="tcard w53model"><h3>모범 답안 · Bài mẫu <small>${w53Len(q.model)}자</small></h3><p>${esc(q.model)}</p>
+     <div class="w53h">채점 포인트 · Điểm chấm</div><ul>${q.points.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>
+     <div class="w53h">꼭 쓰는 표현 · Mẫu câu nên dùng</div><ul>${q.expr.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`; try{ $("w53m").scrollIntoView({block:"start",behavior:"smooth"}); }catch(e){} };
   foot(`<button class="btn sec" id="w53mb">모범 답안</button><button class="btn pri" id="w53ck">검사하기 · Kiểm tra</button>`);
   $("w53ck").onclick=()=>{ if(!ta.value.trim()){ ta.focus(); return; } show(); };
   $("w53mb").onclick=model;
@@ -2147,7 +2277,7 @@ function topik2(){ sec();
   $("body").innerHTML=`
    <div class="eyebrow" style="margin:2px 0 12px">목표 등급을 고르세요 · CHỌN CẤP ĐỘ MỤC TIÊU</div>
    ${lvlBtn({id:"l34",badge:"3·4급",ko:"3급 · 4급",vn:"Cấp 3 · 4 — lộ trình của cô",mm:`선생님 수업 ${n}일 · 듣기 · 쓰기 · 읽기 · 단어장`,c:"listen"})}
-   ${lvlBtn({id:"l53",badge:"⭐ 53",ko:"쓰기 53번",vn:"Câu 53 · Viết theo biểu đồ",mm:"그래프 보고 200~300자 · 자동 검사",c:"write"})}
+   ${lvlBtn({id:"l53",badge:"⭐ 53",ko:"쓰기 53번",vn:"Câu 53 · Viết theo biểu đồ",mm:`자료 보고 200~300자 · ${W53.length}문제 · 원고지 · 자동 검사`,c:"write"})}
    ${lvlBtn({badge:"5·6급",ko:"5급 · 6급",vn:"Cấp 5 · 6 — cao cấp",mm:"고급 수업은 나중에 열려요 · Sẽ mở sau",c:"write"})}`;
   $("l34").onclick=menu; $("l53").onclick=w53Home;
   foot("");
