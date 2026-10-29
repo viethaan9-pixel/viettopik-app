@@ -438,7 +438,7 @@ function lsKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ co
 function lsSnapshot(){ const p={}; lsKeys().forEach(k=>{ try{ p[k]=localStorage.getItem(k); }catch(e){} }); return p; }
 function lsClear(){ lsKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
 let UNLOCK_ALL=false, GUEST=false;
-const APP_VERSION="10/29 5·6급 듣기 Ngày 26~50";
+const APP_VERSION="10/29 5급·6급 나눔 · 6급 시험";
 const TEACHER_ID="viethaan9";
 /* ---------- data ---------- */
 // type: next(이어질 말) · act(이어서 할 행동) · same(내용과 같은 것) · main(중심 생각)
@@ -1749,8 +1749,9 @@ const lsGet=k=>{ try{ return localStorage.getItem(k); }catch(e){ return null; } 
 const lsSet=(k,v)=>{ try{ localStorage.setItem(k,v); }catch(e){} };
 const TRACK=()=>lsGet("tpk-track");
 const MODE=()=>lsGet("tpk-mode")||"3";
+const is56=()=>{ const m=MODE(); return m==="5"||m==="6"||m==="56"; };
 const t4Open=()=>freeAll()||TRACK()==="4"||dayState(T4_FROM)==="open";
-function setMode(m){ lsSet("tpk-mode",m); const inR=d=>m==="56"?d>=T56_FROM:m==="4"?d>=T4_FROM&&d<T56_FROM:d<T4_FROM, first=m==="56"?T56_FROM:m==="4"?T4_FROM:1;
+function setMode(m){ lsSet("tpk-mode",m); const inR=d=>m==="6"?d>=T6_FROM:m==="5"?d>=T56_FROM&&d<T6_FROM:m==="4"?d>=T4_FROM&&d<T56_FROM:d<T4_FROM, first=m==="6"?T6_FROM:m==="5"?T56_FROM:m==="4"?T4_FROM:1;
   if(!inR(DAY)){ DAY=DAYS[first]?first:DAY; load(); } if(!inR(RDAY)){ RDAY=READ[first]?first:RDAY; rload(); } if(!inR(WDAY)){ WDAY=WDAYS[first]?first:WDAY; wload(); } }
 const LOCK='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:4px"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
 // a subject of a Ngày is "done" only when every question is answered AND every wrong one was solved again (다시 풀기)
@@ -1770,15 +1771,15 @@ function subjDone(d){ // [available subjects, finished subjects] for Ngày d
   if(WDAYS[d]) S.push(wDayDone(d));
   return [S.length,S.filter(Boolean).length];
 }
-const prevOk=d=>{ if(d<=1) return true; const [n,k]=subjDone(d-1); return k>=Math.min(2,n); };
+const prevOk=d=>{ if(d<=1) return true; const [n,k]=subjDone(d-1); return k>=(d>T56_FROM?1:Math.min(2,n)); };   // 5·6급: 듣기·읽기 중 하나
 const freeAll=()=>UNLOCK_ALL||isTeacher();
-function dayState(d){ if(d<=1||freeAll()) return "open"; if(d===T4_FROM&&TRACK()==="4") return "open"; if(d===T56_FROM&&t56Open()) return "open"; return prevOk(d)||started(d)?"open":"prev"; }
+function dayState(d){ if(d<=1||freeAll()) return "open"; if(d===T4_FROM&&TRACK()==="4") return "open"; if(d===T56_FROM&&t56Open()) return "open"; if(d===T6_FROM&&t6Info()&&t6Info().pass) return "open"; return prevOk(d)||started(d)?"open":"prev"; }
 function dayTabs(o){
-  const M=MODE(), lo=M==="56"?T56_FROM:M==="4"?T4_FROM:1, hi=M==="56"?999:M==="4"?T56_FROM-1:T4_FROM-1;
+  const M=MODE(), lo=M==="6"?T6_FROM:M==="5"?T56_FROM:M==="4"?T4_FROM:1, hi=M==="6"?999:M==="5"?T6_FROM-1:M==="4"?T56_FROM-1:T4_FROM-1;
   const ks=Object.keys(o.days).map(Number).filter(d=>d>=lo&&d<=hi).sort((a,b)=>a-b);
   const g=d=>o.subj?gradeOf(o.subj,d):"";
   const chip=d=>g(d)?`<em class="gr gr-${g(d).replace("+","p")}">${g(d)}</em>`:"";
-  const sep=d=>MODE()!=="56"?"":d===T56_FROM?`<div class="dsep"><b>5급</b> · A- ~ A · Ngày ${T56_FROM}~${T6_FROM-1}</div>`:d===T6_FROM?`<div class="dsep"><b>6급</b> · A+ ~ S+ · Ngày ${T6_FROM}~</div>`:"";
+  const sep=d=>true?"":d===T56_FROM?`<div class="dsep"><b>5급</b> · A- ~ A · Ngày ${T56_FROM}~${T6_FROM-1}</div>`:d===T6_FROM?`<div class="dsep"><b>6급</b> · A+ ~ S+ · Ngày ${T6_FROM}~</div>`:"";
   const tabs=ks.map(d=>sep(d)+(()=>{ const st=o.done(d)?"open":dayState(d);
     if(st==="open") return `<button class="day" data-d="${d}" aria-current="${d==o.cur}"><b>${o.days[d].title}${chip(d)}</b><span>${o.days[d].sub}</span></button>`;
     return `<button class="day lock" data-why="${d}" title="Ngày ${d-1}에서 두 과목을 다 풀고 틀린 문제를 한 번 더 풀면 열려요"><b>${LOCK}${o.days[d].title}${chip(d)}</b><span>잠김 · Khóa</span></button>`; })()).join("");
@@ -1792,7 +1793,7 @@ function whyLocked(d){
   if(DAYS[p]) L.push(["듣기 · Nghe",lInfo(p)]);
   if(READ[p]) L.push(["읽기 · Đọc",rInfo(p)]);
   if(WDAYS[p]) L.push(["쓰기 · Viết",wInfo(p)]);
-  const need=Math.min(2,L.length);
+  const need=d>T56_FROM?1:Math.min(2,L.length);
   return `<div class="fb no" style="margin-top:10px"><b>🔒 Ngày ${d}는 아직 잠겨 있어요 · Ngày ${d} chưa mở</b>
     Ngày ${p}에서 ${need===L.length&&need<2?"아래 과목을":`${L.length}과목 중 ${need}과목을`} 끝까지 다 풀고, 틀린 문제를 「다시 풀기」로 한 번 더 풀어야 열려요.<span class="vn">Phải làm xong ${need}/${L.length} môn của Ngày ${p} và làm lại các câu sai một lần nữa thì mới mở được.</span>
     <div style="margin-top:8px">${L.map(([n,x])=>`${x.done?"✅":"⬜"} ${n}${x.done?"":x.all?` · 🔁 틀린 문제 ${x.left}개 다시 풀기 · làm lại ${x.left} câu sai`:` · ${x.ans}/${n.startsWith("쓰기")?WDAYS[p].length:(n.startsWith("듣기")?DAYS[p]:READ[p]).q.length}문제 풂`}`).join("<br>")}</div></div>`;
@@ -1833,7 +1834,7 @@ function voiceSet(){
   foot(`<button class="btn pri" id="vdone">다 됐어요 · Xong</button>`); $("vdone").onclick=home;
 }
 function home(){ sec("listen");
-  stopAll(); setTitle(MODE()==="56"?"5·6급 듣기":"TOPIK II 듣기",MODE()==="56"?lv56:menu); $("speed").hidden=false; $("speed").textContent=`속도 ${(rate%1?String(rate):rate.toFixed(1))}×`;
+  stopAll(); setTitle(is56()?`${MODE()}급 듣기`:"TOPIK II 듣기",is56()?lv56:menu); $("speed").hidden=false; $("speed").textContent=`속도 ${(rate%1?String(rate):rate.toFixed(1))}×`;
   const qs=Q(), done=qs.filter((_,i)=>ST.res[i]!=null).length, ok=qs.filter((_,i)=>ST.res[i]===true).length;
   $("body").innerHTML=`
    ${dayTabs({subj:"listen",days:DAYS,cur:DAY,done:d=>dayDone("tpk-day",d,DAYS[d]?DAYS[d].q.length:1e9)})}
@@ -2495,7 +2496,7 @@ function menu(){ sec();
   stopAll(); setTitle("TOPIK II · 3·4급",topik2); $("speed").hidden=true;
   if(!TRACK()){ const any=Object.keys(localStorage).some(k=>/^tpk-(day|read|write)\d*$/.test(k));
     if(any||freeAll()){ lsSet("tpk-track","3"); } else return chooseTrack(); }
-  if(MODE()==="56") lsSet("tpk-mode",TRACK()==="4"?"4":"3");
+  if(is56()) lsSet("tpk-mode",TRACK()==="4"?"4":"3");
   { const m=MODE(); if(m==="4"&&!t4Open()) lsSet("tpk-mode","3"); setMode(MODE()); }
   $("body").innerHTML=`
    <div class="mswitch"><button data-mode="3" aria-pressed="${MODE()==="3"}"><b>TOPIK 3</b><span>Ngày 1~10 · D~C+</span></button>
@@ -2567,6 +2568,21 @@ function placeResult(){ sec(); stopAll(); const pass=PT.ok>=9; setTitle("TOPIK 4
 const T56=[["R",25,4],["L",25,20],["R",25,18],["W",21,9],["R",23,13],["L",24,17],["R",24,12],["L",25,8],["R",24,19],["W",21,18]];
 const t56Info=()=>{ try{ return JSON.parse(localStorage.getItem("tpk-t56")||"null"); }catch(e){ return null; } };
 const t56Open=()=>freeAll()||!!(t56Info()&&t56Info().pass);
+// 6급부터 시작하려면: 5급(Ngày 31~35, A)에서 가장 어려운 10문제 (듣기 5 · 읽기 5), 8개 이상
+const T6L=[["L",35,8],["R",35,18],["L",35,14],["R",35,16],["L",35,17],["R",34,19],["L",34,18],["R",35,13],["L",35,20],["R",34,12]];
+const t6Info=()=>{ try{ return JSON.parse(localStorage.getItem("tpk-t6")||"null"); }catch(e){ return null; } };
+const t6Open=()=>freeAll()||!!(t6Info()&&t6Info().pass)||dayState(T6_FROM)==="open";
+const TESTS={
+ t56:{list:T56,need:9,key:"tpk-t56",title:"5·6급 시험",back:()=>topik2(),
+   ok:["🎉 합격! 5·6급 연습이 열렸어요","TOPIK II 화면에서 「5급 · 6급」을 누르세요.","Đạt! Đã mở luyện tập cấp 5·6."],
+   no:["아쉬워요. 9문제 이상 맞혀야 해요","TOPIK 4 (Ngày 11~)를 더 연습한 뒤 언제든 다시 볼 수 있어요.","Cần đúng ít nhất 9 câu. Luyện thêm TOPIK 4 rồi thi lại nhé.","괜찮아요! TOPIK 4를 더 공부하고 다시 도전해요"],
+   done:()=>topik2()},
+ t6:{list:T6L,need:8,key:"tpk-t6",title:"6급 시험",back:()=>lv56(),
+   ok:["🎉 합격! 6급(Ngày 36~)부터 시작해요","5급으로 돌아가고 싶으면 위의 「5급」 버튼을 누르세요.","Đạt! Bắt đầu từ cấp 6 (Ngày 36). Muốn quay lại thì bấm 「5급」."],
+   no:["아쉬워요. 8문제 이상 맞혀야 해요","5급 (Ngày 26~35)을 더 연습한 뒤 언제든 다시 볼 수 있어요.","Cần đúng ít nhất 8 câu. Luyện thêm cấp 5 rồi thi lại nhé.","괜찮아요! 5급부터 차근차근 해요"],
+   done:pass=>{ if(pass) lsSet("tpk-mode56","6"); lv56(); }}
+};
+let TC=TESTS.t56;
 let T6={i:0,ok:0,ans:[]};
 function t56Intro(){ sec(); stopAll(); setTitle("5·6급 시험 · Thi lên cấp 5·6",topik2); $("speed").hidden=true;
   const last=t56Info();
@@ -2577,14 +2593,24 @@ function t56Intro(){ sec(); stopAll(); setTitle("5·6급 시험 · Thi lên cấ
     <div class="vn" style="margin-top:6px">10 câu khó nhất của TOPIK 4 (5 đọc, 3 nghe, 2 câu viết 51·52). Đúng ≥ 9 câu thì mở cấp 5·6. Phần viết chỉ cần đúng ㉠ hoặc ㉡.</div>
     ${last?`<div class="tip" style="margin-top:8px">지난 시험: ${last.ok} / 10 ${last.pass?"· 합격 ✅":""}</div>`:""}</div>`;
   foot(`<button class="btn pri" id="t6go">시험 시작 · Bắt đầu</button>`);
-  $("t6go").onclick=()=>{ T6={i:0,ok:0,ans:[]}; t56Q(); };
+  $("t6go").onclick=()=>{ TC=TESTS.t56; T6={i:0,ok:0,ans:[]}; t56Q(); };
 }
-function t56Q(){ sec(); stopAll(); const [k,d,n]=T56[T6.i], last=T6.i===T56.length-1;
-  setTitle(`5·6급 시험 · ${T6.i+1} / ${T56.length}`,()=>{ if(confirm("시험을 그만할까요? · Dừng bài kiểm tra?")) topik2(); }); $("speed").hidden=k!=="L";
-  const prog=`<div class="prog"><span>${T6.i+1} / ${T56.length}</span><div class="bar"><i style="width:${T6.i/T56.length*100}%"></i></div></div>`;
+function t6Intro(){ sec(); stopAll(); setTitle("6급 시험 · Thi lên cấp 6",lv56); $("speed").hidden=true;
+  const last=t6Info();
+  $("body").innerHTML=`<div class="tcard" style="margin-top:4px"><h3>6급 시험 · 10문제</h3><div class="vn">Bài kiểm tra lên cấp 6 · 10 câu</div>
+    <ul><li>5급에서 가장 어려운 문제 10개예요. <b>듣기 5 · 읽기 5</b>.</li><li><b>8문제 이상</b> 맞히면 6급 (Ngày 36)부터 시작할 수 있어요.</li>
+    <li>듣기는 두 번까지 들을 수 있어요. 답을 고르면 바로 다음 문제로 넘어가요.</li><li>시험을 안 봐도 5급 Ngày 35까지 끝내면 6급이 열려요.</li></ul>
+    <div class="vn" style="margin-top:6px">10 câu khó nhất của cấp 5 (5 nghe, 5 đọc). Đúng ≥ 8 câu thì học từ Ngày 36. Không thi thì làm xong Ngày 35 cũng mở cấp 6.</div>
+    ${last?`<div class="tip" style="margin-top:8px">지난 시험: ${last.ok} / 10 ${last.pass?"· 합격 ✅":""}</div>`:""}</div>`;
+  foot(`<button class="btn pri" id="t6go">시험 시작 · Bắt đầu</button>`);
+  $("t6go").onclick=()=>{ TC=TESTS.t6; T6={i:0,ok:0,ans:[]}; t56Q(); };
+}
+function t56Q(){ sec(); stopAll(); const [k,d,n]=TC.list[T6.i], last=T6.i===TC.list.length-1;
+  setTitle(`${TC.title} · ${T6.i+1} / ${TC.list.length}`,()=>{ if(confirm("시험을 그만할까요? · Dừng bài kiểm tra?")) TC.back(); }); $("speed").hidden=k!=="L";
+  const prog=`<div class="prog"><span>${T6.i+1} / ${TC.list.length}</span><div class="bar"><i style="width:${T6.i/TC.list.length*100}%"></i></div></div>`;
   const next=ok=>{ stopAll(); T6.ans.push(ok); if(ok) T6.ok++; if(last) t56Result(); else { T6.i++; t56Q(); $("body").scrollTop=0; } };
   foot(`<button class="btn sec" id="t6give">포기 · Bỏ cuộc</button>`);
-  $("t6give").onclick=()=>{ if(!confirm("시험을 포기할까요? · Bỏ cuộc?")) return; stopAll(); while(T6.ans.length<T56.length) T6.ans.push(false); T6.gaveUp=true; t56Result(); };
+  $("t6give").onclick=()=>{ if(!confirm("시험을 포기할까요? · Bỏ cuộc?")) return; stopAll(); while(T6.ans.length<TC.list.length) T6.ans.push(false); T6.gaveUp=true; t56Result(); };
   if(k==="W"){ const q=WDAYS[d][n-1], is51=q.k==="51";
     const mk=t=>esc(t).replace(/\( ?㉠ ?\)/g,'<span class="mk2">( ㉠ )</span>').replace(/\( ?㉡ ?\)/g,'<span class="mk2">( ㉡ )</span>');
     $("body").innerHTML=`${prog}<div class="qhead"><span class="qno">${String(T6.i+1).padStart(2,"0")}</span><span class="chip">쓰기 · ${is51?"51번":"52번"}</span></div>
@@ -2593,7 +2619,7 @@ function t56Q(){ sec(); stopAll(); const [k,d,n]=T56[T6.i], last=T6.i===T56.leng
       <div class="blank2"><b>㉠</b><input class="inp" id="t6a" lang="ko" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="㉠ 쓰기 · Viết ㉠"></div>
       <div class="blank2"><b>㉡</b><input class="inp" id="t6b" lang="ko" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" placeholder="㉡ 쓰기 · Viết ㉡"></div>`;
     foot(`<button class="btn sec" id="t6give">포기 · Bỏ cuộc</button><button class="btn pri" id="t6ok">${last?"제출 · Nộp bài":"다음 · Tiếp"}</button>`);
-    $("t6give").onclick=()=>{ if(!confirm("시험을 포기할까요? · Bỏ cuộc?")) return; while(T6.ans.length<T56.length) T6.ans.push(false); T6.gaveUp=true; t56Result(); };
+    $("t6give").onclick=()=>{ if(!confirm("시험을 포기할까요? · Bỏ cuộc?")) return; while(T6.ans.length<TC.list.length) T6.ans.push(false); T6.gaveUp=true; t56Result(); };
     const go=()=>{ const a=$("t6a").value.trim(), b=$("t6b").value.trim(); if(!a){ $("t6a").focus(); return; } if(!b){ $("t6b").focus(); return; }
       const m=(v,arr)=>arr.some(x=>norm(x)===norm(v)); next(m(a,q.a1)||m(b,q.a2)); };   // 둘 중 하나만 맞아도 정답
     $("t6ok").onclick=go; $("t6a").onkeydown=e=>{ if(e.key==="Enter"&&!e.isComposing){ e.preventDefault(); $("t6b").focus(); } };
@@ -2601,7 +2627,7 @@ function t56Q(){ sec(); stopAll(); const [k,d,n]=T56[T6.i], last=T6.i===T56.leng
     return; }
   let q,head,body;
   if(k==="L"){ q=DAYS[d].q[n-1]; const T=TYPES[q.t];
-    head=`<div class="qhead"><span class="qno">${String(T6.i+1).padStart(2,"0")}</span><span class="chip">듣기 · ${q.sp==="F"?T.ko.replace("남자","여자"):T.ko}</span></div><div class="instr">${q.sp==="F"?T.q.replace("남자","여자"):T.q}<span class="vn">${q.sp==="F"?T.qvn.replace("người đàn ông","người phụ nữ"):T.qvn}</span></div>`;
+    head=`<div class="qhead"><span class="qno">${String(T6.i+1).padStart(2,"0")}</span><span class="chip">듣기 · ${q.sp==="F"?T.ko.replace("남자","여자"):T.ko}</span></div><div class="instr">${q.pr?esc(q.pr):q.sp==="F"?T.q.replace("남자","여자"):T.q}<span class="vn">${q.sp==="F"?T.qvn.replace("người đàn ông","người phụ nữ"):T.qvn}</span></div>`;
     body=`<div class="player"><button class="playbtn" id="pbtn" aria-label="듣기">${ICON.play}</button><div class="wave" id="wave"><i></i><i></i><i></i><i></i><i></i></div><div class="eyebrow" id="plays" style="margin-top:8px">2번 들을 수 있어요 · Nghe tối đa 2 lần</div></div>`;
   } else { q=READ[d].q[n-1]; const I=RI[q.i];
     head=`<div class="qhead"><span class="qno">${String(T6.i+1).padStart(2,"0")}</span><span class="chip">읽기 · ${esc(q.t)}</span></div><div class="instr">${q.who?I.q.replace("어머니",q.who):I.q}<span class="vn">${I.v}</span></div>`;
@@ -2613,28 +2639,31 @@ function t56Q(){ sec(); stopAll(); const [k,d,n]=T56[T6.i], last=T6.i===T56.leng
     setTimeout(()=>{ if($("pbtn")===pb&&left===2) pb.click(); },400); }
   $("chs").querySelectorAll(".ch").forEach(b=>b.onclick=()=>next(+b.dataset.i===q.a));
 }
-function t56Result(){ sec(); stopAll(); const pass=T6.ok>=9; setTitle("5·6급 시험 결과",null); $("speed").hidden=true;
-  const prev=t56Info(); lsSet("tpk-t56",JSON.stringify({ok:T6.ok,at:Date.now(),pass:pass||!!(prev&&prev.pass)}));
-  $("body").innerHTML=`<section class="hero" style="text-align:center"><div class="eyebrow">맞힌 문제 · CÂU ĐÚNG</div><div class="big">${T6.ok}<small> / ${T56.length}</small></div>
+function t56Result(){ sec(); stopAll(); const pass=T6.ok>=TC.need; setTitle(TC.title+" 결과",null); $("speed").hidden=true;
+  const prev=JSON.parse(lsGet(TC.key)||"null"); lsSet(TC.key,JSON.stringify({ok:T6.ok,at:Date.now(),pass:pass||!!(prev&&prev.pass)}));
+  const M=pass?TC.ok:TC.no;
+  $("body").innerHTML=`<section class="hero" style="text-align:center"><div class="eyebrow">맞힌 문제 · CÂU ĐÚNG</div><div class="big">${T6.ok}<small> / ${TC.list.length}</small></div>
     <div style="margin-top:10px;font-size:22px">${T6.ans.map(x=>x?"🟢":"⚪").join("")}</div></section>
-    <div class="fb ${pass?"ok":"no"}" style="margin-top:12px"><b>${pass?"🎉 합격! 5·6급 연습이 열렸어요":T6.gaveUp?"괜찮아요! TOPIK 4를 더 공부하고 다시 도전해요":"아쉬워요. 9문제 이상 맞혀야 해요"}</b>${pass?"TOPIK II 화면에서 「5급 · 6급」을 누르세요.":"TOPIK 4 (Ngày 11~)를 더 연습한 뒤 언제든 다시 볼 수 있어요."}
-    <span class="vn">${pass?"Đạt! Đã mở luyện tập cấp 5·6.":"Cần đúng ít nhất 9 câu. Luyện thêm TOPIK 4 rồi thi lại nhé."}</span></div>`;
-  foot(`<button class="btn pri" id="t6done">확인 · OK</button>`); $("t6done").onclick=topik2;
+    <div class="fb ${pass?"ok":"no"}" style="margin-top:12px"><b>${!pass&&T6.gaveUp?M[3]:M[0]}</b>${M[1]}<span class="vn">${M[2]}</span></div>`;
+  foot(`<button class="btn pri" id="t6done">확인 · OK</button>`); $("t6done").onclick=()=>TC.done(pass);
 }
 function lv56(){ sec(); stopAll(); setTitle("TOPIK II · 5·6급",topik2); $("speed").hidden=true;
-  setMode("56");
-  const rd=Object.keys(READ).map(Number).filter(d=>d>=T56_FROM);
-  $("body").innerHTML=`<div class="tcard" style="margin-top:4px"><h3>🎓 5·6급 연습</h3><div class="vn">Luyện cấp 5·6</div>
-     <ul><li>선생님이 날마다 조금씩 어렵게 만든 문제예요. Ngày ${rd[0]}부터 차례로 풀어요.</li><li><b>5급</b>: Ngày ${T56_FROM}~${T6_FROM-1} (A- · A) · <b>6급</b>: Ngày ${T6_FROM}~${rd[rd.length-1]} (A+ · S · S+)</li><li>앞 Ngày의 <b>듣기와 읽기</b>를 다 풀고 틀린 문제를 한 번 더 풀면 다음 Ngày가 열려요.</li></ul>
-     <div class="vn" style="margin-top:6px">Bài cô soạn khó dần mỗi ngày. Cấp 5: Ngày 26~35 · Cấp 6: Ngày 36~50. Làm xong cả nghe và đọc của Ngày trước, làm lại câu sai thì mở Ngày sau.</div></div>
+  let m=lsGet("tpk-mode56")||"5"; if(m==="6"&&!t6Open()) m="5"; lsSet("tpk-mode56",m); setMode(m);
+  const lo=m==="6"?T6_FROM:T56_FROM, hi=m==="6"?999:T6_FROM-1;
+  const rd=Object.keys(READ).map(Number).filter(d=>d>=lo&&d<=hi), ld=Object.keys(DAYS).map(Number).filter(d=>d>=lo&&d<=hi);
+  $("body").innerHTML=`<div class="mswitch"><button data-lv="5" aria-pressed="${m==="5"}"><b>5급</b><span>Ngày ${T56_FROM}~${T6_FROM-1} · A- ~ A</span></button>
+     <button data-lv="6" aria-pressed="${m==="6"}" class="${t6Open()?"":"lk"}"><b>${t6Open()?"":"🔒 "}6급</b><span>${t6Open()?`Ngày ${T6_FROM}~ · A+ ~ S+`:"Kiểm tra 10 câu · Thi lên cấp 6"}</span></button></div>
+   <div class="tcard" style="margin-top:0"><div class="vn">${m==="5"?"Cấp 5 · bài cô soạn khó dần mỗi ngày.":"Cấp 6 · bài khó nhất (A+ → S → S+)."} Làm xong <b>nghe hoặc đọc</b> của Ngày trước (và làm lại câu sai) thì mở Ngày sau.</div>
+     <div class="tip" style="margin-top:4px">앞 Ngày의 <b>듣기나 읽기 중 하나</b>를 다 풀고 틀린 문제를 한 번 더 풀면 다음 Ngày가 열려요.</div></div>
    <div class="menu">
-    <button class="mcard" data-m="read"><span class="ic">${IC.read}</span><b>읽기</b><span class="ds">5급 ${T6_FROM-T56_FROM}일 · 6급 ${rd.length-(T6_FROM-T56_FROM)}일</span></button>
-    <button class="mcard" data-m="listen"><span class="ic">${IC.listen}</span><b>듣기</b><span class="ds">5급 ${T6_FROM-T56_FROM}일 · 6급 ${Object.keys(DAYS).filter(d=>+d>=T6_FROM).length}일</span></button>
+    <button class="mcard" data-m="listen"><span class="ic">${IC.listen}</span><b>듣기</b><span class="ds">Ngày ${ld[0]}~${ld[ld.length-1]} · ${ld.length}일</span></button>
+    <button class="mcard" data-m="read"><span class="ic">${IC.read}</span><b>읽기</b><span class="ds">Ngày ${rd[0]}~${rd[rd.length-1]} · ${rd.length}일</span></button>
     <button class="mcard" disabled><span class="ic">${IC.write}</span><b>쓰기</b><span class="ds">준비 중 · Sắp có</span></button>
     <button class="mcard" disabled><span class="ic">${IC.vocab}</span><b>단어장</b><span class="ds">준비 중 · Sắp có</span></button>
    </div>`;
-  $("body").querySelector('.mcard[data-m="listen"]').onclick=()=>{ if(!DAYS[DAY]||DAY<T56_FROM){ DAY=T56_FROM; load(); } home(); };
-  $("body").querySelector('.mcard[data-m="read"]').onclick=()=>{ if(!READ[RDAY]||RDAY<T56_FROM){ RDAY=T56_FROM; rload(); } rHome(); };
+  $("body").querySelectorAll("[data-lv]").forEach(b=>b.onclick=()=>{ const v=b.dataset.lv; if(v==="6"&&!t6Open()) return t6Intro(); lsSet("tpk-mode56",v); lv56(); });
+  $("body").querySelector('.mcard[data-m="listen"]').onclick=()=>{ if(!DAYS[DAY]||DAY<lo||DAY>hi){ DAY=ld[0]; load(); } home(); };
+  $("body").querySelector('.mcard[data-m="read"]').onclick=()=>{ if(!READ[RDAY]||RDAY<lo||RDAY>hi){ RDAY=rd[0]; rload(); } rHome(); };
   foot("");
 }
 /* ---------- level picker: TOPIK I / TOPIK II → 3·4급 / 5·6급 ---------- */
@@ -4252,7 +4281,7 @@ const rsets=()=>READ[RDAY].sets||(RQ().length===30?RSETS30:RSETS20);
 
 /* ---------- reading views ---------- */
 function rHome(){ sec("read");
-  stopAll(); setTitle(MODE()==="56"?"5·6급 읽기":"TOPIK II 읽기",MODE()==="56"?lv56:menu); $("speed").hidden=true;
+  stopAll(); setTitle(is56()?`${MODE()}급 읽기`:"TOPIK II 읽기",is56()?lv56:menu); $("speed").hidden=true;
   const qs=RQ(), done=qs.filter((_,i)=>RS.res[i]!=null).length, ok=qs.filter((_,i)=>RS.res[i]===true).length;
   $("body").innerHTML=`
    ${dayTabs({subj:"read",days:READ,cur:RDAY,done:d=>dayDone("tpk-read",d,READ[d]?READ[d].q.length:1e9)})}
