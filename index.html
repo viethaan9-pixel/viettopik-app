@@ -438,7 +438,7 @@ function lsKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ co
 function lsSnapshot(){ const p={}; lsKeys().forEach(k=>{ try{ p[k]=localStorage.getItem(k); }catch(e){} }); return p; }
 function lsClear(){ lsKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
 let UNLOCK_ALL=false, GUEST=false;
-const APP_VERSION="10/29 5급·6급 나눔 · 6급 시험";
+const APP_VERSION="10/29 쓰기 자동 채점";
 const TEACHER_ID="viethaan9";
 /* ---------- data ---------- */
 // type: next(이어질 말) · act(이어서 할 행동) · same(내용과 같은 것) · main(중심 생각)
@@ -2479,6 +2479,11 @@ function wload(){ WS={n3:{},n3a:{},p:{},pa:{}}; try{const s=JSON.parse(localStor
 function wDayDone(d){ return !!WDAYS[d]&&wInfo(d).done; }
 function wsave(){ try{localStorage.setItem(WKEY(),JSON.stringify(WS))}catch(e){} }
 const norm=s=>String(s||"").replace(/[\s.,!?~·"'()]/g,"");
+// strict auto grading: only answers inside the accepted range count. Spacing, punctuation and
+// standard contractions (되었→됐, 하였→했, 것이→게 …) are treated as the same answer.
+const ANS_CANON=[["되었","됐"],["되어","돼"],["하였","했"],["하여","해"],["주었","줬"],["주어","줘"],["보았","봤"],["보아","봐"],["두었","뒀"],["두어","둬"],["오았","왔"],["것이","게"],["것을","걸"],["것은","건"],["무엇을","뭘"],["이것은","이건"],["그것은","그건"]];
+const canon=v=>{ let t=norm(v).normalize("NFC"); ANS_CANON.forEach(([a,b])=>{ t=t.split(a).join(b); }); return t; };
+const ansOk=(v,list)=>!!String(v||"").trim()&&(list||[]).some(x=>canon(x)===canon(v));
 const IC={
  listen:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14v-2a9 9 0 0 1 18 0v2"/><path d="M21 15a2 2 0 0 1-2 2h-1v-6h1a2 2 0 0 1 2 2zM3 15a2 2 0 0 0 2 2h1v-6H5a2 2 0 0 0-2 2z"/></svg>',
  write:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
@@ -2621,7 +2626,7 @@ function t56Q(){ sec(); stopAll(); const [k,d,n]=TC.list[T6.i], last=T6.i===TC.l
     foot(`<button class="btn sec" id="t6give">포기 · Bỏ cuộc</button><button class="btn pri" id="t6ok">${last?"제출 · Nộp bài":"다음 · Tiếp"}</button>`);
     $("t6give").onclick=()=>{ if(!confirm("시험을 포기할까요? · Bỏ cuộc?")) return; while(T6.ans.length<TC.list.length) T6.ans.push(false); T6.gaveUp=true; t56Result(); };
     const go=()=>{ const a=$("t6a").value.trim(), b=$("t6b").value.trim(); if(!a){ $("t6a").focus(); return; } if(!b){ $("t6b").focus(); return; }
-      const m=(v,arr)=>arr.some(x=>norm(x)===norm(v)); next(m(a,q.a1)||m(b,q.a2)); };   // 둘 중 하나만 맞아도 정답
+      const m=(v,arr)=>ansOk(v,arr); next(m(a,q.a1)||m(b,q.a2)); };   // 둘 중 하나만 맞아도 정답
     $("t6ok").onclick=go; $("t6a").onkeydown=e=>{ if(e.key==="Enter"&&!e.isComposing){ e.preventDefault(); $("t6b").focus(); } };
     $("t6b").onkeydown=e=>{ if(e.key==="Enter"&&!e.isComposing){ e.preventDefault(); go(); } };
     return; }
@@ -2990,7 +2995,7 @@ function wHome(){ sec("write");
   $("body").innerHTML=`
    ${dayTabs({subj:"write",days:Object.fromEntries(Object.keys(WDAYS).map(d=>[d,{title:"Ngày "+d,sub:WDAYS[d].length+"문제"}])),cur:WDAY,done:d=>!!WDAYS[d]&&wDayDone(d)})}
    ${is51Day()?`<div class="tcard" style="margin-top:4px"><h3>51·52번 실전 연습</h3><div class="vn">Luyện đề thật câu 51·52</div>
-    <ul><li>글을 읽고 ㉠과 ㉡에 들어갈 말을 각각 쓰세요. 실제 시험과 같은 형식이에요.</li><li>1~10번은 51번(실용문): 글의 문체(-습니다 / 해요 / 반말)를 그대로 따라 쓰세요.</li><li>11~20번은 52번(설명문): "-다"체로 쓰고, 앞뒤 접속어(그래서, 그러나, 따라서)를 꼭 보세요.</li><li>모범 답안과 다르게 썼으면 직접 비교해서 맞았는지 고르세요.</li></ul>
+    <ul><li>글을 읽고 ㉠과 ㉡에 들어갈 말을 각각 쓰세요. 실제 시험과 같은 형식이에요.</li><li>1~10번은 51번(실용문): 글의 문체(-습니다 / 해요 / 반말)를 그대로 따라 쓰세요.</li><li>11~20번은 52번(설명문): "-다"체로 쓰고, 앞뒤 접속어(그래서, 그러나, 따라서)를 꼭 보세요.</li><li>정답 범위 안의 답만 정답이에요. 띄어쓰기·문장 부호·준말(됐다/되었다)은 상관없지만, 다른 표현은 오답이 돼요. 틀리면 모범 답안을 꼭 읽어 보세요.</li></ul>
     <div class="vn" style="margin-top:6px">Đọc bài, viết vào ㉠ và ㉡. Câu 1~10 giữ đúng thể văn; câu 11~20 viết thể "-다", chú ý từ nối trước sau.</div></div>`:`<div class="tcard" style="margin-top:4px"><h3>이렇게 공부하세요</h3><div class="vn">Cách học</div>
     <ul><li>괄호 안의 말을 문장에 맞게 바꿔 쓰세요. 쓰고 「확인」을 누르면 바로 채점돼요.</li><li>틀리면 정답과 문법 포인트를 꼭 읽어 보세요.</li><li>1~10번은 실용문(-습니다 / 해요), 11~20번은 설명문(-다)이에요.</li></ul>
     <div class="vn" style="margin-top:6px">Chia từ trong ngoặc cho hợp với câu, bấm 「확인」 để chấm ngay. Sai thì đọc kỹ đáp án và điểm ngữ pháp.</div></div>`}
@@ -3047,8 +3052,8 @@ function renderN3(){ sec("write");
   const check=give=>{
     const v=give?"":inp.value.trim(); if(!give&&!v){inp.focus();return;}
     if(give) return done(false,"",false);
-    if(q.a.some(x=>norm(x)===norm(v))) return done(true,v,false);
-    if(free&&!hint&&!rv){ // another wording may also be right: let the student compare and decide
+    if(ansOk(v,q.a)) return done(true,v,false);
+    if(false){
       inp.disabled=true; if($("hb")) $("hb").remove();
       $("fb").innerHTML=`<div class="fb"><b>모범 답안과 비교해 보세요 · So sánh với đáp án mẫu</b>내 답: <strong>${esc(v)}</strong><br>모범 답안: <strong>${esc(q.a.join(" / "))}</strong> (괄호 말: ${esc(q.b)})<div class="tip" style="margin-top:6px">뜻과 문법이 맞으면 「맞았어요」를 누르세요.<span class="vn" style="display:block">Nếu đúng nghĩa và ngữ pháp thì bấm 「Đúng」.</span></div></div>`;
       foot(`<button class="btn sec" id="sn">틀렸어요 · Sai</button><button class="btn pri" id="sy">맞았어요 · Đúng</button>`);
@@ -3079,7 +3084,7 @@ function render51(k,q,last){
    <div class="blank2"><b>㉡</b><input class="inp" id="i2" lang="ko" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" placeholder="㉡ 여기에 쓰세요 · Viết ㉡"></div>
    <div id="fb"></div>`;
   const i1=$("i1"), i2=$("i2"), A=[q.a1,q.a2];
-  const match=(v,a)=>!!v&&a.some(x=>norm(x)===norm(v));
+  const match=(v,a)=>ansOk(v,a);
   const finish=(oks,vs)=>{
     const ok=oks[0]&&oks[1];
     if(W.rv) WS.fix[k]=ok; else { WS.n3[k]=ok; WS.n3a[k]=vs; WS.b2[k]=oks; } wsave(); W.res[k]=ok;
@@ -3094,8 +3099,8 @@ function render51(k,q,last){
     if(give) return finish([false,false],["",""]);
     if(!vs[0]){ i1.focus(); return; } if(!vs[1]){ i2.focus(); return; }
     const auto=[match(vs[0],A[0]),match(vs[1],A[1])];
-    if(auto[0]&&auto[1]) return finish(auto,vs);
-    // a blank that differs from the model answers: the student compares and decides
+    return finish(auto,vs);   // strict: outside the accepted answers = wrong
+
     const pick=auto.map(x=>x?true:null);
     i1.disabled=i2.disabled=true;
     const row=j=>auto[j]?`<div style="margin-top:8px"><b>${j?"㉡":"㉠"}</b> ${esc(vs[j])} ✓</div>`:
