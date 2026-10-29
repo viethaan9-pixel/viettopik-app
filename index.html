@@ -436,7 +436,7 @@ function lsKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ co
 function lsSnapshot(){ const p={}; lsKeys().forEach(k=>{ try{ p[k]=localStorage.getItem(k); }catch(e){} }); return p; }
 function lsClear(){ lsKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
 let UNLOCK_ALL=false, GUEST=false;
-const APP_VERSION="10/29 5·6급 시험";
+const APP_VERSION="10/29 5·6급 시험 쓰기 완화";
 const TEACHER_ID="viethaan9";
 /* ---------- data ---------- */
 // type: next(이어질 말) · act(이어서 할 행동) · same(내용과 같은 것) · main(중심 생각)
@@ -2006,9 +2006,9 @@ function t56Intro(){ sec(); stopAll(); setTitle("5·6급 시험 · Thi lên cấ
   const last=t56Info();
   $("body").innerHTML=`<div class="tcard" style="margin-top:4px"><h3>5·6급 시험 · 10문제</h3><div class="vn">Bài kiểm tra lên cấp 5·6 · 10 câu</div>
     <ul><li>TOPIK 4에서 가장 어려운 문제 10개예요. <b>읽기 5 · 듣기 3 · 쓰기 51·52번 2</b>.</li><li><b>9문제 이상</b> 맞히면 5·6급 연습이 열려요.</li>
-    <li>듣기는 두 번까지 들을 수 있어요. 답을 고르면 바로 다음 문제로 넘어가요.</li><li>쓰기는 ㉠과 ㉡을 <b>둘 다</b> 맞게 써야 정답이에요. 띄어쓰기와 문장 부호는 상관없어요.</li>
+    <li>듣기는 두 번까지 들을 수 있어요. 답을 고르면 바로 다음 문제로 넘어가요.</li><li>쓰기는 ㉠과 ㉡ 중 <b>하나만 맞아도</b> 정답이에요. 띄어쓰기와 문장 부호는 상관없어요.</li>
     <li>합격하지 못해도 TOPIK 4를 더 공부하고 언제든 다시 볼 수 있어요.</li></ul>
-    <div class="vn" style="margin-top:6px">10 câu khó nhất của TOPIK 4 (5 đọc, 3 nghe, 2 câu viết 51·52). Đúng ≥ 9 câu thì mở cấp 5·6. Phần viết phải đúng cả ㉠ và ㉡.</div>
+    <div class="vn" style="margin-top:6px">10 câu khó nhất của TOPIK 4 (5 đọc, 3 nghe, 2 câu viết 51·52). Đúng ≥ 9 câu thì mở cấp 5·6. Phần viết chỉ cần đúng ㉠ hoặc ㉡.</div>
     ${last?`<div class="tip" style="margin-top:8px">지난 시험: ${last.ok} / 10 ${last.pass?"· 합격 ✅":""}</div>`:""}</div>`;
   foot(`<button class="btn pri" id="t6go">시험 시작 · Bắt đầu</button>`);
   $("t6go").onclick=()=>{ T6={i:0,ok:0,ans:[]}; t56Q(); };
@@ -2029,7 +2029,7 @@ function t56Q(){ sec(); stopAll(); const [k,d,n]=T56[T6.i], last=T6.i===T56.leng
     foot(`<button class="btn sec" id="t6give">포기 · Bỏ cuộc</button><button class="btn pri" id="t6ok">${last?"제출 · Nộp bài":"다음 · Tiếp"}</button>`);
     $("t6give").onclick=()=>{ if(!confirm("시험을 포기할까요? · Bỏ cuộc?")) return; while(T6.ans.length<T56.length) T6.ans.push(false); T6.gaveUp=true; t56Result(); };
     const go=()=>{ const a=$("t6a").value.trim(), b=$("t6b").value.trim(); if(!a){ $("t6a").focus(); return; } if(!b){ $("t6b").focus(); return; }
-      const m=(v,arr)=>arr.some(x=>norm(x)===norm(v)); next(m(a,q.a1)&&m(b,q.a2)); };
+      const m=(v,arr)=>arr.some(x=>norm(x)===norm(v)); next(m(a,q.a1)||m(b,q.a2)); };   // 둘 중 하나만 맞아도 정답
     $("t6ok").onclick=go; $("t6a").onkeydown=e=>{ if(e.key==="Enter"&&!e.isComposing){ e.preventDefault(); $("t6b").focus(); } };
     $("t6b").onkeydown=e=>{ if(e.key==="Enter"&&!e.isComposing){ e.preventDefault(); go(); } };
     return; }
