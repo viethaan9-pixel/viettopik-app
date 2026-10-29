@@ -436,7 +436,7 @@ function lsKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ co
 function lsSnapshot(){ const p={}; lsKeys().forEach(k=>{ try{ p[k]=localStorage.getItem(k); }catch(e){} }); return p; }
 function lsClear(){ lsKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
 let UNLOCK_ALL=false, GUEST=false;
-const APP_VERSION="10/29 메뉴 간단히";
+const APP_VERSION="10/29 5·6급 시험";
 const TEACHER_ID="viethaan9";
 /* ---------- data ---------- */
 // type: next(이어질 말) · act(이어서 할 행동) · same(내용과 같은 것) · main(중심 생각)
@@ -1997,6 +1997,69 @@ function placeResult(){ sec(); stopAll(); const pass=PT.ok>=9; setTitle("TOPIK 4
     <span class="vn">${pass?"Đạt! Bắt đầu từ TOPIK 4 (Ngày 11). Muốn quay lại thì bấm nút 「TOPIK 3」 ở menu.":"Cần đúng ít nhất 9 câu. Học TOPIK 3 rồi bấm 「TOPIK 4」 ở menu để thi lại."}</span></div>`;
   foot(`<button class="btn pri" id="ptdone">${pass?"TOPIK 4 시작 · Bắt đầu":"TOPIK 3 시작 · Bắt đầu"}</button>`); $("ptdone").onclick=menu;
 }
+/* ---------- 5·6급 시험: TOPIK 4에서 가장 어려운 10문제 (읽기 5 · 듣기 3 · 51·52 2) · 9개 이상 맞히면 5·6급 열림 ---------- */
+const T56=[["R",19,16],["L",25,20],["R",18,18],["W",21,9],["R",20,14],["L",24,17],["R",20,11],["L",25,8],["R",20,19],["W",21,18]];
+const t56Info=()=>{ try{ return JSON.parse(localStorage.getItem("tpk-t56")||"null"); }catch(e){ return null; } };
+const t56Open=()=>freeAll()||!!(t56Info()&&t56Info().pass);
+let T6={i:0,ok:0,ans:[]};
+function t56Intro(){ sec(); stopAll(); setTitle("5·6급 시험 · Thi lên cấp 5·6",topik2); $("speed").hidden=true;
+  const last=t56Info();
+  $("body").innerHTML=`<div class="tcard" style="margin-top:4px"><h3>5·6급 시험 · 10문제</h3><div class="vn">Bài kiểm tra lên cấp 5·6 · 10 câu</div>
+    <ul><li>TOPIK 4에서 가장 어려운 문제 10개예요. <b>읽기 5 · 듣기 3 · 쓰기 51·52번 2</b>.</li><li><b>9문제 이상</b> 맞히면 5·6급 연습이 열려요.</li>
+    <li>듣기는 두 번까지 들을 수 있어요. 답을 고르면 바로 다음 문제로 넘어가요.</li><li>쓰기는 ㉠과 ㉡을 <b>둘 다</b> 맞게 써야 정답이에요. 띄어쓰기와 문장 부호는 상관없어요.</li>
+    <li>합격하지 못해도 TOPIK 4를 더 공부하고 언제든 다시 볼 수 있어요.</li></ul>
+    <div class="vn" style="margin-top:6px">10 câu khó nhất của TOPIK 4 (5 đọc, 3 nghe, 2 câu viết 51·52). Đúng ≥ 9 câu thì mở cấp 5·6. Phần viết phải đúng cả ㉠ và ㉡.</div>
+    ${last?`<div class="tip" style="margin-top:8px">지난 시험: ${last.ok} / 10 ${last.pass?"· 합격 ✅":""}</div>`:""}</div>`;
+  foot(`<button class="btn pri" id="t6go">시험 시작 · Bắt đầu</button>`);
+  $("t6go").onclick=()=>{ T6={i:0,ok:0,ans:[]}; t56Q(); };
+}
+function t56Q(){ sec(); stopAll(); const [k,d,n]=T56[T6.i], last=T6.i===T56.length-1;
+  setTitle(`5·6급 시험 · ${T6.i+1} / ${T56.length}`,()=>{ if(confirm("시험을 그만할까요? · Dừng bài kiểm tra?")) topik2(); }); $("speed").hidden=k!=="L";
+  const prog=`<div class="prog"><span>${T6.i+1} / ${T56.length}</span><div class="bar"><i style="width:${T6.i/T56.length*100}%"></i></div></div>`;
+  const next=ok=>{ stopAll(); T6.ans.push(ok); if(ok) T6.ok++; if(last) t56Result(); else { T6.i++; t56Q(); $("body").scrollTop=0; } };
+  foot(`<button class="btn sec" id="t6give">포기 · Bỏ cuộc</button>`);
+  $("t6give").onclick=()=>{ if(!confirm("시험을 포기할까요? · Bỏ cuộc?")) return; stopAll(); while(T6.ans.length<T56.length) T6.ans.push(false); T6.gaveUp=true; t56Result(); };
+  if(k==="W"){ const q=WDAYS[d][n-1], is51=q.k==="51";
+    const mk=t=>esc(t).replace(/\( ?㉠ ?\)/g,'<span class="mk2">( ㉠ )</span>').replace(/\( ?㉡ ?\)/g,'<span class="mk2">( ㉡ )</span>');
+    $("body").innerHTML=`${prog}<div class="qhead"><span class="qno">${String(T6.i+1).padStart(2,"0")}</span><span class="chip">쓰기 · ${is51?"51번":"52번"}</span></div>
+      <div class="instr">다음 글의 ㉠과 ㉡에 알맞은 말을 각각 쓰십시오.<span class="vn">Viết từ phù hợp vào ㉠ và ㉡. ${is51?"Giữ đúng thể văn của bài.":"Viết theo thể 「-다」."}</span></div>
+      <div class="pass p51">${q.h?`<div class="ph">${esc(q.h)}</div>`:""}<div class="pb">${q.x.map(l=>`<p>${mk(l)}</p>`).join("")}</div></div>
+      <div class="blank2"><b>㉠</b><input class="inp" id="t6a" lang="ko" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="㉠ 쓰기 · Viết ㉠"></div>
+      <div class="blank2"><b>㉡</b><input class="inp" id="t6b" lang="ko" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" placeholder="㉡ 쓰기 · Viết ㉡"></div>`;
+    foot(`<button class="btn sec" id="t6give">포기 · Bỏ cuộc</button><button class="btn pri" id="t6ok">${last?"제출 · Nộp bài":"다음 · Tiếp"}</button>`);
+    $("t6give").onclick=()=>{ if(!confirm("시험을 포기할까요? · Bỏ cuộc?")) return; while(T6.ans.length<T56.length) T6.ans.push(false); T6.gaveUp=true; t56Result(); };
+    const go=()=>{ const a=$("t6a").value.trim(), b=$("t6b").value.trim(); if(!a){ $("t6a").focus(); return; } if(!b){ $("t6b").focus(); return; }
+      const m=(v,arr)=>arr.some(x=>norm(x)===norm(v)); next(m(a,q.a1)&&m(b,q.a2)); };
+    $("t6ok").onclick=go; $("t6a").onkeydown=e=>{ if(e.key==="Enter"&&!e.isComposing){ e.preventDefault(); $("t6b").focus(); } };
+    $("t6b").onkeydown=e=>{ if(e.key==="Enter"&&!e.isComposing){ e.preventDefault(); go(); } };
+    return; }
+  let q,head,body;
+  if(k==="L"){ q=DAYS[d].q[n-1]; const T=TYPES[q.t];
+    head=`<div class="qhead"><span class="qno">${String(T6.i+1).padStart(2,"0")}</span><span class="chip">듣기 · ${q.sp==="F"?T.ko.replace("남자","여자"):T.ko}</span></div><div class="instr">${q.sp==="F"?T.q.replace("남자","여자"):T.q}<span class="vn">${q.sp==="F"?T.qvn.replace("người đàn ông","người phụ nữ"):T.qvn}</span></div>`;
+    body=`<div class="player"><button class="playbtn" id="pbtn" aria-label="듣기">${ICON.play}</button><div class="wave" id="wave"><i></i><i></i><i></i><i></i><i></i></div><div class="eyebrow" id="plays" style="margin-top:8px">2번 들을 수 있어요 · Nghe tối đa 2 lần</div></div>`;
+  } else { q=READ[d].q[n-1]; const I=RI[q.i];
+    head=`<div class="qhead"><span class="qno">${String(T6.i+1).padStart(2,"0")}</span><span class="chip">읽기 · ${esc(q.t)}</span></div><div class="instr">${q.who?I.q.replace("어머니",q.who):I.q}<span class="vn">${I.v}</span></div>`;
+    body=rBox(q); }
+  const ro=(k==="R"&&q.k==="ins")?[0,1,2,3]:shuffle([0,1,2,3]);
+  $("body").innerHTML=`${prog}${head}${body}<div class="choices" id="chs">${ro.map((j,pos)=>`<button class="ch" data-i="${j}"><span class="k">${circ[pos]}</span><span>${esc(q.o[j])}</span></button>`).join("")}</div>`;
+  if(k==="L"){ let left=2; const pb=$("pbtn");
+    pb.onclick=()=>{ if(playing){ stopAll(); return; } if(left<=0) return; left--; $("plays").textContent=left?"한 번 더 들을 수 있어요 · Còn 1 lần nghe":"다 들었어요 · Đã hết lượt nghe"; playLines(q.l).then(()=>{ if(!left) pb.disabled=true; }); };
+    setTimeout(()=>{ if($("pbtn")===pb&&left===2) pb.click(); },400); }
+  $("chs").querySelectorAll(".ch").forEach(b=>b.onclick=()=>next(+b.dataset.i===q.a));
+}
+function t56Result(){ sec(); stopAll(); const pass=T6.ok>=9; setTitle("5·6급 시험 결과",null); $("speed").hidden=true;
+  const prev=t56Info(); lsSet("tpk-t56",JSON.stringify({ok:T6.ok,at:Date.now(),pass:pass||!!(prev&&prev.pass)}));
+  $("body").innerHTML=`<section class="hero" style="text-align:center"><div class="eyebrow">맞힌 문제 · CÂU ĐÚNG</div><div class="big">${T6.ok}<small> / ${T56.length}</small></div>
+    <div style="margin-top:10px;font-size:22px">${T6.ans.map(x=>x?"🟢":"⚪").join("")}</div></section>
+    <div class="fb ${pass?"ok":"no"}" style="margin-top:12px"><b>${pass?"🎉 합격! 5·6급 연습이 열렸어요":T6.gaveUp?"괜찮아요! TOPIK 4를 더 공부하고 다시 도전해요":"아쉬워요. 9문제 이상 맞혀야 해요"}</b>${pass?"TOPIK II 화면에서 「5급 · 6급」을 누르세요.":"TOPIK 4 (Ngày 11~)를 더 연습한 뒤 언제든 다시 볼 수 있어요."}
+    <span class="vn">${pass?"Đạt! Đã mở luyện tập cấp 5·6.":"Cần đúng ít nhất 9 câu. Luyện thêm TOPIK 4 rồi thi lại nhé."}</span></div>`;
+  foot(`<button class="btn pri" id="t6done">확인 · OK</button>`); $("t6done").onclick=topik2;
+}
+function lv56(){ sec(); stopAll(); setTitle("TOPIK II · 5·6급",topik2); $("speed").hidden=true;
+  $("body").innerHTML=`<div class="tcard" style="margin-top:4px;text-align:center"><div style="font-size:34px">🎓</div><h3>5·6급 연습 · 준비 중</h3><div class="vn">Luyện cấp 5·6 · đang chuẩn bị</div>
+    <p class="tip" style="margin-top:8px">선생님이 5·6급 문제를 만들고 있어요. 곧 열려요!<span class="vn" style="display:block">Cô đang soạn bài cấp 5·6. Sắp mở rồi!</span></p></div>`;
+  foot("");
+}
 /* ---------- level picker: TOPIK I / TOPIK II → 3·4급 / 5·6급 ---------- */
 const lvlBtn=(o)=>`<button class="lvl" ${o.id?`id="${o.id}"`:"disabled"} style="${o.c?`--accent:var(--c-${o.c});--accent-soft:var(--c-${o.c}-soft)`:""}"><span class="badge">${o.badge}</span><span><b>${o.ko}</b><span class="vn">${o.vn}</span><span class="mm">${o.mm}</span></span>${o.id?`<span class="go">›</span>`:`<span class="soon">준비 중 · Sắp có</span>`}</button>`;
 let CAT_INTRO=false;   // set on login → the two cats step out once
@@ -2310,8 +2373,8 @@ function topik2(){ sec();
   $("body").innerHTML=`
    <div class="eyebrow" style="margin:2px 0 12px">목표 등급을 고르세요 · CHỌN CẤP ĐỘ MỤC TIÊU</div>
    ${lvlBtn({id:"l34",badge:"3·4급",ko:"3급 · 4급",vn:"Cấp 3 · 4 — lộ trình của cô",mm:`선생님 수업 ${n}일 · 듣기 · 쓰기 · 읽기 · 단어장`,c:"listen"})}
-   ${lvlBtn({badge:"5·6급",ko:"5급 · 6급",vn:"Cấp 5 · 6 — cao cấp",mm:"고급 수업은 나중에 열려요 · Sẽ mở sau",c:"write"})}`;
-  $("l34").onclick=menu;
+   ${lvlBtn({id:"l56",badge:t56Open()?"5·6급":"🔒 5·6",ko:"5급 · 6급",vn:"Cấp 5 · 6 — cao cấp",mm:t56Open()?"합격 ✅ · 고급 수업은 곧 열려요 · Sắp mở":"시험 10문제 · 9개 이상 맞히면 열려요 · Thi 10 câu, đúng ≥ 9",c:"write"})}`;
+  $("l34").onclick=menu; $("l56").onclick=()=>t56Open()?lv56():t56Intro();
   foot("");
 }
 
