@@ -458,6 +458,18 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .mkin{display:flex;align-items:center;gap:8px;margin-top:10px;font-weight:700}
 .mkin .inp{width:90px;text-align:center}
 .fb .nb{font-weight:800;color:var(--good)}
+.ch.sel{border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
+.ch.sel .k{color:var(--accent)}
+.mkno{font-weight:800;margin-right:2px}
+.mknav{display:flex;gap:6px;overflow-x:auto;margin:0 0 12px;padding-bottom:4px;scrollbar-width:none}
+.mknav::-webkit-scrollbar{display:none}
+.mknav button{flex:none;min-width:38px;height:34px;padding:0 8px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);font-size:12.5px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
+.mknav button.done{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.mknav button.cur{border-color:var(--accent);color:var(--accent)}
+button.ag{width:100%;border:0;font:inherit;color:inherit;cursor:pointer}
+.mkscript{margin-top:12px;padding:10px 12px;border-radius:12px;background:var(--surface);border:1px solid var(--line)}
+.mkscript summary{font-weight:700;cursor:pointer}
+.mkscript p{margin:8px 0 0;line-height:1.7}
 .mkline b.wait{color:var(--bad)}
 .mkgr{margin-left:6px;padding:3px 10px;border-radius:99px;background:var(--accent);color:var(--accent-ink);font-size:12px;font-weight:700}
 </style>
@@ -489,7 +501,7 @@ function lsKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ co
 function lsSnapshot(){ const p={}; lsKeys().forEach(k=>{ try{ p[k]=localStorage.getItem(k); }catch(e){} }); return p; }
 function lsClear(){ lsKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
 let UNLOCK_ALL=false, GUEST=false;
-const APP_VERSION="10/30 실전 모의고사 (기출 답안지)";
+const APP_VERSION="10/30 실전 모의고사 (우리 문제 · 실제 순서)";
 const TEACHER_ID="viethaan9";
 /* ---------- data ---------- */
 // type: next(이어질 말) · act(이어서 할 행동) · same(내용과 같은 것) · main(중심 생각)
@@ -2751,235 +2763,230 @@ function t56Result(){ sec(); stopAll(); const pass=T6.ok>=TC.need; setTitle(TC.t
     <div class="fb ${pass?"ok":"no"}" style="margin-top:12px"><b>${!pass&&T6.gaveUp?M[3]:M[0]}</b>${M[1]}<span class="vn">${M[2]}</span></div>`;
   foot(`<button class="btn pri" id="t6done">확인 · OK</button>`); $("t6done").onclick=()=>TC.done(pass);
 }
-/* ---------- 실전 모의고사: 기출 시험지(종이·PDF) + 앱 답안지(OMR) ----------
-   앱에는 정답 번호와 51·52번 모범 답안만 넣어요. 시험지·듣기 대본은 저작권 때문에 넣지 않아요.
-   xR = 시험지에서 지문이 비공개된 문항 → 채점에서 빼고 100점으로 환산해요. */
-const MOCK={
- 102:{L:"21324311424141324414312322342334112314422312332144",R:"11441321242112123114331422343241343344324232132443",xR:[23,24,42,43],
-   w:[[["정리해야 합니다","정리해 주십시오","정리해 주시기 바랍니다","정리해 주세요"],["시작되기 전에","시작하기 전에"]],
-      [["받지 않아서","받지 않기 때문에","안 받아서","받지 않으므로"],["비행을 하기 위해서는","날기 위해서는","비행하기 위해서는","비행을 하려면","비행하려면","날려면"]]],
-   t53:"한국 캠핑 인구의 변화",t54:"디지털 소외 문제와 해결 방안"},
- 96:{L:"12231243424232443141424211231243311432433214433341",R:"41142411324423113142232133442433123431132312422344",xR:[42,43],
-   w:[[["하려고 합니다","하고 싶습니다","할 계획입니다","할 예정입니다","하려고 해요"],["동네가 좋은지","동네가 좋을지","곳으로 갈지","곳이 좋은지","곳이 좋을지","곳으로 가야 할지","동네로 가야 할지"]],
-      [["자는 것은 아니다","자는 것이 아니다"],["못하기 때문이다","하지 못하기 때문이다","할 수 없기 때문이다","하지 못하는 것이다"]]],
-   t53:"인주시 마라톤 대회 참가자 수의 변화",t54:"직장과 개인의 자율성"},
- 91:{L:"21311223113441314112234324414432421223234414334323",R:"44142311423223213131341413112334224414133213422424",xR:[42,43],
-   w:[[["변경하고 싶습니다","바꾸고 싶습니다","변경해 주십시오","바꿔 주십시오","변경하려고 합니다","바꾸려고 합니다"],["불가능하면","어려우면","불가능하다면","어렵다면","안 되면"]],
-      [["중독된다고 한다","중독될 수 있다고 한다","중독된다고 말한다"],["먹지 않도록","먹지 않게"]]],
-   t53:"편의점 매출액 변화",t54:"가짜 뉴스의 등장이 사회에 미치는 영향"},
- 83:{L:"11321443313121243313344212421213424243242233143142",R:"12343221132214232341331413141344142442123213413324",xR:[42,43],
-   w:[[["본 적이","본 적은","구경한 적이"],["하고 싶습니다","해 보고 싶습니다","경험하고 싶습니다"]],
-      [["놀라게 한다","놀라게 만든다"],["방법이라고 한다","방법이라고 말한다","방식이라고 한다"]]],
-   t53:"인주시의 가구 수 변화",t54:"창의력의 필요성과 이를 기르기 위한 노력"}
-};
-const MK_ROUNDS=[102,96,91,83];
-const MK_SEC={L:{ko:"듣기",vn:"Nghe",min:60,no:"1교시",c:"listen"},W:{ko:"쓰기",vn:"Viết",min:50,no:"1교시",c:"write"},R:{ko:"읽기",vn:"Đọc",min:70,no:"2교시",c:"read"}};
-const MK_LC={pic:"그림·그래프 고르기",next:"이어질 말",act:"이어서 할 행동",same:"내용과 같은 것",main:"중심 생각·중심 내용",sit:"누구·무엇을 하는지·대화 전",att:"의도·태도·말하는 방식"};
-const MK_RC={gram:"문법·비슷한 표현",ad:"무엇에 대한 글",same:"내용과 같은 것",ord:"순서 배열",fill:"( ) 빈칸 채우기",topic:"주제·기사 제목",feel:"심정·태도·목적",ins:"문장 넣기"};
-const mkMap=spec=>{ const m=[]; spec.forEach(([k,list])=>list.forEach(x=>{ if(Array.isArray(x)) for(let i=x[0];i<=x[1];i++) m[i]=k; else m[x]=k; })); return m; };
-const MK_LMAP=mkMap([["pic",[[1,3]]],["next",[[4,8]]],["act",[[9,12]]],["same",[[13,16],22,24,26,28,30,34,36,38,40,42,44,45,47,49]],
-  ["main",[[17,21],25,31,37,41,43]],["sit",[23,29,33,35,39]],["att",[27,32,46,48,50]]]);
-const MK_RMAP=mkMap([["gram",[[1,4]]],["ad",[[5,8]]],["same",[[9,12],22,24,[32,34],43,47,50]],["ord",[[13,15]]],["fill",[[16,19],21,[28,31],44,49]],
-  ["topic",[20,[25,27],[35,38],45]],["feel",[23,42,46,48]],["ins",[[39,41]]]]);
-// 답안지 묶음 제목 (시험지 지시문과 같은 순서)
-const MK_LG=[[1,"1~3","그림 또는 그래프"],[4,"4~8","이어질 수 있는 말"],[9,"9~12","이어서 할 행동"],[13,"13~16","들은 내용과 같은 것"],[17,"17~20","중심 생각"],[21,"21~50","물음에 답하기 · 2문제씩"]];
-const MK_RG=[[1,"1~2","( )에 들어갈 말"],[3,"3~4","의미가 비슷한 것"],[5,"5~8","무엇에 대한 글"],[9,"9~12","내용과 같은 것"],[13,"13~15","순서에 맞게 배열"],[16,"16~18","( )에 들어갈 말"],
-  [19,"19~24","물음에 답하기"],[25,"25~27","신문 기사의 제목"],[28,"28~31","( )에 들어갈 말"],[32,"32~34","내용과 같은 것"],[35,"35~38","글의 주제"],[39,"39~41","문장이 들어갈 곳"],[42,"42~50","물음에 답하기"]];
-const MK_KEY="tpk-mock";
-let MK_GRADE={}, MK_T=null;      // MK_GRADE: 선생님이 넣은 53·54번 점수 (users/{uid}.mockGrade)
+/* ---------- 실전 모의고사: 우리 문제로 실제 TOPIK II 순서·난이도 흐름대로 ----------
+   실제 시험처럼 앞 번호는 쉽고(3급) 뒤로 갈수록 어려워요(6급). 번호마다 그 유형의 문제를 알맞은 Ngày에서 뽑아요.
+   회차끼리 같은 문제는 나오지 않아요. 듣기 1~3(그림)·읽기 5~8(광고)은 우리 문제에 없어서 비슷한 유형으로 채워요. */
+const MK_N=3;   // 회차 수
+// [번호들, 유형 (짝 문제는 같은 음성·지문), Ngày 범위, 이름]
+const MK_LS=[
+ [[1,2,3],["same"],[3,4],"내용과 같은 것 (짧은 대화)"],[[4,5,6,7,8],["next"],[1,2],"이어질 말"],[[9,10,11,12],["act"],[1,2],"이어서 할 행동"],
+ [[13,14,15,16],["same"],[5,9],"내용과 같은 것"],[[17,18,19,20],["main"],[3,9],"중심 생각"],
+ [[21,22],["main","same"],[10,14]],[[23,24],["doing","same"],[10,16]],[[25,26],["main","same"],[15,25]],[[27,28],["intent","same"],[10,14]],
+ [[29,30],["who","same"],[15,25]],[[31,32],["main","attitude"],[17,29]],[[33,34],["about","same"],[26,33]],[[35,36],["doing","same"],[17,25]],
+ [[37,38],["main","same"],[26,33]],[[39,40],["before","same"],[26,29]],[[41,42],["topic","same"],[30,37]],[[43,44],["about","why|desc"],[34,37]],
+ [[45,46],["same","manner"],[38,41]],[[47,48],["same","attitude"],[42,45]],[[49,50],["same","attitude|manner"],[46,50]]];
+const MK_RS=[
+ [[1,2],["sim"],[1,6]],[[3,4],["sim"],[11,18]],[[5,6],["same:n"],[1,6]],[[7,8],["same:g"],[1,6]],[[9,10,11,12],["same:p"],[1,6]],
+ [[13,14,15],["ord"],[7,10]],[[16,17,18],["fill"],[11,18]],[[19,20],["fill","topic"],[2,10]],[[21,22],["fill","same2"],[11,18]],[[23,24],["feel","same2"],[7,10]],
+ [[25,26,27],["head"],[11,18]],[[28,29,30,31],["fill"],[19,29]],[[32,33,34],["same3"],[26,35]],[[35,36,37,38],["topic2"],[30,42]],[[39,40,41],["ins"],[36,45]],
+ [[42,43],["feel","same2"],[21,25]],[[44,45],["attitude","same2"],[38,44]],[[46,47],["attitude","same2"],[45,50]],[[48,49,50],["purpose","fill","same2"],[40,50]]];
+const MK_WS=[["51",[16,21]],["52",[16,21]]];
+const MK_SEC={L:{ko:"듣기",vn:"Nghe",min:60,no:"1교시",c:"listen",n:50},W:{ko:"쓰기 51·52",vn:"Viết 51·52",min:15,no:"1교시",c:"write",n:2},R:{ko:"읽기",vn:"Đọc",min:70,no:"2교시",c:"read",n:50}};
+const MK_KEY="tpk-mocka";
+let MK_T=null, MK_SET=null;
+const mkMatch=(q,s,pat)=>pat.split("|").some(p=>{ const [i,k]=p.split(":"); return s==="L"?q.t===i:(q.i===i&&(!k||q.k===k)); });
+const mkShare=(a,b,s)=>!!a&&!!b&&(s==="L"?JSON.stringify(a.l)===JSON.stringify(b.l):(!!a.x&&a.x===b.x));
+// 문제 은행에서 회차별 문제 고르기 (항상 같은 결과)
+function mkBuild(){ if(MK_SET) return MK_SET; const used=new Set(), set=[];
+  for(let r=0;r<MK_N;r++) set.push({L:[],R:[],W:[]});
+  const pick=(s,BANK,slots)=>slots.forEach(([nums,pat,[d0,d1]])=>{ const per=pat.length, need=nums.length/per, cands=[];
+    for(let d=d0;d<=d1;d++){ const Q=BANK[d]&&BANK[d].q; if(!Q) continue;
+      for(let i=0;i+per<=Q.length;i++){ if(mkShare(Q[i-1],Q[i],s)) continue;            // 짝 문제의 두 번째로 시작하면 안 됨
+        let ok=true; for(let j=0;j<per;j++){ if(!mkMatch(Q[i+j],s,pat[j])) ok=false; if(j&&!mkShare(Q[i],Q[i+j],s)) ok=false; }
+        if(per===1&&mkShare(Q[i],Q[i+1],s)) ok=false;                                    // 혼자인 문제만
+        if(ok) cands.push([d,i]); } }
+    for(let r=0;r<MK_N;r++){ const got=[]; let c=Math.floor(r*cands.length/MK_N), tries=0;
+      while(got.length<need&&tries<cands.length){ const [d,i]=cands[c%cands.length]; const id=s+d+"-"+i; c++; tries++;
+        if(used.has(id)) continue; used.add(id); got.push([d,i]); }
+      got.forEach(([d,i],g)=>{ const grp=[]; for(let j=0;j<per;j++) grp.push({n:nums[g*per+j],d,i:i+j}); set[r][s].push(grp); }); } });
+  pick("L",DAYS,MK_LS); pick("R",READ,MK_RS);
+  MK_WS.forEach(([k,[d0,d1]],w)=>{ const cands=[]; for(let d=d0;d<=d1;d++) (WDAYS[d]||[]).forEach((q,i)=>{ if(q.k===k) cands.push([d,i]); });
+    for(let r=0;r<MK_N;r++){ const [d,i]=cands[Math.floor((r+0.5)*cands.length/MK_N)]; set[r].W.push([{n:51+w,d,i}]); } });
+  return MK_SET=set; }
+const mkQ=(s,it)=>s==="L"?DAYS[it.d].q[it.i]:s==="R"?READ[it.d].q[it.i]:WDAYS[it.d][it.i];
+const mkItems=(r,s)=>mkBuild()[r-1][s].flat();
 const mkAll=()=>{ try{ return JSON.parse(lsGet(MK_KEY)||"{}")||{}; }catch(e){ return {}; } };
 const mkGet=r=>mkAll()[r]||{};
 const mkPut=(r,o)=>{ const a=mkAll(); a[r]=o; lsSet(MK_KEY,JSON.stringify(a)); };
 const mkLeft=(k,st)=>st&&st.t0?st.t0+MK_SEC[k].min*60000-Date.now():MK_SEC[k].min*60000;
 const mkFmt=ms=>{ const s=Math.max(0,Math.ceil(ms/1000)); return `${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`; };
-const mkLen=v=>Array.from(String(v||"").replace(/\r?\n/g,"").normalize("NFC")).length;
 const mkLevel=t=>t>=230?"6급":t>=190?"5급":t>=150?"4급":t>=120?"3급":"불합격";
 const MK_CUT=[[120,"3급"],[150,"4급"],[190,"5급"],[230,"6급"]];
-// 시간이 다 됐는데 앱이 닫혀 있었으면 그때 표시한 답으로 제출 처리
 function mkSweep(r){ const s=mkGet(r); let ch=false;
   ["L","W","R"].forEach(k=>{ const st=s[k]; if(st&&st.t0&&!st.end&&mkLeft(k,st)<=0){ st.end=st.t0+MK_SEC[k].min*60000; st.auto=true; ch=true; } });
   if(ch) mkPut(r,s); return s; }
-// 채점: s = 그 회차 기록, g = 선생님 점수 (같은 쓰기 시험에 매긴 점수만 인정)
-function mkScoreOf(r,s,g){ const M=MOCK[r], out={}; s=s||{};
-  ["L","R"].forEach(k=>{ const st=s[k]; if(!st||!st.end) return; const x=M["x"+k]||[], map=k==="L"?MK_LMAP:MK_RMAP, cat={};
-    let ok=0,n=0; for(let i=1;i<=50;i++){ if(x.includes(i)) continue; n++; const good=(st.a||"")[i-1]===M[k][i-1]; if(good) ok++;
-      const c=map[i]; cat[c]=cat[c]||[0,0]; cat[c][1]++; if(good) cat[c][0]++; }
-    out[k]={ok,n,pts:Math.round(ok/n*100),cat}; });
-  if(s.W&&s.W.end){ const a=s.W.a||[]; const hit=[ansOk(a[0],M.w[0][0]),ansOk(a[1],M.w[0][1]),ansOk(a[2],M.w[1][0]),ansOk(a[3],M.w[1][1])];
+// 채점: 듣기·읽기 2점씩, 51·52번은 ㉠㉡ 하나에 5점 (하나만 맞으면 반 점수)
+function mkScoreOf(r,s){ const out={}; s=s||{};
+  ["L","R"].forEach(k=>{ const st=s[k]; if(!st||!st.end) return; const cat={}; let ok=0;
+    mkItems(r,k).forEach(it=>{ const q=mkQ(k,it), good=st.ans&&st.ans[it.n]===q.a; if(good) ok++;
+      const c=k==="L"?mkTL(q):((RI[q.i]?q.t:"")||q.i); cat[c]=cat[c]||[0,0]; cat[c][1]++; if(good) cat[c][0]++; });
+    out[k]={ok,n:50,pts:ok*2,cat}; });
+  if(s.W&&s.W.end){ const hit=[]; mkItems(r,"W").forEach(it=>{ const q=mkQ("W",it), a=(s.W.ans||{})[it.n]||["",""]; hit.push(ansOk(a[0],q.a1),ansOk(a[1],q.a2)); });
     out.W={hit,pts:hit.filter(Boolean).length*5}; }
-  if(g&&s.W&&g.wid===s.W.t0&&g.w53!=null) out.G=g;
-  const sum=(out.L?out.L.pts:0)+(out.R?out.R.pts:0)+(out.W?out.W.pts:0)+(out.G?(+out.G.w53||0)+(+out.G.w54||0):0);
-  out.sum=sum; out.all=!!(out.L&&out.R&&out.W); out.lv=mkLevel(sum);
+  const raw=(out.L?out.L.pts:0)+(out.R?out.R.pts:0)+(out.W?out.W.pts:0);
+  out.raw=raw; out.all=!!(out.L&&out.R&&out.W); out.sum=Math.round(raw*300/220); out.lv=mkLevel(out.sum);
   return out; }
-const mkScore=r=>mkScoreOf(r,mkGet(r),MK_GRADE[r]);
-// 선생님 점수 새로 받기 (결과 화면을 열 때)
-async function mkGradeSync(after){ if(!window.CLOUD||!CLOUD.user||!CLOUD.myGrade) return;
-  try{ const g=await CLOUD.myGrade(); const ch=JSON.stringify(g)!==JSON.stringify(MK_GRADE); MK_GRADE=g||{}; if(ch&&after) after(); }catch(e){} }
+const mkScore=r=>mkScoreOf(r,mkGet(r));
 
 function mockHome(){ sec(); $("body").scrollTop=0; stopAll(); clearInterval(MK_T); setTitle("실전 모의고사 · Thi thử",topik2); $("speed").hidden=true;
-  $("body").innerHTML=`<div class="tcard" style="margin-top:4px"><h3>기출문제로 실전처럼</h3><div class="vn">Thi thử bằng đề TOPIK thật</div>
-    <ul><li><b>시험지와 듣기 음성</b>은 선생님이 나눠 준 것을 쓰거나 <a href="https://www.topik.go.kr" target="_blank" rel="noopener">TOPIK 누리집</a> 「기출문제」에서 받으세요. 이 앱은 <b>답안지(OMR)</b>예요.</li>
-    <li>시간은 실제 시험과 같아요: <b>듣기 60분 → 쓰기 50분 → 읽기 70분</b>. 시작하면 앱을 닫아도 시간이 계속 가요.</li>
-    <li>제출하면 듣기·읽기·쓰기 51·52번은 바로 채점돼요. <b>53·54번은 선생님이 채점</b>해요.</li></ul>
-    <div class="vn" style="margin-top:6px">Đề thi và file nghe: lấy từ cô hoặc trang TOPIK (mục 기출문제). Ứng dụng này là phiếu trả lời. Thời gian như thi thật, đã bắt đầu thì đóng app thời gian vẫn chạy. Câu 53·54 cô sẽ chấm.</div></div>
+  $("body").innerHTML=`<div class="tcard" style="margin-top:4px"><h3>실제 시험처럼 풀어 보기</h3><div class="vn">Thi thử giống đề TOPIK II thật</div>
+    <ul><li>실제 TOPIK II와 <b>같은 번호 순서·같은 유형</b>이에요. 앞 번호는 쉽고(3급) 뒤로 갈수록 어려워요(6급).</li>
+    <li><b>듣기 50문제(60분) → 쓰기 51·52번(15분) → 읽기 50문제(70분)</b>. 시작하면 앱을 닫아도 시간이 계속 가요.</li>
+    <li>풀 때는 정답·해설이 안 나와요. <b>제출하면 바로 자동 채점</b>되고 예상 등급이 나와요.</li>
+    <li>듣기는 실제 시험처럼 <b>한 번만</b> 들을 수 있어요. 쓰기 51·52번은 ㉠㉡ 하나만 맞아도 반 점수(5점)를 받아요.</li></ul>
+    <div class="vn" style="margin-top:6px">Cùng thứ tự và dạng câu như đề thật, câu đầu dễ (cấp 3) và càng về sau càng khó (cấp 6). Nghe 60 phút → Viết 51·52 15 phút → Đọc 70 phút. Khi làm bài không có đáp án; nộp bài là chấm ngay. Phần nghe chỉ được nghe 1 lần. Câu 51·52 đúng một ô được nửa điểm.</div></div>
    <div class="sec"><b>회차 고르기 · Chọn đề</b></div>
-   ${MK_ROUNDS.map(r=>{ const s=mkSweep(r), sc=mkScore(r);
+   ${Array.from({length:MK_N},(_,j)=>j+1).map(r=>{ const s=mkSweep(r), sc=mkScore(r);
      const parts=["L","W","R"].map(k=>{ const st=s[k]; if(!st||!st.t0) return ""; return MK_SEC[k].ko+(st.end?" ✓":" ⏱"); }).filter(Boolean);
-     const mm=!parts.length?"아직 안 봤어요 · Chưa thi":sc.all?`${sc.sum}점 · ${sc.G?sc.lv:"53·54번 채점 전"} · ${parts.join(" · ")}`:parts.join(" · ");
-     return lvlBtn({id:"mk"+r,badge:r+"회",ko:`제${r}회 TOPIK II`,vn:`Đề thi thật kỳ ${r}`,mm,c:"read"}); }).join("")}`;
-  MK_ROUNDS.forEach(r=>{ $("mk"+r).onclick=()=>mockRound(r); });
+     const mm=!parts.length?"아직 안 봤어요 · Chưa thi":sc.all?`${sc.sum}점 · ${sc.lv} · ${parts.join(" · ")}`:parts.join(" · ");
+     return lvlBtn({id:"mk"+r,badge:r+"회",ko:`모의고사 ${r}회`,vn:`Đề thi thử số ${r} · 102 câu`,mm,c:"read"}); }).join("")}
+   <p class="tip">문제는 우리 연습 문제에서 뽑았어요. 연습에서 본 문제가 나올 수 있어요. 듣기 1~3번(그림)과 읽기 5~8번(광고)은 비슷한 유형으로 바꿨어요.<span class="vn" style="display:block">Câu hỏi lấy từ bài luyện của cô, có thể gặp lại câu đã làm. Nghe 1~3 (tranh) và Đọc 5~8 (quảng cáo) được thay bằng dạng tương tự.</span></p>`;
+  for(let r=1;r<=MK_N;r++) $("mk"+r).onclick=()=>mockRound(r);
   foot("");
 }
-function mockRound(r){ sec(); $("body").scrollTop=0; stopAll(); clearInterval(MK_T); setTitle(`제${r}회 모의고사`,mockHome); $("speed").hidden=true;
+function mockRound(r){ sec(); $("body").scrollTop=0; stopAll(); clearInterval(MK_T); setTitle(`모의고사 ${r}회`,mockHome); $("speed").hidden=true;
   const s=mkSweep(r), sc=mkScore(r);
   const row=k=>{ const S=MK_SEC[k], st=s[k]; let mm;
-    if(!st||!st.t0) mm=`${k==="W"?"51~54번":"50문제"} · ${S.min}분 · 시작 전`;
+    if(!st||!st.t0) mm=`${k==="W"?"51·52번":"50문제"} · ${S.min}분 · 시작 전`;
     else if(!st.end) mm=`⏱ 진행 중 · 남은 시간 ${Math.ceil(mkLeft(k,st)/60000)}분 · 눌러서 계속`;
-    else mm=k==="W"?`✅ 제출 · 51·52번 ${sc.W.pts} / 20점 · 53·54번 ${sc.G?`${(+sc.G.w53||0)+(+sc.G.w54||0)} / 80점`:"선생님 채점 전"}`:`✅ 제출 · ${sc[k].pts}점 (${sc[k].ok} / ${sc[k].n})`;
-    return lvlBtn({id:"ms"+k,badge:S.ko,ko:`${S.no} ${S.ko}`,vn:`${S.vn} · ${k==="W"?"câu 51~54":"50 câu"} · ${S.min} phút`,mm,c:S.c}); };
-  const any=["L","W","R"].some(k=>s[k]&&s[k].end);
+    else mm=k==="W"?`✅ 제출 · ${sc.W.pts} / 20점`:`✅ 제출 · ${sc[k].pts}점 (${sc[k].ok} / 50)`;
+    return lvlBtn({id:"ms"+k,badge:k==="W"?"쓰기":S.ko,ko:`${S.no} ${S.ko}`,vn:`${S.vn} · ${k==="W"?"câu 51·52":"50 câu"} · ${S.min} phút`,mm,c:S.c}); };
+  const any=["L","W","R"].some(k=>s[k]&&s[k].end), started=["L","W","R"].some(k=>s[k]&&s[k].t0);
   $("body").innerHTML=`<p class="tip" style="margin-top:0">실제 시험 순서대로 <b>듣기 → 쓰기 → 읽기</b>를 추천해요. 하나씩 따로 봐도 돼요.<span class="vn" style="display:block">Nên làm theo thứ tự thi thật: Nghe → Viết → Đọc. Làm riêng từng phần cũng được.</span></p>
     ${row("L")}${row("W")}${row("R")}
     ${any?`<button class="btn pri" id="mkres" style="width:100%;margin-top:4px">결과 보기 · Xem kết quả${sc.all?` · ${sc.sum}점`:""}</button>`:""}
-    ${any||["L","W","R"].some(k=>s[k]&&s[k].t0)?`<button class="btn sec" id="mkreset" style="height:40px;font-size:13px;color:var(--muted);margin-top:10px;width:100%">이 회차 다시 보기 (기록 지우기) · Thi lại đề này</button>`:""}`;
-  ["L","W","R"].forEach(k=>{ $("ms"+k).onclick=()=>{ const st=mkGet(r)[k]; if(st&&st.end) return mockResult(r,k); if(st&&st.t0) return k==="W"?mockWrite(r):mockSheet(r,k); mkReady(r,k); }; });
+    ${started?`<button class="btn sec" id="mkreset" style="height:40px;font-size:13px;color:var(--muted);margin-top:10px;width:100%">이 회차 다시 보기 (기록 지우기) · Thi lại đề này</button>`:""}`;
+  ["L","W","R"].forEach(k=>{ $("ms"+k).onclick=()=>{ const st=mkGet(r)[k]; if(st&&st.end) return mockResult(r,k); if(st&&st.t0) return mkExam(r,k); mkReady(r,k); }; });
   if($("mkres")) $("mkres").onclick=()=>mockResult(r);
-  if($("mkreset")) $("mkreset").onclick=()=>{ if(!confirm(`제${r}회 기록을 모두 지우고 처음부터 볼까요? · Xóa kết quả đề ${r} và thi lại?`)) return; const a=mkAll(); delete a[r]; lsSet(MK_KEY,JSON.stringify(a)); mockRound(r); };
+  if($("mkreset")) $("mkreset").onclick=()=>{ if(!confirm(`모의고사 ${r}회 기록을 모두 지우고 처음부터 볼까요? · Xóa kết quả đề ${r} và thi lại?`)) return; const a=mkAll(); delete a[r]; lsSet(MK_KEY,JSON.stringify(a)); mockRound(r); };
   foot("");
 }
-function mkReady(r,k){ sec(); $("body").scrollTop=0; stopAll(); const S=MK_SEC[k]; setTitle(`제${r}회 ${S.ko} · 시작 전`,()=>mockRound(r)); $("speed").hidden=true;
-  const how={L:[`시험지 <b>1교시</b> 듣기 1~50번을 펴고 <b>듣기 음성</b>을 준비하세요.`,`「시작」을 누르면 <b>60분</b> 타이머가 바로 시작돼요. 음성을 처음부터 틀고 답안지에 표시하세요.`,`Mở đề phần 1 (Nghe 1~50) và chuẩn bị file nghe. Bấm 「Bắt đầu」 là đồng hồ 60 phút chạy ngay, rồi bật file nghe từ đầu.`],
-    W:[`시험지 <b>1교시</b> 쓰기 51~54번을 보세요.`,`51·52번은 ㉠과 ㉡에 들어갈 말을, 53·54번은 글을 <b>이 앱에 직접</b> 쓰세요. 시간은 <b>50분</b>이에요.`,`Xem đề câu 51~54. Câu 51·52 viết ㉠ ㉡, câu 53·54 viết bài ngay trong app. Thời gian 50 phút.`],
-    R:[`시험지 <b>2교시</b> 읽기 1~50번을 펴세요.`,`「시작」을 누르면 <b>70분</b> 타이머가 바로 시작돼요.`,`Mở đề phần 2 (Đọc 1~50). Bấm 「Bắt đầu」 là đồng hồ 70 phút chạy ngay.`]}[k];
-  const x=MOCK[r]["x"+k]||[];
-  $("body").innerHTML=`<div class="tcard" style="margin-top:4px"><h3>제${r}회 ${S.no} ${S.ko}</h3><div class="vn">Đề ${r} · ${S.vn}</div>
-    <ul><li>${how[0]}</li><li>${how[1]}</li><li>시작하면 멈출 수 없어요. 앱을 닫아도 시간이 계속 가고, 시간이 끝나면 표시한 답으로 자동 제출돼요.</li>
-    ${x.length?`<li>${x.join("·")}번은 시험지에 지문이 공개되지 않아서 <b>채점하지 않아요</b>. 나머지로 100점 환산해요.</li>`:""}</ul>
-    <div class="vn" style="margin-top:6px">${how[2]} Đã bắt đầu thì không dừng được; hết giờ app tự nộp bài.${x.length?` Câu ${x.join(", ")} không chấm (đề không công bố bài đọc).`:""}</div></div>`;
+function mkReady(r,k){ sec(); $("body").scrollTop=0; stopAll(); const S=MK_SEC[k]; setTitle(`모의고사 ${r}회 ${S.ko} · 시작 전`,()=>mockRound(r)); $("speed").hidden=true;
+  const how={L:["듣기 1~50번이에요. 음성은 문제마다 <b>한 번만</b> 나와요. 짝 문제(21번부터)는 한 번 듣고 두 문제를 풀어요.","답을 고르면 다음 문제로 넘어가요. 앞 문제로 돌아가 답을 바꿀 수는 있지만 다시 들을 수는 없어요.","Nghe 1~50, mỗi bài chỉ nghe 1 lần (từ câu 21: nghe 1 lần làm 2 câu). Có thể quay lại sửa đáp án nhưng không nghe lại được."],
+    W:["51·52번이에요. ㉠과 ㉡에 들어갈 말을 쓰세요.","정답 범위 안의 답만 점수를 받아요. ㉠㉡ 하나에 5점이라 하나만 맞아도 반 점수예요.","Câu 51·52: viết ㉠ và ㉡. Mỗi ô 5 điểm, đúng một ô được nửa điểm."],
+    R:["읽기 1~50번이에요. 짝 문제는 한 지문을 읽고 두세 문제를 풀어요.","위의 번호를 눌러 아무 문제로나 갈 수 있어요.","Đọc 1~50. Bấm số ở trên để chuyển đến câu bất kỳ."]}[k];
+  $("body").innerHTML=`<div class="tcard" style="margin-top:4px"><h3>모의고사 ${r}회 · ${S.no} ${S.ko}</h3><div class="vn">Đề ${r} · ${S.vn} · ${S.min} phút</div>
+    <ul><li>${how[0]}</li><li>${how[1]}</li><li>「시작」을 누르면 <b>${S.min}분</b> 타이머가 바로 시작돼요. 멈출 수 없고, 시간이 끝나면 고른 답으로 자동 제출돼요.</li>${k==="L"?"<li>이어폰을 끼고 소리를 켜 두세요.</li>":""}</ul>
+    <div class="vn" style="margin-top:6px">${how[2]} Bấm 「Bắt đầu」 là đồng hồ chạy ngay, hết giờ tự nộp bài.${k==="L"?" Hãy đeo tai nghe và bật âm thanh.":""}</div></div>`;
   foot(`<button class="btn sec" id="mkno">나중에 · Để sau</button><button class="btn pri" id="mkgo">시작 · Bắt đầu</button>`);
   $("mkno").onclick=()=>mockRound(r);
-  $("mkgo").onclick=()=>{ const s=mkGet(r); s[k]=k==="W"?{a:["","","",""],e53:"",e54:"",t0:Date.now()}:{a:"0".repeat(50),t0:Date.now()}; mkPut(r,s); k==="W"?mockWrite(r):mockSheet(r,k); };
+  $("mkgo").onclick=()=>{ const s=mkGet(r); const perm={};
+    if(k!=="W") mkItems(r,k).forEach(it=>{ const q=mkQ(k,it); perm[it.n]=k==="R"&&q.k==="ins"?[0,1,2,3]:shuffle([0,1,2,3]); });
+    s[k]={t0:Date.now(),ans:{},perm,pg:0,heard:{}}; mkPut(r,s); mkExam(r,k); };
 }
-function mkTick(r,k){ clearInterval(MK_T);
-  const upd=()=>{ const el=$("mktime"); if(!el){ clearInterval(MK_T); return; } const st=mkGet(r)[k]; if(!st||st.end){ clearInterval(MK_T); return; }
-    const ms=mkLeft(k,st); if(ms<=0){ clearInterval(MK_T); mkSubmit(r,k,true); return; } el.textContent=mkFmt(ms); el.classList.toggle("low",ms<5*60000); };
-  upd(); MK_T=setInterval(upd,1000); }
-function mkSubmit(r,k,auto){ const s=mkGet(r), st=s[k]; if(!st||st.end) return mockResult(r,k);
-  if(!auto){ const blank=k==="W"?(st.a||[]).filter(v=>!String(v).trim()).length+(mkLen(st.e53)?0:1)+(mkLen(st.e54)?0:1):[...(st.a||"")].filter((c,i)=>c==="0"&&!(MOCK[r]["x"+k]||[]).includes(i+1)).length;
-    if(!confirm(`${blank?`아직 안 쓴(표시 안 한) 문제가 ${blank}개 있어요.\n`:""}제출할까요? 제출하면 고칠 수 없어요.\nNộp bài? Nộp rồi thì không sửa được.`)) return; }
+function mkSubmit(r,k,auto){ stopAll(); const s=mkGet(r), st=s[k]; if(!st||st.end) return mockResult(r,k);
+  if(!auto){ const blank=k==="W"?mkItems(r,"W").reduce((a,it)=>a+((st.ans[it.n]||["",""]).filter(v=>!String(v).trim()).length),0):50-Object.keys(st.ans).length;
+    if(!confirm(`${blank?`아직 답하지 않은 칸이 ${blank}개 있어요.\n`:""}제출할까요? 제출하면 고칠 수 없어요.\nNộp bài? Nộp rồi thì không sửa được.`)) return; }
   st.end=Date.now(); if(auto) st.auto=true; mkPut(r,s); mockResult(r,k);
 }
-function mkTop(k,label){ return `<div class="omr-top"><div><span class="eyebrow">남은 시간 · CÒN</span><b id="mktime">${mkFmt(MK_SEC[k].min*60000)}</b></div><div><span class="eyebrow">${label}</span><b id="mkcnt">0</b></div></div>`; }
-function mockSheet(r,k){ sec(); $("body").scrollTop=0; stopAll(); const S=MK_SEC[k]; setTitle(`제${r}회 ${S.ko} 답안지`,()=>mockRound(r)); $("speed").hidden=true;
-  const st=mkGet(r)[k], x=MOCK[r]["x"+k]||[], G=k==="L"?MK_LG:MK_RG;
-  let h=mkTop(k,"표시 · ĐÃ TÔ")+`<p class="tip" style="margin:0 0 4px">시험지를 보면서 답 번호를 누르세요. 다시 누르면 지워져요.<span class="vn" style="display:block">Vừa xem đề vừa bấm số đáp án. Bấm lại để xóa.</span></p>`;
-  for(let i=1;i<=50;i++){ const g=G.find(z=>z[0]===i); if(g) h+=`<div class="omr-g"><b>${g[1]}</b>${g[2]}</div>`;
-    if(k==="L"&&i>21&&i%2===1) h+=`<div class="omr-g sm">${i}~${i+1}</div>`; else if(k==="L"&&i===21) h+=`<div class="omr-g sm">21~22</div>`;
-    h+=x.includes(i)?`<div class="omr-r x"><span class="qn">${i}</span><span class="ox">지문 비공개 · 채점 안 함 · Không chấm</span></div>`
-      :`<div class="omr-r" data-q="${i}"><span class="qn">${i}</span>${[1,2,3,4].map(c=>`<button class="ob ${st.a[i-1]===String(c)?"fill":""}" data-c="${c}" aria-label="${i}번 ${c}">${c}</button>`).join("")}</div>`; }
-  $("body").innerHTML=h;
-  const tot=50-x.length, cnt=()=>{ const a=mkGet(r)[k].a; $("mkcnt").textContent=`${[...a].filter(c=>c!=="0").length} / ${tot}`; }; cnt();
-  $("body").querySelectorAll(".omr-r[data-q]").forEach(row=>row.querySelectorAll(".ob").forEach(b=>b.onclick=()=>{
-    const s=mkGet(r), cur=s[k]; if(!cur||cur.end) return mockResult(r,k); const i=+row.dataset.q-1, c=b.dataset.c, a=[...cur.a];
-    a[i]=a[i]===c?"0":c; cur.a=a.join(""); mkPut(r,s);
-    row.querySelectorAll(".ob").forEach(o=>o.classList.toggle("fill",o.dataset.c===a[i])); cnt(); }));
-  foot(`<button class="btn sec" id="mkout">나가기 · Thoát</button><button class="btn pri" id="mksub">제출 · Nộp bài</button>`);
-  $("mkout").onclick=()=>{ if(confirm("나가도 시간은 계속 가요. 나갈까요? · Thoát ra thời gian vẫn chạy. Thoát?")) mockRound(r); };
-  $("mksub").onclick=()=>mkSubmit(r,k,false);
-  mkTick(r,k);
-}
-function mockWrite(r){ sec(); $("body").scrollTop=0; stopAll(); setTitle(`제${r}회 쓰기 답안지`,()=>mockRound(r)); $("speed").hidden=true;
-  const M=MOCK[r], st=mkGet(r).W;
-  const inp=(id,ph,v)=>`<input class="inp" id="${id}" lang="ko" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${ph}" value="${esc(v||"")}">`;
-  $("body").innerHTML=mkTop("W","53·54 글자 수")+`
-    <div class="tcard mkw"><h3>51번 <small>· 10점</small></h3><div class="blank2"><b>㉠</b>${inp("w0","㉠ 쓰기",st.a[0])}</div><div class="blank2"><b>㉡</b>${inp("w1","㉡ 쓰기",st.a[1])}</div></div>
-    <div class="tcard mkw"><h3>52번 <small>· 10점</small></h3><div class="blank2"><b>㉠</b>${inp("w2","㉠ 쓰기",st.a[2])}</div><div class="blank2"><b>㉡</b>${inp("w3","㉡ 쓰기",st.a[3])}</div></div>
-    <div class="tcard mkw"><h3>53번 <small>· 30점 · 200~300자</small></h3><div class="vn">「${esc(M.t53)}」</div>
-      <textarea class="inp mkta" id="e53" lang="ko" rows="8" spellcheck="false" placeholder="여기에 쓰세요 · Viết ở đây">${esc(st.e53||"")}</textarea><div class="mkcnt" id="c53"></div></div>
-    <div class="tcard mkw"><h3>54번 <small>· 50점 · 600~700자</small></h3><div class="vn">「${esc(M.t54)}」</div>
-      <textarea class="inp mkta" id="e54" lang="ko" rows="14" spellcheck="false" placeholder="여기에 쓰세요 · Viết ở đây">${esc(st.e54||"")}</textarea><div class="mkcnt" id="c54"></div></div>
-    <p class="tip">글자 수는 띄어쓰기를 포함해서 세요 (줄 바꿈은 빼고). 제목은 쓰지 마세요.<span class="vn" style="display:block">Số chữ tính cả dấu cách (không tính xuống dòng). Không viết tiêu đề.</span></p>`;
-  let tmr=null;
-  const save=()=>{ const s=mkGet(r), w=s.W; if(!w||w.end) return; w.a=[0,1,2,3].map(i=>$("w"+i).value); w.e53=$("e53").value; w.e54=$("e54").value; mkPut(r,s); };
-  const count=()=>{ [["53",200,300],["54",600,700]].forEach(([n,lo,hi])=>{ const v=mkLen($("e"+n).value), el=$("c"+n); el.textContent=`${v}자 · 목표 ${lo}~${hi}자`; el.className="mkcnt"+(v>hi?" over":v>=lo?" ok":""); });
-    $("mkcnt").textContent=`${mkLen($("e53").value)} · ${mkLen($("e54").value)}`; };
-  $("body").querySelectorAll("input,textarea").forEach(el=>{ el.addEventListener("input",()=>{ count(); clearTimeout(tmr); tmr=setTimeout(save,500); }); el.addEventListener("blur",save); });
-  count();
-  foot(`<button class="btn sec" id="mkout">나가기 · Thoát</button><button class="btn pri" id="mksub">제출 · Nộp bài</button>`);
-  $("mkout").onclick=()=>{ save(); if(confirm("나가도 시간은 계속 가요. 나갈까요? · Thoát ra thời gian vẫn chạy. Thoát?")) mockRound(r); };
-  $("mksub").onclick=()=>{ save(); mkSubmit(r,"W",false); };
-  // 시간이 끝나면 쓰던 글까지 저장하고 제출
+const mkTL=q=>String((TYPES[q.t]||{}).ko||q.t).replace(/^남자(의|가) ?/,"");
+function mkInstrL(q){ const T=TYPES[q.t]||{}; return q.pr?esc(q.pr):(q.sp==="F"?String(T.q||"").replace("남자","여자"):T.q||""); }
+function mkExam(r,k){ sec(); stopAll(); const S=MK_SEC[k]; setTitle(`모의고사 ${r}회 ${S.ko}`,()=>{ stopAll(); mockRound(r); }); $("speed").hidden=k!=="L";
+  const pages=mkBuild()[r-1][k], s=mkGet(r), st=s[k]; if(!st||st.end) return mockResult(r,k);
+  const pg=Math.min(st.pg||0,pages.length-1), grp=pages[pg];
+  const nAns=()=>k==="W"?pages.reduce((a,g)=>a+((st.ans[g[0].n]||["",""]).filter(v=>String(v).trim()).length),0):Object.keys(st.ans).length;
+  const nav=k==="W"?"":`<div class="mknav" id="mknav">${pages.map((g,j)=>`<button data-p="${j}" class="${j===pg?"cur":""} ${g.every(it=>st.ans[it.n]!=null)?"done":""}">${g.length>1?`${g[0].n}~${g[g.length-1].n}`:g[0].n}</button>`).join("")}</div>`;
+  let h=`<div class="omr-top"><div><span class="eyebrow">남은 시간 · CÒN</span><b id="mktime">${mkFmt(mkLeft(k,st))}</b></div><div><span class="eyebrow">${k==="W"?"쓴 칸 · ĐÃ VIẾT":"답함 · ĐÃ LÀM"}</span><b id="mkcnt">${nAns()} / ${k==="W"?4:50}</b></div></div>${nav}`;
+  const choices=it=>{ const q=mkQ(k,it), ro=st.perm[it.n]||[0,1,2,3];
+    return `<div class="choices mkch" data-n="${it.n}">${ro.map((j,pos)=>`<button class="ch ${st.ans[it.n]===j?"sel":""}" data-i="${j}"><span class="k">${circ[pos]}</span><span>${esc(q.o[j])}</span></button>`).join("")}</div>`; };
+  if(k==="L"){ const q0=mkQ("L",grp[0]), heard=!!st.heard[pg];
+    h+=`<div class="qhead"><span class="qno">${grp.length>1?`${grp[0].n}~${grp[1].n}`:String(grp[0].n).padStart(2,"0")}</span><span class="chip">듣기 · ${grp.length>1?"한 번 듣고 두 문제":"한 번만 들어요"}</span></div>
+      <div class="player"><button class="playbtn" id="pbtn" aria-label="듣기" ${heard?"disabled":""}>${ICON.play}</button><div class="wave" id="wave"><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="eyebrow" id="plays" style="margin-top:8px">${heard?"다 들었어요 · Đã nghe xong":"곧 시작해요 · Sắp phát"}</div></div>`;
+    grp.forEach(it=>{ const q=mkQ("L",it); h+=`<div class="instr"><b class="mkno">${it.n}.</b> ${mkInstrL(q)}</div>${choices(it)}`; });
+  } else if(k==="R"){ const q0=mkQ("R",grp[0]);
+    h+=`<div class="qhead"><span class="qno">${grp.length>1?`${grp[0].n}~${grp[grp.length-1].n}`:String(grp[0].n).padStart(2,"0")}</span><span class="chip">읽기</span></div>`;
+    if(grp.length>1) h+=`<div class="instr">다음을 읽고 물음에 답하십시오.</div>`+rBox(q0);
+    grp.forEach(it=>{ const q=mkQ("R",it), I=RI[q.i]||{q:""}; const ins=q.who?I.q.replace("어머니",q.who):I.q;
+      h+=grp.length>1?`<div class="instr"><b class="mkno">${it.n}.</b> ${ins.replace(/^다음을 읽고 /,"")}</div>${choices(it)}`:`<div class="instr"><b class="mkno">${it.n}.</b> ${ins}</div>${rBox(q)}${choices(it)}`; });
+  } else { const it=grp[0], q=mkQ("W",it), a=st.ans[it.n]||["",""], is51=q.k==="51";
+    const mk=t=>esc(t).replace(/\( ?㉠ ?\)/g,'<span class="mk2">( ㉠ )</span>').replace(/\( ?㉡ ?\)/g,'<span class="mk2">( ㉡ )</span>');
+    h+=`<div class="qhead"><span class="qno">${it.n}</span><span class="chip">쓰기 · 10점</span></div>
+      <div class="instr">다음 글의 ㉠과 ㉡에 알맞은 말을 각각 쓰십시오.<span class="vn">Viết từ phù hợp vào ㉠ và ㉡. ${is51?"Giữ đúng thể văn của bài.":"Viết theo thể 「-다」."}</span></div>
+      <div class="pass p51">${q.h?`<div class="ph">${esc(q.h)}</div>`:""}<div class="pb">${q.x.map(l=>`<p>${mk(l)}</p>`).join("")}</div></div>
+      <div class="blank2"><b>㉠</b><input class="inp" id="wa" lang="ko" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="㉠ 쓰기 · Viết ㉠" value="${esc(a[0])}"></div>
+      <div class="blank2"><b>㉡</b><input class="inp" id="wb" lang="ko" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="㉡ 쓰기 · Viết ㉡" value="${esc(a[1])}"></div>`; }
+  $("body").innerHTML=h; $("body").scrollTop=0;
+  const go=p=>{ stopAll(); const s2=mkGet(r); if(!s2[k]||s2[k].end) return mockResult(r,k); s2[k].pg=p; mkPut(r,s2); mkExam(r,k); };
+  if($("mknav")){ $("mknav").querySelectorAll("button").forEach(b=>b.onclick=()=>go(+b.dataset.p)); const nv=$("mknav"), cur=nv.querySelector(".cur"); if(cur) nv.scrollLeft=cur.offsetLeft-nv.clientWidth/2+cur.offsetWidth/2; }
+  // 답 고르기: 저장만 하고 정답은 안 보여 줘요. 이 쪽의 문제를 다 풀면 다음 쪽으로.
+  $("body").querySelectorAll(".mkch").forEach(box=>box.querySelectorAll(".ch").forEach(b=>b.onclick=()=>{
+    const s2=mkGet(r), c=s2[k]; if(!c||c.end) return mockResult(r,k); const n=+box.dataset.n; c.ans[n]=+b.dataset.i; mkPut(r,s2); st.ans=c.ans;
+    box.querySelectorAll(".ch").forEach(o=>o.classList.toggle("sel",o===b)); $("mkcnt").textContent=`${Object.keys(c.ans).length} / 50`;
+    if(grp.every(it=>c.ans[it.n]!=null)&&pg<pages.length-1&&!(k==="L"&&playing)) setTimeout(()=>{ if($("mkcnt")&&mkGet(r)[k]&&mkGet(r)[k].pg===pg) go(pg+1); },450); }));
+  if(k==="W"){ const save=()=>{ const s2=mkGet(r), c=s2[k]; if(!c||c.end) return; c.ans[grp[0].n]=[$("wa").value,$("wb").value]; mkPut(r,s2); st.ans=c.ans; $("mkcnt").textContent=`${nAns()} / 4`; };
+    ["wa","wb"].forEach(id=>{ $(id).addEventListener("input",save); $(id).addEventListener("blur",save); });
+    $("wa").onkeydown=e=>{ if(e.key==="Enter"&&!e.isComposing){ e.preventDefault(); $("wb").focus(); } }; }
+  if(k==="L"){ const pb=$("pbtn"), q0=mkQ("L",grp[0]);
+    const play=()=>{ if(playing||mkGet(r).L.heard[pg]) return; $("plays").textContent="듣는 중 · Đang nghe… (한 번만)";
+      playLines(q0.l,{onLine:i=>{ if(i!==-1) return; const s2=mkGet(r); if(s2.L&&!s2.L.end){ s2.L.heard[pg]=1; mkPut(r,s2); st.heard[pg]=1; }
+        if($("pbtn")===pb){ pb.disabled=true; $("plays").textContent="다 들었어요 · Đã nghe xong";
+          if(grp.every(it=>mkGet(r).L.ans[it.n]!=null)&&pg<pages.length-1) setTimeout(()=>{ if($("pbtn")===pb) go(pg+1); },600); } }}); };
+    pb.onclick=()=>{ if(!playing) play(); };
+    if(!st.heard[pg]) setTimeout(()=>{ if($("pbtn")===pb) play(); },500); }
+  const last=pg===pages.length-1;
+  foot(`<button class="btn sec" id="mkprev" ${pg?"":"disabled"}>‹ 이전</button>${last?`<button class="btn pri" id="mksub">제출 · Nộp bài</button>`:`<button class="btn pri" id="mknx">다음 ›</button>`}`);
+  $("mkprev").onclick=()=>{ if(pg) go(pg-1); };
+  if($("mknx")) $("mknx").onclick=()=>go(pg+1);
+  if($("mksub")) $("mksub").onclick=()=>mkSubmit(r,k,false);
   clearInterval(MK_T);
-  const upd=()=>{ const el=$("mktime"); if(!el||!$("e54")){ clearInterval(MK_T); return; } const w=mkGet(r).W; if(!w||w.end){ clearInterval(MK_T); return; }
-    const ms=mkLeft("W",w); if(ms<=0){ clearInterval(MK_T); save(); mkSubmit(r,"W",true); return; } el.textContent=mkFmt(ms); el.classList.toggle("low",ms<5*60000); };
+  const upd=()=>{ const el=$("mktime"); if(!el){ clearInterval(MK_T); return; } const c=mkGet(r)[k]; if(!c||c.end){ clearInterval(MK_T); return; }
+    const ms=mkLeft(k,c); if(ms<=0){ clearInterval(MK_T); mkSubmit(r,k,true); return; } el.textContent=mkFmt(ms); el.classList.toggle("low",ms<5*60000); };
   upd(); MK_T=setInterval(upd,1000);
 }
-function mkCatHtml(cat,names){ return `<div class="mkcat">${Object.keys(names).filter(c=>cat[c]).map(c=>{ const [ok,n]=cat[c], p=ok/n;
-    return `<span>${names[c]}</span><b class="${p<0.5?"lo":p<0.8?"mid":"hi"}">${ok}/${n}</b><div class="bar"><i style="width:${p*100}%"></i></div>`; }).join("")}</div>`; }
-function mkGrid(r,k,st){ const M=MOCK[r], x=M["x"+k]||[]; let h=`<div class="agrid">`;
-  for(let i=1;i<=50;i++){ if(x.includes(i)){ h+=`<span class="ag x"><i>${i}</i>-</span>`; continue; }
-    const me=(st.a||"")[i-1], key=M[k][i-1], ok=me===key;
-    h+=`<span class="ag ${ok?"k":"w"}"><i>${i}</i>${me&&me!=="0"?circ[me-1]:"—"}${ok?"":`<em>${circ[key-1]}</em>`}</span>`; }
-  return h+`</div><p class="tip" style="margin-top:6px">빨간 칸: 내 답 → <b style="color:var(--good)">정답</b> · Ô đỏ: đáp án của bạn → đáp án đúng</p>`; }
+function mkCatHtml(cat){ return `<div class="mkcat">${Object.keys(cat).map(c=>{ const [ok,n]=cat[c], p=ok/n;
+    return `<span>${esc(c)}</span><b class="${p<0.5?"lo":p<0.8?"mid":"hi"}">${ok}/${n}</b><div class="bar"><i style="width:${p*100}%"></i></div>`; }).join("")}</div>`; }
 function mkLadder(sum){ const pct=v=>Math.min(100,v/300*100);
   return `<div class="ladder"><i style="width:${pct(sum)}%"></i>${MK_CUT.map(([v,l])=>`<span class="tk ${sum>=v?"on":""}" style="left:${pct(v)}%"><em>${l}</em><small>${v}</small></span>`).join("")}<span class="me" style="left:${pct(sum)}%"></span></div>`; }
-function mockResult(r,focus){ sec(); $("body").scrollTop=0; stopAll(); clearInterval(MK_T); setTitle(`제${r}회 결과 · Kết quả`,()=>mockRound(r)); $("speed").hidden=true;
-  const s=mkSweep(r), sc=mkScore(r), M=MOCK[r];
-  const wsum=sc.W?sc.W.pts+(sc.G?(+sc.G.w53||0)+(+sc.G.w54||0):0):null;
-  const need=MK_CUT.filter(([v])=>v>sc.sum).map(([v,l])=>`${l}까지 <span class="nb">+${v-sc.sum}점</span>`);
-  let h=`<section class="hero" style="text-align:center"><div class="eyebrow">제${r}회 · 300점 만점 · TRÊN 300 ĐIỂM</div><div class="big">${sc.sum}<small> / 300</small></div>
-    <div class="mklv ${sc.all&&sc.G?"":"tmp"}">${sc.all&&sc.G?`예상 등급 <b>${sc.lv}</b>`:`지금까지 <b>${sc.lv==="불합격"?"3급 전":sc.lv}</b> 점수`}</div></section>
-    <div class="mkscore"><div><span>듣기 · Nghe</span><b>${sc.L?sc.L.pts:"-"}</b><span>/ 100</span></div><div><span>쓰기 · Viết</span><b>${wsum==null?"-":wsum}</b><span>/ 100</span></div><div><span>읽기 · Đọc</span><b>${sc.R?sc.R.pts:"-"}</b><span>/ 100</span></div></div>
-    ${mkLadder(sc.sum)}`;
-  if(!sc.all) h+=`<div class="fb no"><b>아직 안 본 영역이 있어요</b>${["L","W","R"].filter(k=>!sc[k]).map(k=>MK_SEC[k].ko).join(" · ")}까지 봐야 총점이 나와요.<span class="vn">Còn phần chưa thi, thi xong mới có tổng điểm.</span></div>`;
-  else if(!sc.G) h+=`<div class="fb ok"><b>53·54번은 선생님이 채점하고 있어요 ✍️</b>지금 점수는 53·54번(80점)을 뺀 점수예요.${need.length?` 53·54번에서 ${need.join(" · ")}을 받으면 돼요.`:""}<span class="vn">Cô đang chấm câu 53·54 (80 điểm). Điểm hiện tại chưa tính hai câu này.</span></div>`;
-  if(sc.G&&sc.G.note) h+=`<div class="fb ok"><b>선생님 한마디 · Lời cô</b>${esc(sc.G.note)}</div>`;
+function mockResult(r,focus){ sec(); $("body").scrollTop=0; stopAll(); clearInterval(MK_T); setTitle(`모의고사 ${r}회 결과`,()=>mockRound(r)); $("speed").hidden=true;
+  const s=mkSweep(r), sc=mkScore(r);
+  let h=`<section class="hero" style="text-align:center"><div class="eyebrow">모의고사 ${r}회 · 300점 환산 · QUY ĐỔI 300</div><div class="big">${sc.sum}<small> / 300</small></div>
+    <div class="mklv ${sc.all?"":"tmp"}">${sc.all?`예상 등급 <b>${sc.lv}</b>`:`지금까지 점수 · 아직 안 본 영역이 있어요`}</div></section>
+    <div class="mkscore"><div><span>듣기 · Nghe</span><b>${sc.L?sc.L.pts:"-"}</b><span>/ 100</span></div><div><span>쓰기 51·52</span><b>${sc.W?sc.W.pts:"-"}</b><span>/ 20</span></div><div><span>읽기 · Đọc</span><b>${sc.R?sc.R.pts:"-"}</b><span>/ 100</span></div></div>
+    ${mkLadder(sc.sum)}
+    <p class="tip">원점수 ${sc.raw} / 220 (듣기 100 + 읽기 100 + 쓰기 51·52 20)을 300점으로 바꾼 점수예요. 53·54번은 모의고사에 없어요.<span class="vn" style="display:block">Điểm gốc ${sc.raw}/220 quy đổi sang thang 300. Không có câu 53·54.</span></p>`;
+  if(!sc.all) h+=`<div class="fb no"><b>아직 안 본 영역: ${["L","W","R"].filter(k=>!sc[k]).map(k=>MK_SEC[k].ko).join(" · ")}</b>다 봐야 예상 등급이 나와요.<span class="vn">Thi hết các phần mới có cấp dự đoán.</span></div>`;
   const secHtml=k=>{ const S=MK_SEC[k], st=s[k];
     if(!st||!st.end) return `<div class="tcard mkres"><h3>${S.no} ${S.ko}</h3><p class="tip">아직 안 봤어요 · Chưa thi</p></div>`;
-    if(k==="W"){ const W=sc.W, a=st.a||[]; const rowW=(i,lab,acc)=>`<div class="mkwr ${W.hit[i]?"k":"w"}"><b>${lab}</b><span>${a[i]&&a[i].trim()?esc(a[i]):"<i>(안 씀)</i>"}</span><em>${W.hit[i]?"✓ 5점":"✗ 0점"}</em>${W.hit[i]?"":`<small>정답 · Đáp án: ${acc.map(esc).join(" / ")}</small>`}</div>`;
-      return `<div class="tcard mkres" id="mkrW"><h3>${S.no} 쓰기 <small>51·52번 ${W.pts}/20 · 53·54번 ${sc.G?`${(+sc.G.w53||0)+(+sc.G.w54||0)}/80`:"채점 전"}</small></h3>
-        ${rowW(0,"51 ㉠",M.w[0][0])}${rowW(1,"51 ㉡",M.w[0][1])}${rowW(2,"52 ㉠",M.w[1][0])}${rowW(3,"52 ㉡",M.w[1][1])}
-        <p class="tip">51·52번은 정답 범위 안의 답만 점수를 받아요 (띄어쓰기·문장 부호는 상관없어요). 실제 시험에서는 비슷한 답도 부분 점수를 받을 수 있어요.</p>
-        <div class="mkess"><b>53번</b> · ${mkLen(st.e53)}자 ${sc.G?`· <em>${sc.G.w53}/30점</em>`:""}<div class="txt">${st.e53&&st.e53.trim()?esc(st.e53):"<i>(안 씀)</i>"}</div></div>
-        <div class="mkess"><b>54번</b> · ${mkLen(st.e54)}자 ${sc.G?`· <em>${sc.G.w54}/50점</em>`:""}<div class="txt">${st.e54&&st.e54.trim()?esc(st.e54):"<i>(안 씀)</i>"}</div></div></div>`; }
-    const R=sc[k], x=M["x"+k]||[];
-    return `<div class="tcard mkres" id="mkr${k}"><h3>${S.no} ${S.ko} <small>${R.pts}점 · ${R.ok}/${R.n} 맞힘${x.length?` · ${x.join("·")}번 채점 제외`:""}${st.auto?" · ⏰ 시간 끝 자동 제출":""}</small></h3>
-      <div class="eyebrow" style="margin:6px 0">유형별 · THEO DẠNG</div>${mkCatHtml(R.cat,k==="L"?MK_LC:MK_RC)}
-      <div class="eyebrow" style="margin:12px 0 6px">답안 확인 · ĐÁP ÁN</div>${mkGrid(r,k,st)}</div>`; };
+    if(k==="W"){ const W=sc.W; let i=0;
+      return `<div class="tcard mkres" id="mkrW"><h3>쓰기 51·52 <small>${W.pts}/20점${st.auto?" · ⏰ 시간 끝 자동 제출":""}</small></h3>${mkItems(r,"W").map(it=>{ const q=mkQ("W",it), a=(st.ans||{})[it.n]||["",""];
+        return [["㉠",q.a1,a[0]],["㉡",q.a2,a[1]]].map(([lab,acc,v])=>{ const ok=W.hit[i++];
+          return `<div class="mkwr ${ok?"k":"w"}"><b>${it.n} ${lab}</b><span>${v&&v.trim()?esc(v):"<i>(안 씀)</i>"}</span><em>${ok?"✓ 5점":"✗ 0점"}</em>${ok?"":`<small>정답 · Đáp án: ${acc.map(esc).join(" / ")}</small>`}</div>`; }).join(""); }).join("")}</div>`; }
+    const R=sc[k];
+    const wrong=mkItems(r,k).filter(it=>st.ans[it.n]!==mkQ(k,it).a);
+    return `<div class="tcard mkres" id="mkr${k}"><h3>${S.no} ${S.ko} <small>${R.pts}점 · ${R.ok}/50 맞힘${st.auto?" · ⏰ 시간 끝 자동 제출":""}</small></h3>
+      <div class="eyebrow" style="margin:6px 0">유형별 · THEO DẠNG</div>${mkCatHtml(R.cat)}
+      <div class="eyebrow" style="margin:12px 0 6px">답안 확인 · ĐÁP ÁN <span style="font-weight:500">(빨간 칸을 누르면 문제와 해설)</span></div>
+      <div class="agrid">${mkItems(r,k).map(it=>{ const q=mkQ(k,it), ro=st.perm[it.n]||[0,1,2,3], me=st.ans[it.n], ok=me===q.a;
+        return `<button class="ag ${ok?"k":"w"}" data-k="${k}" data-n="${it.n}"><i>${it.n}</i>${me!=null?circ[ro.indexOf(me)]:"—"}${ok?"":`<em>${circ[ro.indexOf(q.a)]}</em>`}</button>`; }).join("")}</div>
+      ${wrong.length?"":`<div class="fb ok" style="margin-top:10px"><b>다 맞았어요! 🎉</b></div>`}</div>`; };
   h+=secHtml("L")+secHtml("W")+secHtml("R");
   $("body").innerHTML=h;
+  $("body").querySelectorAll(".ag[data-n]").forEach(b=>b.onclick=()=>mkReview(r,b.dataset.k,+b.dataset.n));
   const next=["L","W","R"].find(k=>!(s[k]&&s[k].end));
-  foot(next?`<button class="btn sec" id="mkback">회차 화면 · Về đề</button><button class="btn pri" id="mknext">다음: ${MK_SEC[next].ko} ›</button>`:`<button class="btn pri" id="mkback">확인 · OK</button>`);
+  foot(next?`<button class="btn sec" id="mkback">회차 화면</button><button class="btn pri" id="mknext">다음: ${MK_SEC[next].ko} ›</button>`:`<button class="btn pri" id="mkback">확인 · OK</button>`);
   $("mkback").onclick=()=>mockRound(r);
-  if($("mknext")) $("mknext").onclick=()=>{ const st=mkGet(r)[next]; if(st&&st.t0) return next==="W"?mockWrite(r):mockSheet(r,next); mkReady(r,next); };
+  if($("mknext")) $("mknext").onclick=()=>{ const st=mkGet(r)[next]; if(st&&st.t0) return mkExam(r,next); mkReady(r,next); };
   if(focus&&$("mkr"+focus)) setTimeout(()=>{ const el=$("mkr"+focus); if(el) $("body").scrollTop=el.offsetTop-80; },30);
-  mkGradeSync(()=>{ if($("title").textContent===`제${r}회 결과 · Kết quả`) mockResult(r); });
 }
-/* teacher: one line per round in the student card + writing grading screen */
+// 결과에서 한 문제 다시 보기: 문제 + 내 답 + 정답 + 해설 (듣기는 다시 듣기와 대본)
+function mkReview(r,k,n){ sec(); $("body").scrollTop=0; stopAll(); setTitle(`모의고사 ${r}회 · ${MK_SEC[k].ko} ${n}번`,()=>mockResult(r,k)); $("speed").hidden=k!=="L";
+  const st=mkGet(r)[k], grp=mkBuild()[r-1][k].find(g=>g.some(it=>it.n===n)), it=grp.find(x=>x.n===n), q=mkQ(k,it), ro=st.perm[n]||[0,1,2,3], me=st.ans[n], ok=me===q.a;
+  let h=`<div class="qhead"><span class="qno">${n}</span><span class="chip">${k==="L"?"듣기 · "+esc(mkTL(q)):"읽기 · "+esc(q.t||"")}</span></div>`;
+  if(k==="L") h+=`<div class="instr">${mkInstrL(q)}</div><div class="player"><button class="playbtn" id="pbtn" aria-label="듣기">${ICON.play}</button><div class="wave" id="wave"><i></i><i></i><i></i><i></i><i></i></div><div class="eyebrow" id="plays" style="margin-top:8px">다시 듣기 · Nghe lại</div></div>`;
+  else { const I=RI[q.i]||{q:""}; h+=`<div class="instr">${q.who?I.q.replace("어머니",q.who):I.q}</div>${rBox(q)}`; }
+  h+=`<div class="choices">${ro.map((j,pos)=>`<div class="ch ${j===q.a?"ok":j===me?"no":""}"><span class="k">${circ[pos]}</span><span>${esc(q.o[j])}</span></div>`).join("")}</div>
+    <div class="fb ${ok?"ok":"no"}"><b>${ok?"맞았어요":`내 답 ${me!=null?circ[ro.indexOf(me)]:"없음"} → 정답 ${circ[ro.indexOf(q.a)]}`}</b>${esc(renum(q.ex||"",ro))}<span class="vn">${esc(renum(q.exv||"",ro))}</span></div>`;
+  if(k==="L") h+=`<details class="mkscript"><summary>대본 보기 · Xem lời thoại</summary>${q.l.filter(l=>l[1]!=="_").map(([sp,tx])=>`<p><b>${sp==="F"?"여":"남"}</b> ${esc(tx)}</p>`).join("")}</details>`;
+  $("body").innerHTML=h;
+  if(k==="L") $("pbtn").onclick=()=>{ if(playing) stopAll(); else playLines(q.l); };
+  foot(`<button class="btn pri" id="mkrb">결과로 돌아가기 · Quay lại</button>`); $("mkrb").onclick=()=>mockResult(r,k);
+}
+/* teacher: one line per round in the student card */
 function mkTeacherLine(u){ let all={}; try{ all=JSON.parse((u.p||{})[MK_KEY]||"{}")||{}; }catch(e){}
-  return Object.keys(all).filter(r=>MOCK[r]).sort((a,b)=>b-a).map(r=>{ const s=all[r], g=(u.mockGrade||{})[r], sc=mkScoreOf(r,s,g); if(!["L","W","R"].some(k=>s[k]&&s[k].t0)) return "";
+  return Object.keys(all).filter(r=>+r>=1&&+r<=MK_N).sort().map(r=>{ const s=all[r], sc=mkScoreOf(+r,s); if(!["L","W","R"].some(k=>s[k]&&s[k].t0)) return "";
     const p=k=>sc[k]?sc[k].pts:(s[k]&&s[k].t0?"⏱":"-");
-    return `<div class="asnd mkline">📝 <b>제${r}회</b> 듣기 ${p("L")} · 읽기 ${p("R")} · 51·52 ${sc.W?sc.W.pts+"/20":p("W")} · 53·54 ${sc.G?`${(+sc.G.w53||0)+(+sc.G.w54||0)}/80`:sc.W?"<b class=\"wait\">채점 전</b>":"-"}${sc.all?` · <b>합계 ${sc.sum}${sc.G?` (${sc.lv})`:""}</b>`:""}
-      ${s.W&&s.W.end?`<button class="mkgr" data-uid="${esc(u.uid)}" data-r="${r}">${sc.G?"채점 고치기":"✍️ 쓰기 채점"}</button>`:""}</div>`; }).join(""); }
-function mkGradeView(u,r){ sec(); $("body").scrollTop=0; stopAll(); setTitle(`쓰기 채점 · ${u.name||u.id} · ${r}회`,()=>teacher()); $("speed").hidden=true;
-  let s={}; try{ s=(JSON.parse((u.p||{})[MK_KEY]||"{}")||{})[r]||{}; }catch(e){}
-  const W=s.W||{}, M=MOCK[r], g0=(u.mockGrade||{})[r], g=g0&&g0.wid===W.t0?g0:{}, sc=mkScoreOf(r,s,g0), a=W.a||[];
-  const accs=[M.w[0][0],M.w[0][1],M.w[1][0],M.w[1][1]], labs=["51 ㉠","51 ㉡","52 ㉠","52 ㉡"];
-  $("body").innerHTML=`<p class="tip" style="margin-top:0"><b>${esc(u.name||"-")}</b> (${esc(u.id||"")}) · 제${r}회 · 듣기 ${sc.L?sc.L.pts:"-"} · 읽기 ${sc.R?sc.R.pts:"-"} · 51·52번 ${sc.W?sc.W.pts:0}/20 (자동)</p>
-    <div class="tcard mkres">${a.map((v,i)=>`<div class="mkwr ${sc.W&&sc.W.hit[i]?"k":"w"}"><b>${labs[i]}</b><span>${v&&v.trim()?esc(v):"<i>(안 씀)</i>"}</span><em>${sc.W&&sc.W.hit[i]?"✓":"✗"}</em><small>모범: ${accs[i].map(esc).join(" / ")}</small></div>`).join("")}</div>
-    <div class="tcard mkres"><h3>53번 <small>「${esc(M.t53)}」 · ${mkLen(W.e53)}자 (200~300)</small></h3><div class="mkess"><div class="txt">${W.e53&&W.e53.trim()?esc(W.e53):"<i>(안 씀)</i>"}</div></div>
-      <label class="mkin">점수 <input class="inp" id="g53" type="number" inputmode="numeric" min="0" max="30" value="${g.w53!=null?g.w53:""}"> / 30</label></div>
-    <div class="tcard mkres"><h3>54번 <small>「${esc(M.t54)}」 · ${mkLen(W.e54)}자 (600~700)</small></h3><div class="mkess"><div class="txt">${W.e54&&W.e54.trim()?esc(W.e54):"<i>(안 씀)</i>"}</div></div>
-      <label class="mkin">점수 <input class="inp" id="g54" type="number" inputmode="numeric" min="0" max="50" value="${g.w54!=null?g.w54:""}"> / 50</label></div>
-    <div class="tcard"><b>선생님 한마디 (학생 결과 화면에 보여요)</b><textarea class="inp" id="gnote" rows="3" maxlength="300" placeholder="예: 53번 원인 부분이 좋아요. 54번은 서론을 줄이세요.">${esc(g.note||"")}</textarea></div>
-    <div id="gmsg"></div>`;
-  foot(`<button class="btn pri" id="gsave">점수 저장 · Lưu</button>`);
-  $("gsave").onclick=async()=>{ const n=(id,mx)=>{ const v=$(id).value.trim(); if(v==="") return null; const x=Math.round(+v); return isNaN(x)?null:Math.max(0,Math.min(mx,x)); };
-    const w53=n("g53",30), w54=n("g54",50); if(w53==null||w54==null){ $("gmsg").innerHTML=`<div class="fb no">53번과 54번 점수를 모두 넣어 주세요. (안 쓴 글은 0)</div>`; return; }
-    const b=$("gsave"); b.disabled=true; b.textContent="저장 중…";
-    try{ await CLOUD.setGrade(u.uid,r,{w53,w54,note:$("gnote").value.trim().slice(0,300),wid:W.t0||0,at:Date.now()}); teacher(); }
-    catch(e){ b.disabled=false; b.textContent="점수 저장 · Lưu"; $("gmsg").innerHTML=`<div class="fb no">저장하지 못했어요. (${esc(e.code||e.message||e)})</div>`; } };
-}
+    return `<div class="asnd mkline">📝 <b>모의고사 ${r}회</b> 듣기 ${p("L")} · 쓰기 51·52 ${sc.W?sc.W.pts+"/20":p("W")} · 읽기 ${p("R")}${sc.all?` · <b>환산 ${sc.sum}점 (${sc.lv})</b>`:""}</div>`; }).join(""); }
 function lv56(){ sec(); stopAll(); setTitle("TOPIK II · 5·6급",topik2); $("speed").hidden=true;
   let m=lsGet("tpk-mode56")||"5"; if(m==="6"&&!t6Open()) m="5"; lsSet("tpk-mode56",m); setMode(m);
   const lo=m==="6"?T6_FROM:T56_FROM, hi=m==="6"?999:T6_FROM-1;
@@ -3313,7 +3320,7 @@ function topik2(){ sec();
    <div class="eyebrow" style="margin:2px 0 12px">목표 등급을 고르세요 · CHỌN CẤP ĐỘ MỤC TIÊU</div>
    ${lvlBtn({id:"l34",badge:"3·4급",ko:"3급 · 4급",vn:"Cấp 3 · 4 — lộ trình của cô",mm:`선생님 수업 ${n}일 · 듣기 · 쓰기 · 읽기 · 단어장`,c:"listen"})}
    ${lvlBtn({id:"l56",badge:t56Open()?"5·6급":"🔒 5·6",ko:"5급 · 6급",vn:"Cấp 5 · 6 — cao cấp",mm:t56Open()?`합격 ✅ · 듣기·읽기 각 ${Object.keys(READ).filter(d=>+d>=T56_FROM).length}일 · 쓰기는 준비 중`:"시험 10문제 · 9개 이상 맞히면 열려요 · Thi 10 câu, đúng ≥ 9",c:"write"})}
-   ${lvlBtn({id:"lmk",badge:"실전",ko:"실전 모의고사",vn:"Thi thử bằng đề thật · 83·91·96·102회",mm:"기출 시험지 + 앱 답안지(OMR) · 실제 시간 · 바로 채점",c:"read"})}`;
+   ${lvlBtn({id:"lmk",badge:"실전",ko:"실전 모의고사",vn:"Thi thử giống đề thật · 3 đề",mm:"실제 시험 순서·난이도 · 듣기 50 · 쓰기 51·52 · 읽기 50 · 바로 채점",c:"read"})}`;
   $("lmk").onclick=mockHome;
   $("l34").onclick=menu; $("l56").onclick=()=>t56Open()?lv56():t56Intro();
   foot("");
@@ -4902,7 +4909,6 @@ async function teacher(given){
     try{ await CLOUD.setUnlock(b.dataset.uid,v); if(!TW) teacher(); }catch(e){ b.disabled=false; alert("바꾸지 못했어요: "+(e.code||e.message)); }
   });
   $("tmail").onclick=()=>inbox(); $("tmail2").onclick=()=>inbox();
-  $("body").querySelectorAll(".mkgr").forEach(b=>b.onclick=()=>{ const u=list.find(x=>x.uid===b.dataset.uid); if(u) mkGradeView(u,b.dataset.r); });
   if(live) $("body").scrollTop=keepY;
 }
 
@@ -4943,7 +4949,7 @@ const C=window.CLOUD={
     if(!C.user) return;
     const r=doc(db,"users",C.user.uid), s=await getDoc(r);
     if(!s.exists()){ await setDoc(r,{id:C.user.id,name:C.user.id,created:serverTimestamp(),updated:serverTimestamp(),p:lsSnapshot(),unlockAll:false}); C.user.name=C.user.id; UNLOCK_ALL=false; return; }
-    const d=s.data(); C.user.name=d.name||C.user.id; UNLOCK_ALL=!!d.unlockAll; MK_GRADE=d.mockGrade||{};
+    const d=s.data(); C.user.name=d.name||C.user.id; UNLOCK_ALL=!!d.unlockAll;
     const p=d.p||{};
     C.applying=true;
     try{ lsClear(); Object.keys(p).forEach(k=>{ if(k.startsWith("tpk-")&&p[k]!=null) localStorage.setItem(k,p[k]); }); }
@@ -4959,10 +4965,7 @@ const C=window.CLOUD={
   sendFeedback(text){ return addDoc(collection(db,"feedback"),{uid:C.user.uid,id:C.user.id,name:C.user.name||C.user.id,text,read:false,created:serverTimestamp()}); },
   watchFeedback(cb,err){ return onSnapshot(query(collection(db,"feedback"),orderBy("created","desc"),limit(300)),s=>cb(s.docs.map(d=>({fid:d.id,...d.data()}))),err); },
   markRead(fid){ return setDoc(doc(db,"feedback",fid),{read:true},{merge:true}); },
-  setUnlock(uid,v){ return setDoc(doc(db,"users",uid),{unlockAll:!!v},{merge:true}); },
-  // 실전 모의고사 53·54번: the teacher writes the score, the student only reads it
-  setGrade(uid,r,g){ return setDoc(doc(db,"users",uid),{mockGrade:{[r]:g}},{merge:true}); },
-  async myGrade(){ if(!C.user) return {}; const s=await getDoc(doc(db,"users",C.user.uid)); return (s.exists()&&s.data().mockGrade)||{}; }
+  setUnlock(uid,v){ return setDoc(doc(db,"users",uid),{unlockAll:!!v},{merge:true}); }
 };
 addEventListener("visibilitychange",()=>{ if(document.visibilityState==="hidden"&&timer) C.flush().catch(()=>{}); });
 addEventListener("pagehide",()=>{ if(timer) C.flush().catch(()=>{}); });
