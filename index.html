@@ -288,6 +288,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .rsm-card p{margin:8px 0 14px;font-size:14px;color:var(--muted);line-height:1.55}.rsm-card p .vn{display:block;margin-top:4px}
 .rsm-b{display:flex;gap:8px}.rsm-b .btn{flex:1;height:48px;font-size:14.5px}
 @keyframes rsmIn{from{opacity:0}to{opacity:1}}
+.asnd{margin:6px 0 2px;padding:6px 10px;border-radius:10px;background:var(--surface);border:1px solid var(--line);font-size:12px;color:var(--muted);line-height:1.5}.asnd.bad{border-color:#F0B3B3;background:#FFF5F5;color:#9B2C2C}.asnd small{display:block}
 .menu{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
 .mcard{display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:16px 14px;border-radius:var(--r);background:var(--surface);border:1.5px solid var(--line);text-align:left;min-height:124px}
 .mcard .ic{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);margin-bottom:10px}
@@ -438,7 +439,7 @@ function lsKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ co
 function lsSnapshot(){ const p={}; lsKeys().forEach(k=>{ try{ p[k]=localStorage.getItem(k); }catch(e){} }); return p; }
 function lsClear(){ lsKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
 let UNLOCK_ALL=false, GUEST=false;
-const APP_VERSION="10/29 쓰기 자동 채점";
+const APP_VERSION="10/29 듣기 소리 안정화 · 소리 점검";
 const TEACHER_ID="viethaan9";
 /* ---------- data ---------- */
 // type: next(이어질 말) · act(이어서 할 행동) · same(내용과 같은 것) · main(중심 생각)
@@ -1689,15 +1690,31 @@ const TTSV={M:"ko-KR-Neural2-C",F:"ko-KR-Neural2-A"};
 const fnv=(s,h)=>{ for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619)>>>0; } return h>>>0; };
 const ttsKey=(sp,t)=>{ const s=TTSV[sp]+"|"+t; return fnv(s,2166136261).toString(16).padStart(8,"0")+fnv(s,0x811c9dc6^0x5bd1e995).toString(16).padStart(8,"0"); };
 let AUD=new Set(); const AU=new Audio(); AU.preload="auto";
-fetch("audio/index.json",{cache:"no-cache"}).then(r=>r.ok?r.json():null).then(j=>{ if(j&&j.keys) AUD=new Set(j.keys); }).catch(()=>{});
+let AUD_ST="loading";   // loading | ok | fail
+(function loadIdx(n){ fetch("audio/index.json",{cache:"no-cache"}).then(r=>r.ok?r.json():null).then(j=>{ if(j&&j.keys){ AUD=new Set(j.keys); AUD_ST="ok"; } else throw 0; })
+  .catch(()=>{ AUD_ST="fail"; if(n<4) setTimeout(()=>loadIdx(n+1),3000*(n+1)); }); })(0);
+// listening sound log (synced with the student's record so the teacher can see what went wrong)
+//  ok = recorded voice played · net = file did not arrive (internet) · blocked = phone blocked auto-play
+//  device = fell back to the phone's own voice · nodevice = no Korean voice on the phone (silent)
+const ALOG=(()=>{ try{ return JSON.parse(localStorage.getItem("tpk-audiolog")||"null")||{}; }catch(e){ return {}; } })(); let ALOG_DIRTY=false;
+function alog(kind){ ALOG[kind]=(ALOG[kind]||0)+1;
+  if(kind!=="ok"){ const c=navigator.connection; ALOG.last=[{k:kind,at:Date.now(),net:navigator.onLine===false?"offline":(c&&c.effectiveType)||""},...(ALOG.last||[])].slice(0,6); }
+  ALOG_DIRTY=true; }
+function alogSave(){ if(!ALOG_DIRTY) return; ALOG_DIRTY=false; try{ localStorage.setItem("tpk-audiolog",JSON.stringify(ALOG)); }catch(e){} }
+const koVoiceOK=()=>{ try{ return canSpeak&&speechSynthesis.getVoices().some(v=>/^ko/i.test(v.lang)); }catch(e){ return false; } };
+const PF=new Audio(); PF.preload="auto";   // fetches the next line while the current one plays
 const useRec=()=>!VOPT().dev;
-function sayRec(sp,t){
+let SAY_TOK=0;
+function sayRec(sp,t){   // → "ok" | "blocked" | "fail"
   return new Promise(res=>{
-    let done=false; const fin=ok=>{ if(done) return; done=true; AU.onended=AU.onerror=null; res(ok); };
-    AU.onended=()=>fin(true); AU.onerror=()=>fin(false);
+    let done=false, started=false, tmo=0; const my=++SAY_TOK;
+    const fin=r=>{ if(done) return; done=true; clearTimeout(tmo); if(SAY_TOK===my) AU.onended=AU.onerror=AU.onplaying=null; res(r); };
+    AU.onended=()=>fin("ok"); AU.onerror=()=>fin("fail");
+    AU.onplaying=()=>{ if(started) return; started=true; clearTimeout(tmo);
+      const dur=(isFinite(AU.duration)&&AU.duration>0?AU.duration:t.length*0.3)/rate; tmo=setTimeout(()=>fin("ok"),dur*1000+5000); };
     AU.src=`audio/${ttsKey(sp,t)}.mp3`; AU.playbackRate=rate; try{ AU.preservesPitch=true; }catch(e){}
-    const pr=AU.play(); if(pr&&pr.catch) pr.catch(()=>fin(false));
-    setTimeout(()=>fin(true), 6000+t.length*400/rate);
+    const pr=AU.play(); if(pr&&pr.catch) pr.catch(e=>fin(e&&e.name==="NotAllowedError"?"blocked":"fail"));
+    tmo=setTimeout(()=>fin("fail"),15000);   // nothing started in 15 s = the file did not arrive
   });
 }
 function sayDevice(sp,text){
@@ -1710,10 +1727,18 @@ function sayDevice(sp,text){
     setTimeout(res, 4000+text.length*350/rate);
   });
 }
-async function sayLine(sp,text){
-  sp=sp==="M"?"M":"F"; const t=String(text).replace(/\(.*?\)/g,"").replace(/~/g,"").trim();
-  if(useRec()&&AUD.has(ttsKey(sp,t))){ if(await sayRec(sp,t)) return; }
-  return sayDevice(sp,t);
+const cleanTT=text=>String(text).replace(/\(.*?\)/g,"").replace(/~/g,"").trim();
+async function sayLine(sp,text){   // → "ok" | "blocked" | "device" | "silent"
+  sp=sp==="M"?"M":"F"; const t=cleanTT(text);
+  if(useRec()&&(AUD.has(ttsKey(sp,t))||AUD_ST!=="ok")){
+    let r=await sayRec(sp,t);
+    if(r==="fail"&&navigator.onLine!==false) r=await sayRec(sp,t);   // try once more
+    if(r==="ok"){ alog("ok"); return "ok"; }
+    if(r==="blocked"){ alog("blocked"); return "blocked"; }
+    alog("net");
+  }
+  if(!koVoiceOK()){ alog("nodevice"); return "silent"; }
+  alog("device"); await sayDevice(sp,t); return "device";
 }
 async function playLines(lines,{onLine,skipBlank=true,fill}={}){
   stopAll(); const tk=++playToken; playing=true; uiPlay(true);
@@ -1722,11 +1747,15 @@ async function playLines(lines,{onLine,skipBlank=true,fill}={}){
     let [sp,tx]=lines[i];
     if(tx==="_"){ if(skipBlank&&!fill) continue; tx=fill; }
     onLine&&onLine(i);
-    await sayLine(sp,tx);
-    if(tk!==playToken) return;
+    const nx=lines.slice(i+1).find(l=>l[1]!=="_"); if(nx&&useRec()){ const ns=nx[0]==="M"?"M":"F", nt=cleanTT(nx[1]); if(AUD.has(ttsKey(ns,nt))) PF.src=`audio/${ttsKey(ns,nt)}.mp3`; }
+    const r=await sayLine(sp,tx);
+    if(tk!==playToken){ alogSave(); return; }
+    if(r==="blocked"){ playing=false; uiPlay(false); alogSave();   // the phone wants a tap first
+      const m=document.querySelector(".player .pmeta, #plays"); if(m) m.innerHTML='<b style="color:var(--accent)">▶ 버튼을 눌러 들으세요 · Bấm ▶ để nghe</b>'; return; }
     await new Promise(r=>setTimeout(r,350));
   }
   if(tk===playToken){ playing=false; uiPlay(false); onLine&&onLine(-1); }
+  alogSave();
 }
 function stopAll(){ playToken++; playing=false; try{ AU.pause(); }catch(e){} if(canSpeak) try{speechSynthesis.cancel()}catch(e){} uiPlay(false); }
 function uiPlay(on){ const b=$("pbtn"),w=$("wave"); if(b){b.classList.toggle("on",on); b.innerHTML=on?ICON.stop:ICON.play;} if(w) w.classList.toggle("on",on); }
@@ -1824,14 +1853,34 @@ function voiceSet(){
    <div class="tcard"><h3>남자 목소리 높낮이</h3><div class="vn">Độ trầm giọng nam</div>
     <p class="tip">${same?"이 폰은 남자·여자가 같은 목소리라서, 남자 목소리를 조금 낮게 바꿔서 구분해요.":"남자·여자 목소리가 달라서 높낮이는 그대로 써요."}</p>
     <div class="seg" style="margin-top:8px">${[[1,"그대로"],[0.92,"조금 낮게"],[0.85,"낮게"]].map(([v,l])=>`<button data-mp="${v}" aria-pressed="${Math.abs(MPITCH-v)<.01}">${l}</button>`).join("")}</div>
-    <button class="btn sec" id="vtest" style="height:44px;font-size:14px;width:100%;margin-top:10px">대화로 들어 보기 · Nghe thử hội thoại</button></div>`;
+    <button class="btn sec" id="vtest" style="height:44px;font-size:14px;width:100%;margin-top:10px">대화로 들어 보기 · Nghe thử hội thoại</button></div>
+   <div class="tcard"><h3>🔧 소리 점검 · Kiểm tra âm thanh</h3><div class="vn">Nếu thỉnh thoảng không nghe thấy tiếng, bấm nút này.</div>
+    <button class="btn sec" id="acheck" style="height:44px;font-size:14px;width:100%;margin-top:10px">소리 점검하기 · Kiểm tra</button><div id="acres"></div></div>`;
   const save=patch=>{ try{ localStorage.setItem("tpk-voice",JSON.stringify(Object.assign(VOPT(),patch))); }catch(e){} pickVoices(); voiceSet(); };
   $("body").querySelectorAll(".vplay").forEach(b=>b.onclick=()=>{ stopAll(); const v=ko[+b.dataset.i]; const u=new SpeechSynthesisUtterance("안녕하세요. 오늘 면접 잘 보세요."); u.lang="ko-KR"; u.voice=v; u.rate=0.95*rate; speechSynthesis.speak(u); });
   $("body").querySelectorAll(".vpick").forEach(b=>b.onclick=()=>save({[b.dataset.r]:ko[+b.dataset.i].name}));
   $("body").querySelectorAll("[data-mp]").forEach(b=>b.onclick=()=>save({mp:+b.dataset.mp}));
   $("body").querySelectorAll("[data-dev]").forEach(b=>b.onclick=()=>save({dev:b.dataset.dev==="1"}));
   $("vtest").onclick=()=>playLines([["M","수미야, 오늘 면접 있지? 면접 잘 봐."],["F","어쩌지? 벌써부터 너무 떨려서 아무 생각이 안 나."],["M","준비 많이 했으니까 잘할 수 있을 거야."]]);
+  $("acheck").onclick=soundCheck;
   foot(`<button class="btn pri" id="vdone">다 됐어요 · Xong</button>`); $("vdone").onclick=home;
+}
+async function soundCheck(){ const out=$("acres"); const L=[]; const show=()=>{ out.innerHTML=`<ul class="w53l" style="margin-top:8px">${L.map(([ok,t,v])=>`<li>${ok===null?"⏳":ok?"✅":"⚠️"} ${t}<span class="vn">${v}</span></li>`).join("")}</ul>`; };
+  const c=navigator.connection;
+  L.push([navigator.onLine!==false,`인터넷 ${navigator.onLine===false?"끊김":"연결됨"}${c&&c.effectiveType?` (${c.effectiveType})`:""}`,"Kết nối mạng"]); show();
+  L.push([AUD_ST==="ok",AUD_ST==="ok"?`녹음 목소리 목록 받음 (${AUD.size}개)`:"녹음 목소리 목록을 못 받았어요",AUD_ST==="ok"?"Đã tải danh sách giọng thu sẵn":"Không tải được danh sách giọng"]); show();
+  const k=[...AUD][0]; let ms=null;
+  if(k){ L.push([null,"녹음 파일 받는 중…","Đang tải thử 1 file…"]); show(); const t0=performance.now();
+    try{ const r=await Promise.race([fetch(`audio/${k}.mp3?x=${Date.now()}`,{cache:"no-store"}),new Promise((_,j)=>setTimeout(()=>j(0),15000))]); if(!r.ok) throw 0; await r.blob(); ms=Math.round(performance.now()-t0); }catch(e){ ms=null; }
+    L[L.length-1]=[ms!=null&&ms<4000,ms==null?"녹음 파일을 받지 못했어요 (인터넷 문제)":`녹음 파일 1개 받는 데 ${(ms/1000).toFixed(1)}초${ms>=4000?" · 인터넷이 느려요":""}`,ms==null?"Không tải được file (mạng có vấn đề)":ms>=4000?"Mạng chậm":"Mạng ổn"]; show(); }
+  L.push([koVoiceOK(),koVoiceOK()?"폰에 한국어 목소리가 있어요":"폰에 한국어 목소리가 없어요 (인터넷이 끊기면 소리가 안 나요)",koVoiceOK()?"Máy có giọng tiếng Hàn":"Máy không có giọng tiếng Hàn"]); show();
+  const a=ALOG, tot=(a.ok||0)+(a.net||0)+(a.blocked||0)+(a.device||0)+(a.nodevice||0);
+  if(tot) { L.push([!(a.net||a.blocked||a.nodevice),`지금까지 들은 문장 ${tot}개 · 인터넷 문제 ${a.net||0} · 자동 재생 막힘 ${a.blocked||0} · 소리 없음 ${a.nodevice||0}`,"Thống kê các lần nghe"]); show(); }
+  const netBad=L.slice(0,3).some(x=>x[0]===false), noVoice=!koVoiceOK();
+  const msg=netBad?["⚠️ 인터넷 문제예요","인터넷이 느리거나 끊기면 녹음 목소리가 안 와서 소리가 끊겨요. 와이파이로 바꿔 보세요.","Mạng yếu nên không tải được giọng thu sẵn. Hãy thử dùng Wi-Fi."]
+    :noVoice?["✅ 인터넷은 괜찮아요","녹음 목소리로 잘 들려요. 다만 폰에 한국어 목소리가 없어서 인터넷이 끊기면 소리가 안 나요. (설정 → 텍스트 음성 변환에서 한국어 추가)","Mạng ổn. Nhưng máy chưa có giọng tiếng Hàn, mất mạng sẽ không nghe được. Có thể thêm tiếng Hàn trong phần Chuyển văn bản thành giọng nói."]
+    :["✅ 이 폰에서는 문제가 없어요","소리가 안 나면 폰의 음량과 무음 모드를 확인하세요.","Nếu vẫn không nghe được, kiểm tra âm lượng và chế độ im lặng."];
+  out.insertAdjacentHTML("beforeend",`<div class="fb ${netBad?"no":"ok"}" style="margin-top:8px"><b>${msg[0]}</b>${msg[1]}<span class="vn">${msg[2]}</span></div>`);
 }
 function home(){ sec("listen");
   stopAll(); setTitle(is56()?`${MODE()}급 듣기`:"TOPIK II 듣기",is56()?lv56:menu); $("speed").hidden=false; $("speed").textContent=`속도 ${(rate%1?String(rate):rate.toFixed(1))}×`;
@@ -4561,6 +4610,9 @@ async function teacher(given){
     const p=u.p||{};
     return `<div class="tcard stu"><div class="sh"><div><b><span class="rk">${ri+1}</span>${esc(u.name||"-")} <span class="ago ${now-seen(u)<864e5?"on":""}">${ago(u)}</span></b><small>${esc(u.id||"")} · 마지막 접속 ${when(seen(u)?{toDate:()=>new Date(seen(u))}:null)} · 가입 ${when(u.created)} · ${p["tpk-track"]==="4"?"TOPIK 4부터 (시험 통과)":p["tpk-track"]==="3"?"TOPIK 3부터":"시작 전"}${(t=>{try{const o=JSON.parse(t);return o?" · 시험 "+o.ok+"/10":""}catch(e){return ""}})(p["tpk-ptest"])}</small></div>
       <button class="lockbtn ${u.unlockAll?"on":""}" data-uid="${esc(u.uid)}" data-v="${u.unlockAll?0:1}">${u.unlockAll?"🔓 전부 열림":"🔒 잠금 해제"}</button></div>
+      ${(()=>{ let a=null; try{ a=JSON.parse(p["tpk-audiolog"]||"null"); }catch(e){} if(!a) return ""; const bad=(a.net||0)+(a.blocked||0)+(a.nodevice||0); const tot=bad+(a.ok||0)+(a.device||0);
+        const last=(a.last||[])[0]; const why={net:"인터넷",blocked:"자동 재생 막힘",nodevice:"폰에 한국어 목소리 없음",device:"폰 목소리로 대신"};
+        return `<div class="asnd ${bad?"bad":""}">🔊 듣기 소리 · 문장 ${tot}개 중 녹음 ${a.ok||0} · 폰 목소리 ${a.device||0}${bad?` · ⚠️ 인터넷 문제 ${a.net||0} · 자동 재생 막힘 ${a.blocked||0} · 소리 없음 ${a.nodevice||0}`:""}${last?` <small>(마지막 문제: ${why[last.k]||last.k}${last.net?` · ${last.net}`:""} · ${new Date(last.at).toLocaleString("ko-KR",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"})})</small>`:""}</div>`; })()}
       ${progCells(p).map(row=>`<div class="prow"><span class="pl">${row[0][0]}</span>${row.map(([,d,s])=>`<span class="pc ${s.n>=s.total?"full":s.n?"part":""}"><i>Ngày ${d}</i>${s.n}/${s.total}<em>✓${s.ok}${s.star!=null?` ⭐${s.star}`:""}</em></span>`).join("")}</div>`).join("")}
     </div>`;}).join(""):`<div class="tcard">아직 가입한 학생이 없어요.</div>`);
   $("body").querySelectorAll(".lockbtn").forEach(b=>b.onclick=async()=>{
