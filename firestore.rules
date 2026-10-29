@@ -9,7 +9,7 @@ service cloud.firestore {
       allow create: if request.auth != null && request.auth.uid == uid
                     && request.resource.data.get('unlockAll', false) == false;
       allow update: if isTeacher() || (request.auth != null && request.auth.uid == uid
-                    && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['unlockAll']));
+                    && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['unlockAll','mockGrade']));
       allow delete: if isTeacher();
     }
     // feedback mailbox: a signed-in student may send a short letter; only the teacher can read it
