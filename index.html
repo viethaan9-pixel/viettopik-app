@@ -280,6 +280,12 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .w53fr{margin-top:10px;border:1px dashed var(--line);border-radius:12px;padding:8px 12px;background:var(--surface)}.w53fr summary{font-weight:700;font-size:14px;cursor:pointer}
 .w53fr ol{margin:8px 0 2px;padding-left:20px;font-size:14px;line-height:1.7}
 .w53model ul{margin:6px 0 0;padding-left:18px;font-size:14px;line-height:1.6}
+.rsm{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:16px;background:rgba(20,24,40,.42);animation:rsmIn .18s ease-out}
+.rsm-card{width:100%;max-width:380px;background:var(--surface);border-radius:20px;padding:20px 18px 16px;box-shadow:0 18px 40px -12px rgba(0,0,0,.35);text-align:center}
+.rsm-ic{font-size:30px;margin-bottom:6px}.rsm-card b{display:block;font-size:17px;line-height:1.4}
+.rsm-card p{margin:8px 0 14px;font-size:14px;color:var(--muted);line-height:1.55}.rsm-card p .vn{display:block;margin-top:4px}
+.rsm-b{display:flex;gap:8px}.rsm-b .btn{flex:1;height:48px;font-size:14.5px}
+@keyframes rsmIn{from{opacity:0}to{opacity:1}}
 .menu{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
 .mcard{display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:16px 14px;border-radius:var(--r);background:var(--surface);border:1.5px solid var(--line);text-align:left;min-height:168px}
 .mcard .ic{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);margin-bottom:10px}
@@ -427,7 +433,7 @@ function lsKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ co
 function lsSnapshot(){ const p={}; lsKeys().forEach(k=>{ try{ p[k]=localStorage.getItem(k); }catch(e){} }); return p; }
 function lsClear(){ lsKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
 let UNLOCK_ALL=false, GUEST=false;
-const APP_VERSION="10/29 이어서 자동으로";
+const APP_VERSION="10/29 이어서 풀까요?";
 const TEACHER_ID="viethaan9";
 /* ---------- data ---------- */
 // type: next(이어질 말) · act(이어서 할 행동) · same(내용과 같은 것) · main(중심 생각)
@@ -1281,6 +1287,7 @@ function home(){ sec("listen");
   $("body").querySelectorAll(".grp").forEach(b=>b.onclick=()=>{const s=sets()[+b.dataset.s];const ids=[];for(let k=s.r[0];k<=s.r[1];k++)ids.push(k);startRun(ids);});
   foot(`<button class="btn pri" id="go">${done&&done<qs.length?"이어서 풀기":"듣기 시작"}</button>`);
   $("go").onclick=()=>{ const left=[...Array(qs.length).keys()].filter(i=>ST.res[i]==null); startRun(left.length?left:[...Array(qs.length).keys()]); };
+  resumeAsk("L"+DAY,qs.length,i=>ST.res[i]!=null,ids=>startRun(ids),`${DAYS[DAY].title} 듣기`);
 }
 function showTips(){ sec("listen");
   setTitle("유형별 공략법",true);
@@ -1310,6 +1317,23 @@ const rvHomeBtn=(n,need)=>`<button class="all rvall ${need?"":"soft"}" id="rvgo"
 /* auto-continue: when a run (a type group, or 이어서 풀기) ends, keep going with the Ngày's unsolved questions */
 function restOf(run,n,done){ const cur=run[run.length-1]||0;
   return [...Array(n).keys()].filter(i=>!done(i)&&!run.includes(i)).sort((a,b)=>((a>cur?a:a+n)-(b>cur?b:b+n))); }
+/* resume prompt: a Ngày left half-done asks "N번부터 이어서 풀까요?" when the student comes back */
+const RESUME_SEEN=new Set();
+function resumeAsk(key,n,done,start,label){
+  const ans=[...Array(n).keys()].filter(done); if(!ans.length||ans.length>=n) return;
+  const tag=key+":"+ans.length; if(RESUME_SEEN.has(tag)) return; RESUME_SEEN.add(tag);
+  const left=restOf(ans.length?[Math.max(...ans)]:[],n,i=>done(i));
+  if(!left.length) return;
+  const m=document.createElement("div"); m.className="rsm";
+  m.innerHTML=`<div class="rsm-card" role="dialog" aria-modal="true"><div class="rsm-ic">📌</div>
+    <b>${label} · ${left[0]+1}번부터 이어서 풀까요?</b>
+    <p>지난번에 ${ans.length}문제를 풀었어요. 안 푼 문제 ${left.length}개가 남았어요.<span class="vn">Lần trước em đã làm ${ans.length} câu. Còn ${left.length} câu — làm tiếp từ câu ${left[0]+1} nhé?</span></p>
+    <div class="rsm-b"><button class="btn sec" id="rsmno">나중에 · Để sau</button><button class="btn pri" id="rsmyes">이어서 풀기 · Làm tiếp</button></div></div>`;
+  document.body.appendChild(m);
+  const close=()=>m.remove();
+  m.querySelector("#rsmno").onclick=close; m.onclick=e=>{ if(e.target===m) close(); };
+  m.querySelector("#rsmyes").onclick=()=>{ close(); start(left); };
+}
 /* ---------- question flow ---------- */
 let run=[],ri=0,step=0,ord=null,answered=null,runRes={},RV=false;
 function startRun(ids,rv){ run=ids; ri=0; runRes={}; RV=!!rv; openQ(); }
@@ -2314,6 +2338,7 @@ function wHome(){ sec("write");
   const left=[...Array(20).keys()].filter(i=>WS.n3[i]==null);
   foot(`<button class="btn pri" id="go">${left.length?(left.length<20?"이어서 풀기":"1번부터 풀기"):"처음부터 다시 풀기"}</button>`);
   $("go").onclick=()=>wStart("n3",left.length?left:[...Array(20).keys()]);
+  resumeAsk("W"+WDAY,NQ().length,i=>WS.n3[i]!=null,ids=>wStart("n3",ids),`Ngày ${WDAY} 쓰기`);
 }
 let W={k:"n3",ids:[],i:0,res:{}};
 function wStart(k,ids,rv){ W={k,ids,i:0,res:{},rv:!!rv}; if(!WS.fix) WS.fix={}; renderN3(); }
@@ -2943,6 +2968,7 @@ function rHome(){ sec("read");
   $("body").querySelectorAll(".grp").forEach(b=>b.onclick=()=>{const s=rsets()[+b.dataset.s];const ids=[];for(let k=s.r[0];k<=s.r[1];k++)ids.push(k);rStart(ids);});
   foot(`<button class="btn pri" id="go">${done&&done<qs.length?"이어서 풀기":"1번부터 풀기"}</button>`);
   $("go").onclick=()=>{ const left=[...Array(qs.length).keys()].filter(i=>RS.res[i]==null); rStart(left.length?left:[...Array(qs.length).keys()]); };
+  resumeAsk("R"+RDAY,qs.length,i=>RS.res[i]!=null,ids=>rStart(ids),`${READ[RDAY].title} 읽기`);
 }
 let R={ids:[],i:0,res:{}};
 function rStart(ids,rv){ R={ids,i:0,res:{},rv:!!rv}; renderR(); }
