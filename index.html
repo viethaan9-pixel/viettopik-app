@@ -427,7 +427,7 @@ function lsKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ co
 function lsSnapshot(){ const p={}; lsKeys().forEach(k=>{ try{ p[k]=localStorage.getItem(k); }catch(e){} }); return p; }
 function lsClear(){ lsKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
 let UNLOCK_ALL=false, GUEST=false;
-const APP_VERSION="10/29 고양이 테두리";
+const APP_VERSION="10/29 이어서 자동으로";
 const TEACHER_ID="viethaan9";
 /* ---------- data ---------- */
 // type: next(이어질 말) · act(이어서 할 행동) · same(내용과 같은 것) · main(중심 생각)
@@ -1307,6 +1307,9 @@ function reviewCard(left,total,rv){ // shown on result screens
 const rvBtn=n=>`<button class="btn pri" id="re">🔁 다시 풀기 ${n}문제</button>`;
 const rvHomeBtn=(n,need)=>`<button class="all rvall ${need?"":"soft"}" id="rvgo"><span style="font-size:22px">🔁</span><span><b>틀린 문제 다시 풀기 · ${n}문제</b><span>${need?"다음 Ngày를 열려면 한 번 더 풀어요 · Làm lại để mở Ngày sau":"한 번 더 연습하기 (선택) · Luyện thêm (tùy chọn)"} · 정답 위치가 바뀌어요</span></span></button>`;
 
+/* auto-continue: when a run (a type group, or 이어서 풀기) ends, keep going with the Ngày's unsolved questions */
+function restOf(run,n,done){ const cur=run[run.length-1]||0;
+  return [...Array(n).keys()].filter(i=>!done(i)&&!run.includes(i)).sort((a,b)=>((a>cur?a:a+n)-(b>cur?b:b+n))); }
 /* ---------- question flow ---------- */
 let run=[],ri=0,step=0,ord=null,answered=null,runRes={},RV=false;
 function startRun(ids,rv){ run=ids; ri=0; runRes={}; RV=!!rv; openQ(); }
@@ -1367,9 +1370,10 @@ function stepEvidence(q,qi){
     lns.forEach((b,i)=>{ if(q.ev.includes(i)) b.classList.add("ev","hit"); });
     $("efb").innerHTML=`<div class="fb ${ok?"ok":""}"><b>${ok?"근거를 찾았어요":"근거 문장"}</b>${esc(renum(q.ex,ord))}<span class="vn">${esc(renum(q.exv,ord))}</span></div>`;
     ST.ev[qi]=true; save(); $("steps").querySelector('[data-s="1"]').classList.add("ok");
-    const last=ri===run.length-1;
+    const more=ri===run.length-1&&!RV?restOf(run,Q().length,i=>ST.res[i]!=null):[];
+    const last=ri===run.length-1&&!more.length;
     foot(`<button class="btn pri" id="nx">${last?"결과 보기":"다음 문제"}</button>`);
-    $("nx").onclick=()=>{ stopAll(); if(last) result(); else { ri++; openQ(); $("body").scrollTop=0; } };
+    $("nx").onclick=()=>{ stopAll(); if(last) return result(); if(more.length) run=run.concat(more); ri++; openQ(); $("body").scrollTop=0; };
   };
   if(shown){ reveal(true); return; }
   lns.forEach((b,i)=>b.onclick=()=>{
@@ -2313,7 +2317,9 @@ function wHome(){ sec("write");
 }
 let W={k:"n3",ids:[],i:0,res:{}};
 function wStart(k,ids,rv){ W={k,ids,i:0,res:{},rv:!!rv}; if(!WS.fix) WS.fix={}; renderN3(); }
-function wNext(){ const last=W.i===W.ids.length-1; if(last) wResult(); else { W.i++; renderN3(); $("body").scrollTop=0; } }
+function wMore(){ return W.i===W.ids.length-1&&!W.rv?restOf(W.ids,NQ().length,i=>WS.n3[i]!=null):[]; }
+const wLast=()=>W.i===W.ids.length-1&&!wMore().length;
+function wNext(){ const more=wMore(); if(W.i===W.ids.length-1&&!more.length) return wResult(); if(more.length) W.ids=W.ids.concat(more); W.i++; renderN3(); $("body").scrollTop=0; }
 function wProg(){ return `${W.rv?`<div class="rvtag">🔁 다시 풀기 · Làm lại câu sai</div>`:""}<div class="prog"><span>${W.i+1} / ${W.ids.length}</span><div class="bar"><i style="width:${W.i/W.ids.length*100}%"></i></div></div>`; }
 
 // Ngày 1~3: the base word is shown in brackets (review). Ngày 4~: no brackets, "힌트 보기" reveals it; solving without the hint earns ⭐.
@@ -2342,7 +2348,7 @@ function renderN3(){ sec("write");
     inp.disabled=true; inp.classList.add(ok?"ok":"no");
     const bl=$("bl"); bl.textContent=ok?v:q.a[0]; bl.classList.add(ok?"fill":"miss");
     $("fb").innerHTML=`<div class="fb ${ok?"ok":"no"}"><b>${ok?(star?"⭐ 힌트 없이 맞혔어요!":"정답이에요"):"정답: "+esc(q.a.join(" / "))}</b>${self&&ok?`내 답: ${esc(v)} · 모범 답안: ${esc(q.a.join(" / "))}<br>`:""}${!ok&&v?`내 답: ${esc(v)}<br>`:""}${free?`괄호 말: ${esc(q.b)}<br>`:""}${esc(q.p)}<span class="vn">${esc(q.pv)}</span></div>`;
-    foot(`<button class="btn pri" id="nx">${last?"결과 보기":"다음 문제"}</button>`); $("nx").onclick=wNext;
+    foot(`<button class="btn pri" id="nx">${wLast()?"결과 보기":"다음 문제"}</button>`); $("nx").onclick=wNext;
   };
   const check=give=>{
     const v=give?"":inp.value.trim(); if(!give&&!v){inp.focus();return;}
@@ -2387,7 +2393,7 @@ function render51(k,q,last){
     const n=oks.filter(Boolean).length;
     $("fb").innerHTML=`<div class="fb ${ok?"ok":"no"}"><b>${ok?"둘 다 맞았어요 · Đúng cả hai":n?"하나 맞았어요 · Đúng 1/2":"모범 답안을 보세요 · Xem đáp án mẫu"}</b>
       ㉠ ${esc(A[0].join(" / "))}<br>㉡ ${esc(A[1].join(" / "))}<br>${esc(q.p)}<span class="vn">${esc(q.pv)}</span></div>`;
-    foot(`<button class="btn pri" id="nx">${last?"결과 보기":"다음 문제"}</button>`); $("nx").onclick=wNext;
+    foot(`<button class="btn pri" id="nx">${wLast()?"결과 보기":"다음 문제"}</button>`); $("nx").onclick=wNext;
   };
   const check=give=>{
     const vs=[i1.value.trim(),i2.value.trim()];
@@ -2950,7 +2956,8 @@ function rBox(q){
   return `<div class="pass"><div class="pb"><p>${ul(q.x).replace(/\( \)/g,'<span class="mk">(　　)</span>')}</p></div></div>`;
 }
 function renderR(){ sec("read");
-  const k=R.ids[R.i], q=RQ()[k], last=R.i===R.ids.length-1, I=RI[q.i];
+  const k=R.ids[R.i], q=RQ()[k], I=RI[q.i];
+  const moreR=()=>R.i===R.ids.length-1&&!R.rv?restOf(R.ids,RQ().length,i=>RS.res[i]!=null&&i!==k):[];
   if(!RS.fix) RS.fix={}; if(!RS.pos) RS.pos={};
   const ro=q.k==="ins"?[0,1,2,3]:reshuf(RS.pos[k],q.a,4);
   setTitle(`${READ[RDAY].title} 읽기 · ${k+1}번`,rHome); $("speed").hidden=true;
@@ -2965,8 +2972,9 @@ function renderR(){ sec("read");
     const ok=pick===q.a; if(R.rv) RS.fix[k]=ok; else RS.res[k]=ok; RS.pos[k]=ro.indexOf(q.a); R.res[k]=ok; rsave();
     chs.forEach(b=>{ b.disabled=true; const j=+b.dataset.i; if(j===q.a) b.classList.add("ok"); if(pick!=null&&j===pick&&!ok) b.classList.add("no"); });
     $("fb").innerHTML=`<div class="fb ${ok?"ok":"no"}"><b>${ok?"정답이에요":"정답은 "+circ[ro.indexOf(q.a)]}</b>${esc(renum(q.ex,ro))}<span class="vn">${esc(renum(q.exv,ro))}</span></div>`;
+    const more=moreR(), last=R.i===R.ids.length-1&&!more.length;
     foot(`<button class="btn pri" id="nx">${last?"결과 보기":"다음 문제"}</button>`);
-    $("nx").onclick=()=>{ if(last) rResult(); else { R.i++; renderR(); $("body").scrollTop=0; } };
+    $("nx").onclick=()=>{ if(last) return rResult(); if(more.length) R.ids=R.ids.concat(more); R.i++; renderR(); $("body").scrollTop=0; };
     try{$("fb").scrollIntoView({block:"nearest",behavior:"smooth"})}catch(e){}
   };
   chs.forEach(b=>b.onclick=()=>mark(+b.dataset.i));
