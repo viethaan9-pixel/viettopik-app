@@ -501,7 +501,7 @@ function lsKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ co
 function lsSnapshot(){ const p={}; lsKeys().forEach(k=>{ try{ p[k]=localStorage.getItem(k); }catch(e){} }); return p; }
 function lsClear(){ lsKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
 let UNLOCK_ALL=false, GUEST=false;
-const APP_VERSION="10/30 실전 모의고사 (우리 문제 · 실제 순서)";
+const APP_VERSION="11/1 소리 점검 강화 · TOPIK 4 시험 5개 통과";
 const TEACHER_ID="viethaan9";
 /* ---------- data ---------- */
 // type: next(이어질 말) · act(이어서 할 행동) · same(내용과 같은 것) · main(중심 생각)
@@ -1765,16 +1765,16 @@ function alog(kind){ ALOG[kind]=(ALOG[kind]||0)+1;
 function alogSave(){ if(!ALOG_DIRTY) return; ALOG_DIRTY=false; try{ localStorage.setItem("tpk-audiolog",JSON.stringify(ALOG)); }catch(e){} }
 const koVoiceOK=()=>{ try{ return canSpeak&&speechSynthesis.getVoices().some(v=>/^ko/i.test(v.lang)); }catch(e){ return false; } };
 const PF=new Audio(); PF.preload="auto";   // fetches the next line while the current one plays
-const useRec=()=>!VOPT().dev;
+const useRec=()=>!VOPT().dev||!koVoiceOK();   // no Korean voice on the phone → always use the recordings
 let SAY_TOK=0;
-function sayRec(sp,t){   // → "ok" | "blocked" | "fail"
+function sayRec(sp,t,retry){   // → "ok" | "blocked" | "fail"
   return new Promise(res=>{
     let done=false, started=false, tmo=0; const my=++SAY_TOK;
     const fin=r=>{ if(done) return; done=true; clearTimeout(tmo); if(SAY_TOK===my) AU.onended=AU.onerror=AU.onplaying=null; res(r); };
     AU.onended=()=>fin("ok"); AU.onerror=()=>fin("fail");
     AU.onplaying=()=>{ if(started) return; started=true; clearTimeout(tmo);
       const dur=(isFinite(AU.duration)&&AU.duration>0?AU.duration:t.length*0.3)/rate; tmo=setTimeout(()=>fin("ok"),dur*1000+5000); };
-    AU.src=`audio/${ttsKey(sp,t)}.mp3`; AU.playbackRate=rate; try{ AU.preservesPitch=true; }catch(e){}
+    AU.src=`audio/${ttsKey(sp,t)}.mp3${retry?`?r=${Date.now()}`:""}`; AU.playbackRate=rate; AU.defaultPlaybackRate=rate; try{ AU.preservesPitch=true; }catch(e){}
     const pr=AU.play(); if(pr&&pr.catch) pr.catch(e=>fin(e&&e.name==="NotAllowedError"?"blocked":"fail"));
     tmo=setTimeout(()=>fin("fail"),15000);   // nothing started in 15 s = the file did not arrive
   });
@@ -1794,7 +1794,7 @@ async function sayLine(sp,text){   // → "ok" | "blocked" | "device" | "silent"
   sp=sp==="M"?"M":"F"; const t=cleanTT(text);
   if(useRec()&&(AUD.has(ttsKey(sp,t))||AUD_ST!=="ok")){
     let r=await sayRec(sp,t);
-    if(r==="fail"&&navigator.onLine!==false) r=await sayRec(sp,t);   // try once more
+    if(r==="fail"&&navigator.onLine!==false){ await new Promise(z=>setTimeout(z,900)); r=await sayRec(sp,t,true); }   // try once more, fresh download
     if(r==="ok"){ alog("ok"); return "ok"; }
     if(r==="blocked"){ alog("blocked"); return "blocked"; }
     alog("net");
@@ -1814,6 +1814,8 @@ async function playLines(lines,{onLine,skipBlank=true,fill}={}){
     if(tk!==playToken){ alogSave(); return; }
     if(r==="blocked"){ playing=false; uiPlay(false); alogSave();   // the phone wants a tap first
       const m=document.querySelector(".player .pmeta, #plays"); if(m) m.innerHTML='<b style="color:var(--accent)">▶ 버튼을 눌러 들으세요 · Bấm ▶ để nghe</b>'; return; }
+    if(r==="silent"){ playing=false; uiPlay(false); alogSave();   // recording did not arrive and the phone has no Korean voice
+      const m=document.querySelector(".player .pmeta, #plays"); if(m) m.innerHTML='<b style="color:var(--bad)">소리를 못 받았어요. 인터넷(와이파이)을 확인하고 ▶를 다시 누르세요 · Không tải được âm thanh, kiểm tra mạng rồi bấm ▶ lại</b>'; return; }
     await new Promise(r=>setTimeout(r,350));
   }
   if(tk===playToken){ playing=false; uiPlay(false); onLine&&onLine(-1); }
@@ -1841,7 +1843,7 @@ const lsSet=(k,v)=>{ try{ localStorage.setItem(k,v); }catch(e){} };
 const TRACK=()=>lsGet("tpk-track");
 const MODE=()=>lsGet("tpk-mode")||"3";
 const is56=()=>{ const m=MODE(); return m==="5"||m==="6"||m==="56"; };
-const t4Open=()=>freeAll()||TRACK()==="4"||dayState(T4_FROM)==="open";
+const t4Open=()=>freeAll()||TRACK()==="4"||dayState(T4_FROM)==="open"||(()=>{ try{ return (JSON.parse(localStorage.getItem("tpk-ptest")||"null")||{}).ok>=5; }catch(e){ return false; } })();
 function setMode(m){ lsSet("tpk-mode",m); const inR=d=>m==="6"?d>=T6_FROM:m==="5"?d>=T56_FROM&&d<T6_FROM:m==="4"?d>=T4_FROM&&d<T56_FROM:d<T4_FROM, first=m==="6"?T6_FROM:m==="5"?T56_FROM:m==="4"?T4_FROM:1;
   if(!inR(DAY)){ DAY=DAYS[first]?first:DAY; load(); } if(!inR(RDAY)){ RDAY=READ[first]?first:RDAY; rload(); } if(!inR(WDAY)){ WDAY=WDAYS[first]?first:WDAY; wload(); } }
 const LOCK='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:4px"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
@@ -1928,6 +1930,13 @@ function voiceSet(){
   foot(`<button class="btn pri" id="vdone">다 됐어요 · Xong</button>`); $("vdone").onclick=home;
 }
 async function soundCheck(){ const out=$("acres"); const L=[]; const show=()=>{ out.innerHTML=`<ul class="w53l" style="margin-top:8px">${L.map(([ok,t,v])=>`<li>${ok===null?"⏳":ok?"✅":"⚠️"} ${t}<span class="vn">${v}</span></li>`).join("")}</ul>`; };
+  // 1) play one real recording right away (the tap still counts as permission to play)
+  { const [sp0,tx0]=DAYS[1].q[0].l[0], t0=cleanTT(tx0), spk=sp0==="M"?"M":"F";
+    L.push([null,"소리 재생 시험 중… 목소리가 들리나요?","Đang phát thử… Bạn có nghe thấy giọng nói không?"]); show(); stopAll();
+    const r=AUD.has(ttsKey(spk,t0))?await sayRec(spk,t0,true):"fail";
+    L[L.length-1]=r==="ok"?[true,"녹음 목소리 재생 성공 (안 들렸으면 폰 음량·무음 모드를 확인하세요)","Phát thử thành công (không nghe thấy thì kiểm tra âm lượng / chế độ im lặng)"]
+      :r==="blocked"?[false,"폰이 자동 재생을 막았어요. 문제 화면에서 ▶를 직접 누르면 들려요","Máy chặn tự phát. Ở màn hình câu hỏi hãy tự bấm ▶"]
+      :[false,"녹음 목소리를 재생하지 못했어요 (인터넷 문제일 가능성이 커요)","Không phát được giọng thu sẵn (có thể do mạng)"]; show(); }
   const c=navigator.connection;
   L.push([navigator.onLine!==false,`인터넷 ${navigator.onLine===false?"끊김":"연결됨"}${c&&c.effectiveType?` (${c.effectiveType})`:""}`,"Kết nối mạng"]); show();
   L.push([AUD_ST==="ok",AUD_ST==="ok"?`녹음 목소리 목록 받음 (${AUD.size}개)`:"녹음 목소리 목록을 못 받았어요",AUD_ST==="ok"?"Đã tải danh sách giọng thu sẵn":"Không tải được danh sách giọng"]); show();
@@ -1938,7 +1947,7 @@ async function soundCheck(){ const out=$("acres"); const L=[]; const show=()=>{ 
   L.push([koVoiceOK(),koVoiceOK()?"폰에 한국어 목소리가 있어요":"폰에 한국어 목소리가 없어요 (인터넷이 끊기면 소리가 안 나요)",koVoiceOK()?"Máy có giọng tiếng Hàn":"Máy không có giọng tiếng Hàn"]); show();
   const a=ALOG, tot=(a.ok||0)+(a.net||0)+(a.blocked||0)+(a.device||0)+(a.nodevice||0);
   if(tot) { L.push([!(a.net||a.blocked||a.nodevice),`지금까지 들은 문장 ${tot}개 · 인터넷 문제 ${a.net||0} · 자동 재생 막힘 ${a.blocked||0} · 소리 없음 ${a.nodevice||0}`,"Thống kê các lần nghe"]); show(); }
-  const netBad=L.slice(0,3).some(x=>x[0]===false), noVoice=!koVoiceOK();
+  const netBad=L.slice(0,4).some(x=>x[0]===false), noVoice=!koVoiceOK();
   const msg=netBad?["⚠️ 인터넷 문제예요","인터넷이 느리거나 끊기면 녹음 목소리가 안 와서 소리가 끊겨요. 와이파이로 바꿔 보세요.","Mạng yếu nên không tải được giọng thu sẵn. Hãy thử dùng Wi-Fi."]
     :noVoice?["✅ 인터넷은 괜찮아요","녹음 목소리로 잘 들려요. 다만 폰에 한국어 목소리가 없어서 인터넷이 끊기면 소리가 안 나요. (설정 → 텍스트 음성 변환에서 한국어 추가)","Mạng ổn. Nhưng máy chưa có giọng tiếng Hàn, mất mạng sẽ không nghe được. Có thể thêm tiếng Hàn trong phần Chuyển văn bản thành giọng nói."]
     :["✅ 이 폰에서는 문제가 없어요","소리가 안 나면 폰의 음량과 무음 모드를 확인하세요.","Nếu vẫn không nghe được, kiểm tra âm lượng và chế độ im lặng."];
@@ -2633,9 +2642,9 @@ function menu(){ sec();
 /* first visit: start from TOPIK 3 (Ngày 1) or take a 10-question test to start at TOPIK 4 (Ngày 11) */
 function chooseTrack(){ sec(); stopAll(); setTitle("TOPIK II · 3·4급",topik2); $("speed").hidden=true;
   $("body").innerHTML=`<div class="tcard" style="margin-top:4px"><h3>어디서부터 시작할까요?</h3><div class="vn">Bạn muốn bắt đầu từ đâu?</div>
-     <p class="tip">처음 한 번만 고르면 돼요. TOPIK 4부터 하려면 TOPIK 3에서 가장 어려운 10문제 중 <b>9문제 이상</b> 맞혀야 해요.<span class="vn" style="display:block">Chỉ chọn một lần. Muốn học từ TOPIK 4 thì phải làm đúng ít nhất 9/10 câu khó nhất của TOPIK 3.</span></p></div>
+     <p class="tip">처음 한 번만 고르면 돼요. TOPIK 4부터 하려면 TOPIK 3에서 가장 어려운 10문제 중 <b>5문제 이상</b> 맞혀야 해요.<span class="vn" style="display:block">Chỉ chọn một lần. Muốn học từ TOPIK 4 thì phải làm đúng ít nhất 5/10 câu khó nhất của TOPIK 3.</span></p></div>
    <button class="lvl" id="tr3" style="--accent:var(--c-read);--accent-soft:var(--c-read-soft)"><span class="badge">3</span><span><b>처음부터 · TOPIK 3</b><span class="vn">Học từ đầu · Ngày 1 (D~C+)</span><span class="mm">듣기 · 쓰기 · 읽기 기초부터 차근차근</span></span><span class="go">›</span></button>
-   <button class="lvl" id="tr4" style="--accent:var(--c-listen);--accent-soft:var(--c-listen-soft)"><span class="badge">4</span><span><b>TOPIK 4부터 도전</b><span class="vn">Bắt đầu từ TOPIK 4 · Ngày 11 (B~B+)</span><span class="mm">먼저 10문제 시험 (듣기 5 · 읽기 5) · 9/10 이상 통과</span></span><span class="go">›</span></button>`;
+   <button class="lvl" id="tr4" style="--accent:var(--c-listen);--accent-soft:var(--c-listen-soft)"><span class="badge">4</span><span><b>TOPIK 4부터 도전</b><span class="vn">Bắt đầu từ TOPIK 4 · Ngày 11 (B~B+)</span><span class="mm">먼저 10문제 시험 (듣기 5 · 읽기 5) · 5/10 이상 통과</span></span><span class="go">›</span></button>`;
   $("tr3").onclick=()=>{ lsSet("tpk-track","3"); setMode("3"); menu(); };
   $("tr4").onclick=()=>placeIntro(chooseTrack);
   foot("");
@@ -2645,8 +2654,8 @@ const PLACE=[["L",8,15],["R",8,16],["L",9,9],["R",10,7],["L",8,13],["R",9,14],["
 let PT={i:0,ok:0,back:null,ans:[]};
 function placeIntro(back){ sec(); stopAll(); setTitle("TOPIK 4 시험 · Thi xếp lớp",back); $("speed").hidden=true;
   $("body").innerHTML=`<div class="tcard" style="margin-top:4px"><h3>TOPIK 4 시험 · 10문제</h3><div class="vn">Bài kiểm tra lên TOPIK 4 · 10 câu</div>
-    <ul><li>TOPIK 3에서 가장 어려운 문제 10개예요. 듣기 5문제, 읽기 5문제.</li><li><b>9문제 이상</b> 맞히면 TOPIK 4 (Ngày 11)부터 시작해요.</li><li>듣기는 두 번까지 들을 수 있어요. 답을 고르면 바로 다음 문제로 넘어가요.</li><li>통과하지 못하면 TOPIK 3부터 시작하고, 나중에 다시 볼 수 있어요.</li></ul>
-    <div class="vn" style="margin-top:6px">10 câu khó nhất của TOPIK 3 (5 nghe, 5 đọc). Đúng ≥ 9 câu thì học từ Ngày 11. Phần nghe được nghe tối đa 2 lần.</div></div>`;
+    <ul><li>TOPIK 3에서 가장 어려운 문제 10개예요. 듣기 5문제, 읽기 5문제.</li><li><b>5문제 이상</b> 맞히면 TOPIK 4 (Ngày 11)부터 시작해요.</li><li>듣기는 두 번까지 들을 수 있어요. 답을 고르면 바로 다음 문제로 넘어가요.</li><li>통과하지 못하면 TOPIK 3부터 시작하고, 나중에 다시 볼 수 있어요.</li></ul>
+    <div class="vn" style="margin-top:6px">10 câu khó nhất của TOPIK 3 (5 nghe, 5 đọc). Đúng ≥ 5 câu thì học từ Ngày 11. Phần nghe được nghe tối đa 2 lần.</div></div>`;
   foot(`<button class="btn pri" id="ptgo">시험 시작 · Bắt đầu</button>`);
   $("ptgo").onclick=()=>{ PT={i:0,ok:0,back,ans:[]}; placeQ(); };
 }
@@ -2671,13 +2680,13 @@ function placeQ(){ sec(); stopAll(); const [k,d,n]=PLACE[PT.i], last=PT.i===PLAC
   $("ptgive").onclick=()=>{ if(!confirm("시험을 포기하고 TOPIK 3부터 시작할까요? · Bỏ cuộc và học từ TOPIK 3?")) return;
     stopAll(); while(PT.ans.length<PLACE.length) PT.ans.push(false); PT.gaveUp=true; placeResult(); };
 }
-function placeResult(){ sec(); stopAll(); const pass=PT.ok>=9; setTitle("TOPIK 4 시험 결과",null); $("speed").hidden=true;
+function placeResult(){ sec(); stopAll(); const pass=PT.ok>=5; setTitle("TOPIK 4 시험 결과",null); $("speed").hidden=true;
   lsSet("tpk-ptest",JSON.stringify({ok:PT.ok,at:Date.now()}));
   if(pass){ lsSet("tpk-track","4"); setMode("4"); } else if(!TRACK()){ lsSet("tpk-track","3"); setMode("3"); }
   $("body").innerHTML=`<section class="hero" style="text-align:center"><div class="eyebrow">맞힌 문제 · CÂU ĐÚNG</div><div class="big">${PT.ok}<small> / ${PLACE.length}</small></div>
     <div style="margin-top:10px;font-size:22px">${PT.ans.map(x=>x?"🟢":"⚪").join("")}</div></section>
-    <div class="fb ${pass?"ok":"no"}" style="margin-top:12px"><b>${pass?"통과! TOPIK 4 (Ngày 11)부터 시작해요":PT.gaveUp?"괜찮아요! TOPIK 3 (Ngày 1)부터 차근차근 해요 · Không sao, học từ đầu nhé!":"아쉬워요. TOPIK 3 (Ngày 1)부터 시작해요"}</b>${pass?"TOPIK 3로 돌아가고 싶으면 메뉴 위의 「TOPIK 3」 버튼을 누르세요.":"9문제 이상 맞혀야 해요. TOPIK 3를 공부한 뒤 메뉴의 「TOPIK 4」를 눌러 다시 볼 수 있어요."}
-    <span class="vn">${pass?"Đạt! Bắt đầu từ TOPIK 4 (Ngày 11). Muốn quay lại thì bấm nút 「TOPIK 3」 ở menu.":"Cần đúng ít nhất 9 câu. Học TOPIK 3 rồi bấm 「TOPIK 4」 ở menu để thi lại."}</span></div>`;
+    <div class="fb ${pass?"ok":"no"}" style="margin-top:12px"><b>${pass?"통과! TOPIK 4 (Ngày 11)부터 시작해요":PT.gaveUp?"괜찮아요! TOPIK 3 (Ngày 1)부터 차근차근 해요 · Không sao, học từ đầu nhé!":"아쉬워요. TOPIK 3 (Ngày 1)부터 시작해요"}</b>${pass?"TOPIK 3로 돌아가고 싶으면 메뉴 위의 「TOPIK 3」 버튼을 누르세요.":"5문제 이상 맞혀야 해요. TOPIK 3를 공부한 뒤 메뉴의 「TOPIK 4」를 눌러 다시 볼 수 있어요."}
+    <span class="vn">${pass?"Đạt! Bắt đầu từ TOPIK 4 (Ngày 11). Muốn quay lại thì bấm nút 「TOPIK 3」 ở menu.":"Cần đúng ít nhất 5 câu. Học TOPIK 3 rồi bấm 「TOPIK 4」 ở menu để thi lại."}</span></div>`;
   foot(`<button class="btn pri" id="ptdone">${pass?"TOPIK 4 시작 · Bắt đầu":"TOPIK 3 시작 · Bắt đầu"}</button>`); $("ptdone").onclick=menu;
 }
 /* ---------- 5·6급 시험: TOPIK 4에서 가장 어려운 10문제 (읽기 5 · 듣기 3 · 51·52 2) · 9개 이상 맞히면 5·6급 열림 ---------- */
