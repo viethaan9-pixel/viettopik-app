@@ -12,6 +12,12 @@ service cloud.firestore {
                     && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['unlockAll']));
       allow delete: if isTeacher();
     }
+    // 열공 랭킹: one public line per student (name + points); the student (or the teacher) writes it, everyone signed in reads it
+    match /board/{uid} {
+      allow read: if request.auth != null;
+      allow write: if isTeacher() || (request.auth != null && request.auth.uid == uid
+                    && request.resource.data.pts is int && request.resource.data.pts >= 0);
+    }
     // feedback mailbox: a signed-in student may send a short letter; only the teacher can read it
     match /feedback/{id} {
       allow create: if request.auth != null

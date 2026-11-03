@@ -410,6 +410,22 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .bar{background:color-mix(in srgb,var(--undone) 55%,var(--line))}
 .day.soon{opacity:1;background:var(--line);border-color:var(--undone)}
 .day.soon b,.day.soon span{color:var(--muted)}
+/* 열공 랭킹 */
+.board{margin-top:14px;padding:14px 16px;border-radius:var(--r);background:var(--surface);border:1.5px solid var(--mark);box-shadow:0 6px 18px -12px rgba(0,0,0,.3)}
+.board .bh{display:flex;align-items:center;gap:10px}
+.board .bt{font-size:26px;line-height:1}
+.board .bh b{display:block;font-size:16px;font-weight:800}
+.board .bh .vn{display:block;font-size:12.5px}
+.board ol{list-style:none;margin:10px 0 0;padding:0}
+.board li{display:flex;align-items:center;gap:10px;padding:7px 4px;border-bottom:1px dashed var(--line)}
+.board li:last-child{border-bottom:0}
+.board li b{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:700}
+.board li em{font-style:normal;font-weight:800;font-variant-numeric:tabular-nums;color:var(--accent)}
+.board li.me{background:var(--accent-soft);border-radius:10px}
+.board .md{width:28px;flex:none;text-align:center;font-weight:800;color:var(--muted);font-size:15px}
+.board .md.m{font-size:20px}
+.board .bme{margin-top:8px;padding-top:8px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+.board .bme b{color:var(--ink)}
 /* 실전 모의고사: OMR answer sheet */
 .omr-top{position:sticky;top:-4px;z-index:5;display:flex;gap:10px;margin:0 0 10px;padding:10px 14px;border-radius:14px;background:var(--surface);border:1.5px solid var(--line);box-shadow:0 6px 14px -8px rgba(0,0,0,.25)}
 .omr-top::before{content:"";position:absolute;left:-18px;right:-18px;top:-16px;height:14px;background:var(--bg)}
@@ -501,7 +517,7 @@ function lsKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ co
 function lsSnapshot(){ const p={}; lsKeys().forEach(k=>{ try{ p[k]=localStorage.getItem(k); }catch(e){} }); return p; }
 function lsClear(){ lsKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
 let UNLOCK_ALL=false, GUEST=false;
-const APP_VERSION="11/1 소리 점검 강화 · TOPIK 4 시험 5개 통과";
+const APP_VERSION="11/3 열공 랭킹 TOP 5";
 const TEACHER_ID="viethaan9";
 /* ---------- data ---------- */
 // type: next(이어질 말) · act(이어서 할 행동) · same(내용과 같은 것) · main(중심 생각)
@@ -3033,6 +3049,7 @@ function start(){ sec();
    ${catSlot("brown",lvlBtn({badge:"I",ko:"TOPIK I",vn:"TOPIK I · Sơ cấp",mm:"1급 · 2급 (듣기 · 읽기)",c:"brown"}))}
    ${catSlot("blue",lvlBtn({id:"t2",badge:"II",ko:"TOPIK II",vn:"TOPIK II · Trung - cao cấp",mm:"3급 ~ 6급 (듣기 · 쓰기 · 읽기)",c:"listen"}))}
    </div>
+   <section class="board" id="board" hidden></section>
    <p class="note" style="margin-top:18px">버전 ${APP_VERSION}</p>`;
   CAT_INTRO=false;
   $("t2").onclick=()=>{ const c=document.querySelector(".lcat.blue"); if(!c||matchMedia("(prefers-reduced-motion: reduce)").matches) return topik2();
@@ -3040,6 +3057,7 @@ function start(){ sec();
   bindUserBar(); if($("tview")) $("tview").onclick=()=>teacher();
   if($("smail")) $("smail").onclick=()=>isTeacher()?inbox():mailbox();
   if(isTeacher()){ fbWatch(); fbPaint(); }
+  boardPaint();
   foot("");
 }
 /* ---------- 쓰기 53번 (그래프 설명 200~300자) · free in-browser checker ---------- */
@@ -4829,6 +4847,28 @@ function bindUserBar(){
 }
 const isTeacher=()=>!!(window.CLOUD&&CLOUD.user&&CLOUD.user.id===TEACHER_ID);
 
+/* ---------- 열공 랭킹 · Chăm chỉ nhất: 푼 문제 1개 = 100점, TOP 5만 보여요 ---------- */
+function boardPts(p){ p=p||lsSnapshot(); let n=0;
+  Object.keys(DAYS).forEach(d=>n+=sumRes(p["tpk-day"+d],"res",0).n);
+  Object.keys(READ).forEach(d=>n+=sumRes(p["tpk-read"+d],"res",0).n);
+  Object.keys(WDAYS).forEach(d=>n+=sumRes(p[+d===1?"tpk-write":"tpk-write"+d],"n3",0).n);
+  return n*100; }
+const fmtPts=n=>Number(n||0).toLocaleString("en-US");
+async function boardPaint(){ const el=$("board"); if(!el) return;
+  if(!window.CLOUD||!CLOUD.user||!CLOUD.board){ el.hidden=true; return; }
+  try{ const top=await CLOUD.board(5), mine=boardPts(), me=CLOUD.user;
+    if(!$("board")) return;
+    const medal=["🥇","🥈","🥉","4","5"];
+    const inTop=top.some(t=>t.uid===me.uid);
+    let rank=null; if(!inTop&&me.id!==TEACHER_ID&&mine>0){ try{ rank=await CLOUD.rankOf(mine); }catch(e){} }
+    el.innerHTML=`<div class="bh"><span class="bt">🏆</span><div><b>열공 랭킹 TOP 5</b><span class="vn">Chăm chỉ nhất · 1 câu đã làm = 100 điểm</span></div></div>
+      ${top.length?`<ol>${top.map((t,i)=>`<li class="${t.uid===me.uid?"me":""}"><span class="md ${i<3?"m":""}">${medal[i]}</span><b>${esc(t.name||t.id||"-")}</b><em>${fmtPts(t.pts)}</em></li>`).join("")}</ol>`
+        :`<p class="tip" style="margin:6px 0 0">아직 기록이 없어요. 문제를 풀면 올라가요! · Chưa có ai, làm bài để lên bảng nhé!</p>`}
+      ${me.id===TEACHER_ID?"":inTop?`<div class="bme">🎉 TOP 5 안에 있어요! · Bạn đang trong TOP 5!</div>`
+        :`<div class="bme">내 점수 · Điểm của bạn: <b>${fmtPts(mine)}</b>${rank?` · ${rank}등 · hạng ${rank}`:""}${top.length===5?` · TOP 5까지 <b>${fmtPts(Math.max(0,top[4].pts-mine+100))}</b>점 · còn ${Math.ceil(Math.max(0,top[4].pts-mine+100)/100)} câu`:""}</div>`}`;
+    el.hidden=false;
+  }catch(e){ console.warn(e); if(isTeacher()&&$("board")){ $("board").hidden=false; $("board").innerHTML=`<div class="bh"><span class="bt">🏆</span><div><b>열공 랭킹</b><span class="vn">Firestore 규칙(board)을 게시해야 보여요 · ${esc(e.code||e.message||e)}</span></div></div>`; } else if($("board")) $("board").hidden=true; }
+}
 /* teacher: every student's progress */
 function sumRes(raw,key,total){ try{ const s=JSON.parse(raw||"null"); const r=(s&&s[key])||{}; const v=Object.values(r); return {n:v.length,ok:v.filter(Boolean).length,total}; }catch(e){ return {n:0,ok:0,total}; } }
 function progCells(p){
@@ -4878,7 +4918,7 @@ function inbox(live){ const back=()=>teacher();
   // opening the inbox marks the letters as read
   L.filter(m=>!m.read).forEach(m=>CLOUD.markRead(m.fid).catch(()=>{}));
 }
-let TW=null, TW_N=null;
+let TW=null, TW_N=null, TW_BOARD=false;
 async function teacher(given){
   const live=Array.isArray(given);
   if(live&&$("title").textContent!=="학생 기록"){ if(TW){ TW(); TW=null; } return; }   // teacher left this screen
@@ -4900,6 +4940,7 @@ async function teacher(given){
   const when=t=>{ try{ const d=t&&t.toDate?t.toDate():null; return d?`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`:"-"; }catch(e){ return "-"; } };
   const added=TW_N!=null&&list.length>TW_N?list.length-TW_N:0; TW_N=list.length;
   fbWatch();
+  if(!TW_BOARD&&CLOUD.boardPut){ TW_BOARD=true; list.forEach(u=>{ const pts=boardPts(u.p||{}); if(pts>0) CLOUD.boardPut(u.uid,u.name||u.id,u.id,pts).catch(()=>{}); }); }
   $("body").innerHTML=`<button class="fbnew mailfab" id="tmail" ${fbUnread()?"":"hidden"}>${MAIL}<span class="fbc">${fbUnread()}</span><b>새 편지 · Thư mới</b></button>
    <button class="maillink" id="tmail2">${MAIL} 의견함 열기 · 받은 편지 ${FBX.list.length}통</button>
    ${added?`<div class="fb ok" style="margin:0 0 10px"><b>🎉 새 학생 ${added}명 가입!</b>인원수가 자동으로 늘어났어요.</div>`:""}<div class="tstats"><div><b>${list.length}</b><span>가입한 학생 · 실시간</span></div><div><b>${cToday}</b><span>오늘 접속</span></div><div><b>${cWeek}</b><span>7일 접속</span></div><div><b>${cNew}</b><span>7일 새 가입</span></div></div>
@@ -4928,7 +4969,7 @@ setTimeout(()=>{ if(!window.CLOUD&&!GUEST) afterBoot(()=>showLogin("로그인 �
 /* ---------- Firebase: accounts + saving progress ---------- */
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import {getFirestore,doc,getDoc,setDoc,collection,getDocs,serverTimestamp,onSnapshot,addDoc,query,orderBy,limit} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import {getFirestore,doc,getDoc,setDoc,collection,getDocs,serverTimestamp,onSnapshot,addDoc,query,orderBy,limit,where,getCountFromServer} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 const app=initializeApp({
   apiKey:"AIzaSyDGeZpmvBdMvUCBL3CWXsx-tngWmfly7UQ",
   authDomain:"topikviet-b44f0.firebaseapp.com",
@@ -4963,10 +5004,16 @@ const C=window.CLOUD={
     C.applying=true;
     try{ lsClear(); Object.keys(p).forEach(k=>{ if(k.startsWith("tpk-")&&p[k]!=null) localStorage.setItem(k,p[k]); }); }
     finally{ C.applying=false; }
-    if(C.user.id!==TEACHER_ID) setDoc(r,{lastSeen:serverTimestamp()},{merge:true}).catch(()=>{});
+    if(C.user.id!==TEACHER_ID){ setDoc(r,{lastSeen:serverTimestamp()},{merge:true}).catch(()=>{}); C.boardMine(); }
   },
   schedule(){ if(!C.user||C.applying) return; clearTimeout(timer); timer=setTimeout(()=>C.flush(),1200); },
-  async flush(){ clearTimeout(timer); if(!C.user) return; await setDoc(doc(db,"users",C.user.uid),{p:lsSnapshot(),updated:serverTimestamp()},{merge:true}); },
+  async flush(){ clearTimeout(timer); if(!C.user) return; await setDoc(doc(db,"users",C.user.uid),{p:lsSnapshot(),updated:serverTimestamp()},{merge:true}); C.boardMine(); },
+  // 열공 랭킹: each student keeps one small public line (name + points); everyone signed in can read the board
+  boardMine(){ if(!C.user||C.user.id===TEACHER_ID) return; const pts=boardPts(); if(pts===C.lastPts) return; C.lastPts=pts;
+    C.boardPut(C.user.uid,C.user.name||C.user.id,C.user.id,pts).catch(e=>{ C.lastPts=null; console.warn(e); }); },
+  boardPut(uid,name,id,pts){ return setDoc(doc(db,"board",uid),{name,id,pts,at:serverTimestamp()}); },
+  async board(n){ const s=await getDocs(query(collection(db,"board"),orderBy("pts","desc"),limit(n))); return s.docs.map(d=>({uid:d.id,...d.data()})); },
+  async rankOf(pts){ const c=await getCountFromServer(query(collection(db,"board"),where("pts",">",pts))); return c.data().count+1; },
   async list(){ const s=await getDocs(collection(db,"users")); return s.docs.map(d=>({uid:d.id,...d.data()})); },
   // live list for the teacher view: calls cb again whenever a student signs up or studies
   watch(cb,err){ return onSnapshot(collection(db,"users"),s=>cb(s.docs.map(d=>({uid:d.id,...d.data()}))),err); },
