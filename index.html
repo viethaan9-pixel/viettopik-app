@@ -590,7 +590,7 @@ function lsKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ co
 function lsSnapshot(){ const p={}; lsKeys().forEach(k=>{ try{ p[k]=localStorage.getItem(k); }catch(e){} }); return p; }
 function lsClear(){ lsKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
 let UNLOCK_ALL=false, GUEST=false;
-const APP_VERSION="11/3 Từ vựng · lĩnh vực 1~6";
+const APP_VERSION="11/3 Từ vựng thực dụng · đủ 12 lĩnh vực";
 const TEACHER_ID="viethaan9";
 /* ---------- data ---------- */
 // type: next(이어질 말) · act(이어서 할 행동) · same(내용과 같은 것) · main(중심 생각)
@@ -3136,7 +3136,7 @@ const VFIELDS=[
  {id:10,g:"B",e:"🎓",vn:"Giáo dục · văn hóa",ko:"교육 · 문화"},
  {id:11,g:"B",e:"📱",vn:"Truyền thông · công nghệ",ko:"언론 · 기술"},
  {id:12,g:"B",e:"⚖️",vn:"Luật · chính sách",ko:"법 · 제도"}];
-const VREADY=[1,2,3,4,5,6];
+const VREADY=[1,2,3,4,5,6,7,8,9,10,11,12];
 const VDATA={};
 const vKey=id=>"tpk-voc"+id;
 const vSt=id=>{ try{ return Object.assign({k:{},s:{},q:{}},JSON.parse(lsGet(vKey(id))||"{}")); }catch(e){ return {k:{},s:{},q:{}}; } };
