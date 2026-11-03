@@ -477,35 +477,23 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 /* 마스코트 고양이 */
 .msc{position:fixed;z-index:30;right:max(4px,calc((100vw - 560px)/2 + 4px));bottom:calc(10px + env(safe-area-inset-bottom,0px));width:112px;pointer-events:none}
 .msc .mcat{pointer-events:auto;cursor:pointer;-webkit-tap-highlight-color:transparent;filter:drop-shadow(0 4px 6px rgba(0,0,0,.18))}
-.msc .catsvg{display:block;width:100%;height:auto;overflow:visible}
-.msc.study{bottom:calc(76px + env(safe-area-inset-bottom,0px));width:116px}
-.msc.study .mcat{pointer-events:none}
-.msc.enter{animation:mEnter .95s cubic-bezier(.22,1,.36,1) both}
-.msc.rise{animation:mRise .8s cubic-bezier(.22,1,.36,1) both}
-.msc.hop .mcat{animation:mHop .45s ease-out}
-@keyframes mEnter{0%{transform:translateX(130%)}55%{transform:translateX(-6%) translateY(-10px)}75%{transform:translateX(0) translateY(0)}88%{transform:translateY(-5px)}100%{transform:none}}
-@keyframes mRise{from{transform:translateY(120%);opacity:0}to{transform:none;opacity:1}}
-@keyframes mHop{0%,100%{transform:none}40%{transform:translateY(-16px) scale(1.04,.96)}}
-.catsvg .carm{transform-box:view-box;transform-origin:76px 96px;animation:cWave 1.1s ease-in-out infinite}
-@keyframes cWave{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(16deg)}}
-.catsvg.wave .ctail{transform-box:view-box;transform-origin:86px 122px;animation:cTail 2.6s ease-in-out infinite}
-.catsvg.curl .ctail{transform-box:view-box;transform-origin:112px 84px;animation:cTail 2.2s ease-in-out infinite}
-@keyframes cTail{0%,100%{transform:rotate(0)}50%{transform:rotate(-9deg)}}
-.catsvg .ceye{transform-box:view-box;transform-origin:58px 57px;animation:cBlink 4.5s infinite}
-@keyframes cBlink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
-.catsvg .cbreath{transform-box:view-box;transform-origin:78px 100px;animation:cBreath 3s ease-in-out infinite}
-@keyframes cBreath{0%,100%{transform:scaleY(1)}50%{transform:scaleY(1.04)}}
-.catsvg .cpaw{transform-box:view-box;transform-origin:60px 86px;animation:cCheer .9s ease-in-out infinite}
-@keyframes cCheer{0%,100%{transform:rotate(-10deg)}50%{transform:rotate(14deg)}}
-.catsvg .cheart{animation:cHeart 2.4s ease-out infinite;transform-box:view-box;transform-origin:86px 36px}
-@keyframes cHeart{0%{opacity:0;transform:translateY(8px) scale(.6)}20%{opacity:1}100%{opacity:0;transform:translateY(-16px) scale(1.1)}}
+.msc{width:92px}
+.msc.study{width:104px;bottom:calc(82px + env(safe-area-inset-bottom,0px))}
+.catimg{position:relative}
+.catimg img{display:block;width:100%;height:auto;-webkit-user-select:none;user-select:none}
+.catimg.wave img{transform-origin:50% 100%;animation:cSway 2.6s ease-in-out infinite}
+@keyframes cSway{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3.5deg) translateY(-2px)}}
+.catimg.curl img{transform-origin:50% 92%;animation:cBreath 3.2s ease-in-out infinite}
+@keyframes cBreath{0%,100%{transform:scale(1,1)}50%{transform:scale(1.015,1.04)}}
+.catimg .cheart{position:absolute;right:2%;top:-6%;font-size:16px;animation:cHeart 2.6s ease-out infinite}
+@keyframes cHeart{0%{opacity:0;transform:translateY(10px) scale(.6)}20%{opacity:1}100%{opacity:0;transform:translateY(-20px) scale(1.1)}}
 .mbub{position:absolute;right:58%;bottom:88%;width:max-content;max-width:200px;padding:8px 12px;border-radius:16px 16px 4px 16px;background:var(--surface);border:2px solid var(--accent);color:var(--ink);font-size:14px;font-weight:800;line-height:1.35;box-shadow:0 6px 16px -8px rgba(0,0,0,.35);font-family:var(--f-vn)}
 .msc.study .mbub{bottom:78%}
 .mbub.pop{animation:mpop .35s cubic-bezier(.3,1.6,.5,1)}
 @keyframes mpop{from{transform:scale(.4);opacity:0;transform-origin:100% 100%}to{transform:scale(1);opacity:1}}
 html[data-msc="study"] .mid{padding-bottom:110px}
 html[data-msc="home"] .mid{padding-bottom:150px}
-@media (prefers-reduced-motion:reduce){.msc,.msc *,.catsvg *{animation:none!important}}
+@media (prefers-reduced-motion:reduce){.msc,.msc *{animation:none!important}}
 .msctog{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px;margin:14px auto 0;font-size:12.5px;font-weight:700;color:var(--muted);font-family:var(--f-vn)}
 .msctog button{padding:6px 12px;border-radius:99px;border:1.5px solid var(--line);background:var(--surface);font-weight:700;color:var(--muted)}
 .msctog button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
@@ -616,7 +604,7 @@ function lsKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ co
 function lsSnapshot(){ const p={}; lsKeys().forEach(k=>{ try{ p[k]=localStorage.getItem(k); }catch(e){} }); return p; }
 function lsClear(){ lsKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
 let UNLOCK_ALL=false, GUEST=false;
-const APP_VERSION="11/3 Mèo đồng hành (1 con)";
+const APP_VERSION="11/3 Mèo đồng hành (tranh màu nước)";
 const TEACHER_ID="viethaan9";
 /* ---------- data ---------- */
 // type: next(이어질 말) · act(이어서 할 행동) · same(내용과 같은 것) · main(중심 생각)
@@ -1819,52 +1807,10 @@ const SETS=SETS0, sets=()=>DAYS[DAY].sets||SETS0;
 /* ---------- state ---------- */
 const $=id=>document.getElementById(id);
 /* 마스코트 고양이 (2D SVG): 로그인하면 걸어 나와 손 흔들며 인사, 문제 풀 때는 동그랗게 누워서 응원. 말풍선은 베트남어만 */
-// 2D cat mascot (SVG). kind: "blue" | "brown". pose: "wave" (sitting, waving paw) | "curl" (curled up, cheering)
-const CATPAL={
- blue:{fur:"#BCCAEA",furD:"#93A7D8",belly:"#EEF2FB",line:"#6A7BA6",tail:"#93A7D8",ear:"#F5C2D0"},
- brown:{fur:"#EFE4D6",furD:"#B98A68",belly:"#FBF6EE",line:"#6B4E3A",tail:"#9C6B4E",ear:"#F3B8C8"}
-};
-function catSVG(kind,pose){ const c=CATPAL[kind]||CATPAL.blue, L=`stroke="${c.line}" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"`;
-  const face=(x,y,closed)=>`
-    <ellipse cx="${x-11}" cy="${y+6}" rx="5" ry="3" fill="#F6A9B8" opacity=".55"/><ellipse cx="${x+11}" cy="${y+6}" rx="5" ry="3" fill="#F6A9B8" opacity=".55"/>
-    ${closed?`<path d="M${x-13} ${y-1} q4 -5 8 0 M${x+5} ${y-1} q4 -5 8 0" fill="none" ${L}/>`
-      :`<g class="ceye"><ellipse cx="${x-9}" cy="${y-1}" rx="3.4" ry="4.4" fill="${c.line}"/><ellipse cx="${x+9}" cy="${y-1}" rx="3.4" ry="4.4" fill="${c.line}"/><circle cx="${x-8}" cy="${y-2.6}" r="1.3" fill="#fff"/><circle cx="${x+10}" cy="${y-2.6}" r="1.3" fill="#fff"/></g>`}
-    <path d="M${x-2} ${y+4} h4 l-2 2.4 z" fill="#E98AA0" stroke="#E98AA0" stroke-width="1" stroke-linejoin="round"/>
-    <path d="M${x} ${y+6.4} q-2.6 3.4 -5.4 1.2 M${x} ${y+6.4} q2.6 3.4 5.4 1.2" fill="none" ${L} stroke-width="1.6"/>
-    <path d="M${x-15} ${y+3} l-10 -2 M${x-15} ${y+6} l-10 2 M${x+15} ${y+3} l10 -2 M${x+15} ${y+6} l10 2" ${L} stroke-width="1.1" opacity=".6"/>`;
-  const head=(x,y,closed)=>`
-    <path d="M${x-25} ${y-6} L${x-22} ${y-31} L${x-6} ${y-20} Z" fill="${c.fur}" ${L}/><path d="M${x-20} ${y-12} L${x-19} ${y-25} L${x-10} ${y-19} Z" fill="${c.ear}"/>
-    <path d="M${x+25} ${y-6} L${x+22} ${y-31} L${x+6} ${y-20} Z" fill="${c.fur}" ${L}/><path d="M${x+20} ${y-12} L${x+19} ${y-25} L${x+10} ${y-19} Z" fill="${c.ear}"/>
-    <ellipse cx="${x}" cy="${y}" rx="28" ry="24" fill="${c.fur}" ${L}/>
-    <path d="M${x-9} ${y-23} q3 6 0 10 M${x} ${y-24} q2 6 0 10 M${x+9} ${y-23} q-3 6 0 10" fill="none" stroke="${c.furD}" stroke-width="2" stroke-linecap="round" opacity=".7"/>
-    ${face(x,y+2,closed)}`;
-  if(pose==="curl") return `<svg viewBox="0 0 140 110" class="catsvg curl" aria-hidden="true">
-    <g class="cbreath">
-      <path class="ctail" d="M112 84 q22 -2 18 -20 q-3 -10 -12 -6" fill="none" stroke="${c.line}" stroke-width="12.5" stroke-linecap="round"/>
-      <path class="ctail" d="M112 84 q22 -2 18 -20 q-3 -10 -12 -6" fill="none" stroke="${c.tail}" stroke-width="8.5" stroke-linecap="round"/>
-      <ellipse cx="78" cy="78" rx="44" ry="25" fill="${c.fur}" ${L}/>
-      <path d="M58 58 q8 6 0 13 M74 54 q7 7 0 14 M90 56 q6 7 0 13" fill="none" stroke="${c.furD}" stroke-width="2.2" stroke-linecap="round" opacity=".6"/>
-      <path d="M44 96 q34 14 74 -2" fill="none" stroke="${c.line}" stroke-width="13" stroke-linecap="round"/>
-      <path d="M44 96 q34 14 74 -2" fill="none" stroke="${c.tail}" stroke-width="9" stroke-linecap="round"/>
-      <ellipse cx="66" cy="97" rx="9" ry="6" fill="${c.belly}" ${L}/>
-    </g>
-    <g class="chead">${head(42,74,true)}</g>
-    <g class="cpaw"><path d="M60 86 q10 -16 8 -34" fill="none" stroke="${c.line}" stroke-width="10" stroke-linecap="round"/><path d="M60 86 q10 -16 8 -34" fill="none" stroke="${c.fur}" stroke-width="6.6" stroke-linecap="round"/><ellipse cx="68" cy="48" rx="7.5" ry="8.5" fill="${c.belly}" ${L}/><circle cx="65.5" cy="46" r="1.6" fill="#F3A6B6"/><circle cx="70" cy="45" r="1.6" fill="#F3A6B6"/><ellipse cx="68" cy="51" rx="2.6" ry="2.1" fill="#F3A6B6"/></g>
-    <text class="cheart" x="80" y="40" font-size="14">💗</text>
-  </svg>`;
-  return `<svg viewBox="0 0 120 140" class="catsvg wave" aria-hidden="true">
-    <path class="ctail" d="M86 122 q30 -4 26 -36 q-2 -12 -12 -10" fill="none" stroke="${c.line}" stroke-width="13" stroke-linecap="round"/>
-    <path class="ctail" d="M86 122 q30 -4 26 -36 q-2 -12 -12 -10" fill="none" stroke="${c.tail}" stroke-width="9" stroke-linecap="round"/>
-    <path d="M30 128 q-6 -40 30 -50 q36 10 30 50 z" fill="${c.fur}" ${L}/>
-    <path d="M44 126 q-2 -28 16 -36 q18 8 16 36 z" fill="${c.belly}"/>
-    <ellipse cx="42" cy="128" rx="11" ry="6" fill="${c.belly}" ${L}/><ellipse cx="78" cy="128" rx="11" ry="6" fill="${c.belly}" ${L}/>
-    <path d="M48 96 q-2 14 0 28" fill="none" stroke="${c.line}" stroke-width="10" stroke-linecap="round"/><path d="M48 96 q-2 14 0 28" fill="none" stroke="${c.fur}" stroke-width="6.6" stroke-linecap="round"/>
-    <g class="carm"><path d="M76 96 q12 -10 18 -32" fill="none" stroke="${c.line}" stroke-width="11" stroke-linecap="round"/><path d="M76 96 q12 -10 18 -32" fill="none" stroke="${c.fur}" stroke-width="7.6" stroke-linecap="round"/>
-      <ellipse cx="95" cy="60" rx="8" ry="9" fill="${c.belly}" ${L}/><circle cx="92" cy="58" r="1.7" fill="#F3A6B6"/><circle cx="96.5" cy="56.5" r="1.7" fill="#F3A6B6"/><ellipse cx="94.5" cy="63" rx="3" ry="2.4" fill="#F3A6B6"/></g>
-    <g class="chead">${head(58,56,false)}</g>
-  </svg>`;
-}
-
+// 마스코트 그림 (선생님이 보내 준 수채화 고양이): wave = 앉아서 손 흔들기, curl = 동그랗게 누워 응원
+const catSVG=(kind,pose)=>pose==="curl"
+  ?`<div class="catimg curl"><img src="cat-curl.webp?v=1" alt="" draggable="false"><span class="cheart">💗</span></div>`
+  :`<div class="catimg wave"><img src="cat-wave.webp?v=1" alt="" draggable="false"></div>`;
 window.MSC={want:"off",hello:false,cb:null,
   kind:()=>{ try{ const v=localStorage.getItem("vt-mascot"); if(v==="off"||localStorage.getItem("vt-mascot-off")==="1") return "off"; return "blue"; }catch(e){ return "blue"; } },
   off:()=>MSC.kind()==="off"};
