@@ -435,6 +435,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .day.soon b,.day.soon span{color:var(--muted)}
 /* 실용 어휘 */
 .vgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.vgrid.one{grid-template-columns:1fr} .vgrid.one .vfc{min-height:0;border-width:2px}
 .vfc{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:14px;border-radius:var(--r);background:var(--surface);border:1.5px solid var(--c-brown);text-align:left;min-height:132px}
 .vfc.soon{border-color:var(--line);opacity:.6}
 .vfc .ve{font-size:28px;line-height:1.1}
@@ -590,7 +591,7 @@ function lsKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ co
 function lsSnapshot(){ const p={}; lsKeys().forEach(k=>{ try{ p[k]=localStorage.getItem(k); }catch(e){} }); return p; }
 function lsClear(){ lsKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
 let UNLOCK_ALL=false, GUEST=false;
-const APP_VERSION="11/3 Từ vựng thực dụng · đủ 12 lĩnh vực";
+const APP_VERSION="11/3 Từ vựng · Làm thêm (알바)";
 const TEACHER_ID="viethaan9";
 /* ---------- data ---------- */
 // type: next(이어질 말) · act(이어서 할 행동) · same(내용과 같은 것) · main(중심 생각)
@@ -3124,6 +3125,7 @@ function catSlot(kind,btn){
 /* ---------- 실용 어휘 · Từ vựng thực dụng (갈색 고양이) ----------
    lĩnh vực = 100 từ (10 phần × 10 từ). Dữ liệu ở voca/<id>.json: w = [từ, chữ Hán, nghĩa, câu ví dụ, dịch câu, cấp 1=3·4급 2=5·6급] */
 const VFIELDS=[
+ {id:13,g:"J",e:"💼",vn:"Làm thêm (알바)",ko:"음식점 · 편의점 · 판매 · 계산 · 인사 — mẫu câu dùng ngay khi đi làm"},
  {id:1,g:"A",e:"🏠",vn:"Nhà ở · thuê nhà",ko:"주거 · 집 구하기"},
  {id:2,g:"A",e:"🏥",vn:"Bệnh viện · sức khỏe",ko:"병원 · 건강"},
  {id:3,g:"A",e:"🏦",vn:"Ngân hàng · tiền bạc",ko:"은행 · 금융"},
@@ -3136,7 +3138,7 @@ const VFIELDS=[
  {id:10,g:"B",e:"🎓",vn:"Giáo dục · văn hóa",ko:"교육 · 문화"},
  {id:11,g:"B",e:"📱",vn:"Truyền thông · công nghệ",ko:"언론 · 기술"},
  {id:12,g:"B",e:"⚖️",vn:"Luật · chính sách",ko:"법 · 제도"}];
-const VREADY=[1,2,3,4,5,6,7,8,9,10,11,12];
+const VREADY=[13,1,2,3,4,5,6,7,8,9,10,11,12];
 const VDATA={};
 const vKey=id=>"tpk-voc"+id;
 const vSt=id=>{ try{ return Object.assign({k:{},s:{},q:{}},JSON.parse(lsGet(vKey(id))||"{}")); }catch(e){ return {k:{},s:{},q:{}}; } };
@@ -3156,6 +3158,7 @@ function vHome(){ sec("vocab"); $("body").scrollTop=0; stopAll(); setTitle("Từ
     <ul><li>Mỗi lĩnh vực chia <b>10 phần × 10 từ</b>. Mỗi từ có nghĩa tiếng Việt, chữ Hán, câu ví dụ và phát âm.</li>
     <li>Học bằng <b>danh sách</b>, <b>thẻ lật</b> rồi làm <b>bài kiểm tra</b>. Từ làm đúng sẽ được tính là "đã nhớ".</li>
     <li>Nhãn <span class="vlv l1">3·4급</span> <span class="vlv l2">5·6급</span> cho biết mức độ của từ.</li></ul></div>
+   <div class="sec"><b>Thực tế · Làm thêm · 알바</b></div><div class="vgrid one">${VFIELDS.filter(f=>f.g==="J").map(card).join("")}</div>
    <div class="sec"><b>Đời sống thực tế · 생활</b></div><div class="vgrid">${VFIELDS.filter(f=>f.g==="A").map(card).join("")}</div>
    <div class="sec"><b>Xã hội · học thuật · 사회 · 학술 (5·6급)</b></div><div class="vgrid">${VFIELDS.filter(f=>f.g==="B").map(card).join("")}</div>`;
   $("body").querySelectorAll(".vfc:not(.soon)").forEach(b=>b.onclick=()=>vField(+b.dataset.f));
