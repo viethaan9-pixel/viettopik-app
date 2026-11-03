@@ -591,7 +591,7 @@ function lsKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ co
 function lsSnapshot(){ const p={}; lsKeys().forEach(k=>{ try{ p[k]=localStorage.getItem(k); }catch(e){} }); return p; }
 function lsClear(){ lsKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
 let UNLOCK_ALL=false, GUEST=false;
-const APP_VERSION="11/3 Từ vựng · Làm thêm (알바)";
+const APP_VERSION="11/3 Từ vựng · 알바 프로";
 const TEACHER_ID="viethaan9";
 /* ---------- data ---------- */
 // type: next(이어질 말) · act(이어서 할 행동) · same(내용과 같은 것) · main(중심 생각)
@@ -3126,6 +3126,7 @@ function catSlot(kind,btn){
    lĩnh vực = 100 từ (10 phần × 10 từ). Dữ liệu ở voca/<id>.json: w = [từ, chữ Hán, nghĩa, câu ví dụ, dịch câu, cấp 1=3·4급 2=5·6급] */
 const VFIELDS=[
  {id:13,g:"J",e:"💼",vn:"Làm thêm (알바)",ko:"음식점 · 편의점 · 판매 · 계산 · 인사 — mẫu câu dùng ngay khi đi làm"},
+ {id:14,g:"J",e:"🏅",vn:"알바 프로 · làm thêm nâng cao",ko:"카페 · 배달 · 물류 · 행사 · 정산 · 위생 · 권리 · 사장님과 대화"},
  {id:1,g:"A",e:"🏠",vn:"Nhà ở · thuê nhà",ko:"주거 · 집 구하기"},
  {id:2,g:"A",e:"🏥",vn:"Bệnh viện · sức khỏe",ko:"병원 · 건강"},
  {id:3,g:"A",e:"🏦",vn:"Ngân hàng · tiền bạc",ko:"은행 · 금융"},
@@ -3138,7 +3139,7 @@ const VFIELDS=[
  {id:10,g:"B",e:"🎓",vn:"Giáo dục · văn hóa",ko:"교육 · 문화"},
  {id:11,g:"B",e:"📱",vn:"Truyền thông · công nghệ",ko:"언론 · 기술"},
  {id:12,g:"B",e:"⚖️",vn:"Luật · chính sách",ko:"법 · 제도"}];
-const VREADY=[13,1,2,3,4,5,6,7,8,9,10,11,12];
+const VREADY=[13,14,1,2,3,4,5,6,7,8,9,10,11,12];
 const VDATA={};
 const vKey=id=>"tpk-voc"+id;
 const vSt=id=>{ try{ return Object.assign({k:{},s:{},q:{}},JSON.parse(lsGet(vKey(id))||"{}")); }catch(e){ return {k:{},s:{},q:{}}; } };
