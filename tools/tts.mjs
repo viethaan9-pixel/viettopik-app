@@ -32,6 +32,11 @@ for (const d of Object.values(DAYS)) for (const q of d.q) {
   (q.w || []).forEach((w) => add("F", w[0]));
 }
 for (const list of Object.values(VOCAB)) list.forEach((w) => add("F", w[0]));
+// 실용 어휘 (voca/<n>.json): word + example sentence
+if (fs.existsSync("voca")) for (const f of fs.readdirSync("voca").filter((f) => f.endsWith(".json"))) {
+  const v = JSON.parse(fs.readFileSync("voca/" + f, "utf8"));
+  (v.w || []).forEach((w) => { add("F", w[0]); if (w[3]) add("F", w[3]); });
+}
 [["M", "수미야, 오늘 면접 있지? 면접 잘 봐."], ["F", "어쩌지? 벌써부터 너무 떨려서 아무 생각이 안 나."], ["M", "준비 많이 했으니까 잘할 수 있을 거야."], ["F", "안녕하세요. 오늘 면접 잘 보세요."], ["M", "안녕하세요. 오늘 면접 잘 보세요."]].forEach(([s, t]) => add(s, t));
 
 fs.mkdirSync("audio", { recursive: true });

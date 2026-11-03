@@ -433,6 +433,45 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .bar{background:color-mix(in srgb,var(--undone) 55%,var(--line))}
 .day.soon{opacity:1;background:var(--line);border-color:var(--undone)}
 .day.soon b,.day.soon span{color:var(--muted)}
+/* 실용 어휘 */
+.vgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.vfc{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:14px;border-radius:var(--r);background:var(--surface);border:1.5px solid var(--c-brown);text-align:left;min-height:132px}
+.vfc.soon{border-color:var(--line);opacity:.6}
+.vfc .ve{font-size:28px;line-height:1.1}
+.vfc b{font-size:15px;font-weight:800;line-height:1.3;font-family:var(--f-vn)}
+.vfc .vko{font-size:12px;color:var(--muted)}
+.vfc .vn2{font-size:11.5px;color:var(--c-brown);font-weight:700;margin-top:auto;font-family:var(--f-vn)}
+.vpr{display:block;width:100%;height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-top:8px}
+.vpr i{display:block;height:100%;background:var(--c-brown)}
+.vstat{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:2px 0 12px}
+.vstat div{background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:8px;text-align:center;display:flex;flex-direction:column}
+.vstat b{font-size:22px;font-weight:800;color:var(--c-brown)} .vstat span{font-size:11.5px;color:var(--muted);font-family:var(--f-vn)}
+#vsearch{width:100%;margin-bottom:6px}
+.vlv{display:inline-block;font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:99px;vertical-align:middle;font-style:normal}
+.vlv.l1{background:var(--good-soft);color:var(--good)} .vlv.l2{background:var(--accent-soft);color:var(--accent)}
+.vwrow{padding:12px 12px 10px;margin-bottom:8px;border-radius:14px;background:var(--surface);border:1.5px solid var(--line);cursor:pointer}
+.vwrow.known{border-color:var(--good-soft)} .vwrow.open{border-color:var(--c-brown)}
+.vex[hidden],.vfront[hidden],.vback[hidden]{display:none}
+.vtop{display:flex;align-items:center;gap:10px}
+.vw{flex:1;min-width:0;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px}
+.vw b{font-size:19px;font-weight:800} .vw small{font-size:12.5px;color:var(--muted)}
+.vok{color:var(--good);font-weight:800}
+.vm{margin:4px 0 0 46px;font-family:var(--f-vn);font-size:14.5px;color:var(--ink)}
+.vex{display:flex;gap:10px;margin:10px 0 0 0;padding:10px;border-radius:12px;background:var(--bg);border:1px solid var(--line)}
+.vex p{margin:0;line-height:1.55} .vex .vn{font-size:13px}
+.vspk{flex:none;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:var(--c-brown-soft);color:var(--c-brown)}
+.vspk.sm{width:30px;height:30px}
+.vspk.big{width:auto;height:44px;padding:0 18px;border-radius:99px;display:flex;gap:8px;margin:12px auto 0;font-weight:700;font-family:var(--f-vn)}
+.vstar{flex:none;width:36px;height:36px;font-size:22px;color:var(--muted);line-height:1}
+.vstar.on{color:#E5A50A}
+.vflip{display:block;width:100%;min-height:260px;padding:26px 18px;border-radius:22px;background:var(--surface);border:2px solid var(--c-brown);text-align:center;box-shadow:0 10px 24px -16px rgba(0,0,0,.35)}
+.vfront b{display:block;font-size:34px;font-weight:800;margin-top:30px} .vfront small{display:block;font-size:16px;color:var(--muted);margin:6px 0 10px}
+.vhint{display:block;margin-top:34px;font-size:12px;color:var(--muted);font-family:var(--f-vn)}
+.vback .vbm{display:block;font-size:22px;font-weight:800;font-family:var(--f-vn);margin:14px 0 18px;color:var(--c-brown)}
+.vback p{margin:6px 0;line-height:1.6;text-align:left} .vback .vn{font-size:13.5px}
+.vq{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin:10px 0 14px;padding:22px 14px;border-radius:18px;background:var(--c-brown-soft);text-align:center}
+.vq b{font-size:30px;font-weight:800} .vq small{font-size:14px;color:var(--muted)}
+.vq.rev{font-size:20px;font-weight:800;font-family:var(--f-vn);color:var(--c-brown)}
 /* 3D 마스코트 */
 .msc{position:fixed;z-index:30;right:max(4px,calc((100vw - 560px)/2 + 4px));bottom:calc(10px + env(safe-area-inset-bottom,0px));width:132px;height:156px;pointer-events:none}
 .msc canvas{display:block;width:100%;height:100%;pointer-events:auto;cursor:pointer;-webkit-tap-highlight-color:transparent}
@@ -551,7 +590,7 @@ function lsKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ co
 function lsSnapshot(){ const p={}; lsKeys().forEach(k=>{ try{ p[k]=localStorage.getItem(k); }catch(e){} }); return p; }
 function lsClear(){ lsKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
 let UNLOCK_ALL=false, GUEST=false;
-const APP_VERSION="11/3 첫 화면 고양이 누르기";
+const APP_VERSION="11/3 Từ vựng thực dụng · lĩnh vực 1";
 const TEACHER_ID="viethaan9";
 /* ---------- data ---------- */
 // type: next(이어질 말) · act(이어서 할 행동) · same(내용과 같은 것) · main(중심 생각)
@@ -3082,6 +3121,125 @@ function catSlot(kind,btn){
   const sp=[[-46,-34],[40,-40],[-58,4],[54,0],[-20,-56],[22,-58]].map(([x,y],i)=>`<i class="spark" style="--sx:${x}px;--sy:${y}px;--sc:${col};animation-delay:${(kind==="brown"?.75:1.25)+i*.03}s"></i>`).join("");
   return `<div class="lvlw ${kind}"><div class="lcat ${kind}"><img src="cat-${kind}.webp?v=2" alt="">${sp}</div>${btn}</div>`;
 }
+/* ---------- 실용 어휘 · Từ vựng thực dụng (갈색 고양이) ----------
+   lĩnh vực = 100 từ (10 phần × 10 từ). Dữ liệu ở voca/<id>.json: w = [từ, chữ Hán, nghĩa, câu ví dụ, dịch câu, cấp 1=3·4급 2=5·6급] */
+const VFIELDS=[
+ {id:1,g:"A",e:"🏠",vn:"Nhà ở · thuê nhà",ko:"주거 · 집 구하기"},
+ {id:2,g:"A",e:"🏥",vn:"Bệnh viện · sức khỏe",ko:"병원 · 건강"},
+ {id:3,g:"A",e:"🏦",vn:"Ngân hàng · tiền bạc",ko:"은행 · 금융"},
+ {id:4,g:"A",e:"🛍️",vn:"Mua sắm · dịch vụ",ko:"쇼핑 · 서비스"},
+ {id:5,g:"A",e:"🚆",vn:"Giao thông · du lịch",ko:"교통 · 여행"},
+ {id:6,g:"A",e:"📝",vn:"Hành chính · công việc",ko:"행정 · 직장"},
+ {id:7,g:"B",e:"📈",vn:"Kinh tế · tiêu dùng",ko:"경제 · 소비"},
+ {id:8,g:"B",e:"👪",vn:"Xã hội · dân số",ko:"사회 · 인구"},
+ {id:9,g:"B",e:"🌏",vn:"Môi trường · khoa học",ko:"환경 · 과학"},
+ {id:10,g:"B",e:"🎓",vn:"Giáo dục · văn hóa",ko:"교육 · 문화"},
+ {id:11,g:"B",e:"📱",vn:"Truyền thông · công nghệ",ko:"언론 · 기술"},
+ {id:12,g:"B",e:"⚖️",vn:"Luật · chính sách",ko:"법 · 제도"}];
+const VREADY=[1];
+const VDATA={};
+const vKey=id=>"tpk-voc"+id;
+const vSt=id=>{ try{ return Object.assign({k:{},s:{},q:{}},JSON.parse(lsGet(vKey(id))||"{}")); }catch(e){ return {k:{},s:{},q:{}}; } };
+const vPut=(id,o)=>lsSet(vKey(id),JSON.stringify(o));
+const vF=id=>VFIELDS.find(f=>f.id===id);
+async function vGet(id){ if(VDATA[id]) return VDATA[id];
+  const r=await fetch(`voca/${id}.json`,{cache:"no-cache"}); if(!r.ok) throw new Error(r.status); return VDATA[id]=await r.json(); }
+const vSay=t=>{ if(playing) stopAll(); playLines([["F",t]]); };
+const SPK='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>';
+const vLv=l=>`<span class="vlv l${l}">${l===2?"5·6급":"3·4급"}</span>`;
+
+function vHome(){ sec("vocab"); $("body").scrollTop=0; stopAll(); setTitle("Từ vựng · 실용 어휘",start); $("speed").hidden=true;
+  const card=f=>{ const ok=VREADY.includes(f.id), st=vSt(f.id), n=Object.keys(st.k).length;
+    return `<button class="vfc ${ok?"":"soon"}" data-f="${f.id}" ${ok?"":"disabled"}><span class="ve">${f.e}</span><b>${f.vn}</b><span class="vko">${f.ko}</span>
+      ${ok?`<span class="vpr"><i style="width:${n}%"></i></span><span class="vn2">Đã nhớ ${n}/100</span>`:`<span class="vn2">Sắp có · 준비 중</span>`}</button>`; };
+  $("body").innerHTML=`<div class="tcard" style="margin-top:4px"><h3>Từ vựng thực dụng</h3><div class="vn">실생활 · 시험에 꼭 필요한 어휘 · mỗi lĩnh vực 100 từ quan trọng nhất</div>
+    <ul><li>Mỗi lĩnh vực chia <b>10 phần × 10 từ</b>. Mỗi từ có nghĩa tiếng Việt, chữ Hán, câu ví dụ và phát âm.</li>
+    <li>Học bằng <b>danh sách</b>, <b>thẻ lật</b> rồi làm <b>bài kiểm tra</b>. Từ làm đúng sẽ được tính là "đã nhớ".</li>
+    <li>Nhãn <span class="vlv l1">3·4급</span> <span class="vlv l2">5·6급</span> cho biết mức độ của từ.</li></ul></div>
+   <div class="sec"><b>Đời sống thực tế · 생활</b></div><div class="vgrid">${VFIELDS.filter(f=>f.g==="A").map(card).join("")}</div>
+   <div class="sec"><b>Xã hội · học thuật · 사회 · 학술 (5·6급)</b></div><div class="vgrid">${VFIELDS.filter(f=>f.g==="B").map(card).join("")}</div>`;
+  $("body").querySelectorAll(".vfc:not(.soon)").forEach(b=>b.onclick=()=>vField(+b.dataset.f));
+  foot("");
+}
+async function vField(id,q){ sec("vocab"); stopAll(); const F=vF(id); setTitle(`${F.e} ${F.vn}`,vHome); $("speed").hidden=true;
+  let D; try{ D=await vGet(id); }catch(e){ $("body").innerHTML=`<div class="fb no">Không tải được từ vựng. Kiểm tra mạng rồi thử lại. (${esc(e.message||e)})</div>`; foot(""); return; }
+  const st=vSt(id), known=Object.keys(st.k).length, star=Object.keys(st.s).length;
+  $("body").innerHTML=`<div class="vstat"><div><b>${known}</b><span>Đã nhớ · 외웠어요</span></div><div><b>${star}</b><span>⭐ Đánh dấu</span></div><div><b>${100-known}</b><span>Còn lại</span></div></div>
+    <input class="inp" id="vsearch" placeholder="🔎 Tìm từ · tiếng Hàn hoặc tiếng Việt" autocomplete="off" spellcheck="false" value="${esc(q||"")}">
+    <div id="vres"></div>`;
+  const parts=()=>`<div class="sec"><b>10 phần · 10 PHẦN</b></div>${D.parts.map(([vn,ko],p)=>{ const ids=[...Array(10)].map((_,j)=>p*10+j), k=ids.filter(i=>st.k[i]).length, best=st.q[p];
+      return `<button class="grp" data-p="${p}"><span class="n">${p+1}</span><span class="t"><b>${esc(vn)}</b><span class="vn">${esc(ko)}${best!=null?` · Kiểm tra ${best}/10`:""}</span></span><span class="dots">${ids.map(i=>`<i class="${st.k[i]?"k":""}"></i>`).join("")}</span></button>`; }).join("")}
+    ${star?`<button class="btn sec" id="vstar" style="width:100%;margin-top:8px">⭐ Xem ${star} từ đã đánh dấu</button>`:""}`;
+  const paint=()=>{ const t=$("vsearch").value.trim().toLowerCase();
+    if(!t){ $("vres").innerHTML=parts(); $("vres").querySelectorAll(".grp").forEach(b=>b.onclick=()=>vPart(id,+b.dataset.p)); if($("vstar")) $("vstar").onclick=()=>vPart(id,"s"); return; }
+    const hit=D.w.map((w,i)=>[w,i]).filter(([w])=>(w[0]+" "+w[1]+" "+w[2]).toLowerCase().includes(t)||w[2].toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/đ/g,"d").includes(t.normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/đ/g,"d")));
+    $("vres").innerHTML=hit.length?`<p class="tip">${hit.length} từ</p>`+hit.map(([w,i])=>vRow(w,i,st)).join(""):`<p class="tip">Không tìm thấy · 없어요</p>`; vBindRows(id,st); };
+  $("vsearch").addEventListener("input",paint); paint();
+  foot("");
+}
+function vRow(w,i,st){ return `<div class="vwrow ${st.k[i]?"known":""}" data-i="${i}"><div class="vtop"><button class="vspk" data-t="${esc(w[0])}" aria-label="nghe">${SPK}</button>
+   <div class="vw"><b>${esc(w[0])}</b>${w[1]?`<small>${esc(w[1])}</small>`:""}${vLv(w[5])}${st.k[i]?`<span class="vok">✓</span>`:""}</div><button class="vstar ${st.s[i]?"on":""}" data-i="${i}" aria-label="đánh dấu">${st.s[i]?"★":"☆"}</button></div>
+   <div class="vm">${esc(w[2])}</div><div class="vex" hidden><button class="vspk sm" data-t="${esc(w[3])}" aria-label="nghe câu">${SPK}</button><div><p>${esc(w[3])}</p><p class="vn">${esc(w[4])}</p></div></div></div>`; }
+function vBindRows(id,st){
+  $("body").querySelectorAll(".vspk").forEach(b=>b.onclick=e=>{ e.stopPropagation(); vSay(b.dataset.t); });
+  $("body").querySelectorAll(".vstar").forEach(b=>b.onclick=e=>{ e.stopPropagation(); const i=b.dataset.i, s=vSt(id); if(s.s[i]) delete s.s[i]; else s.s[i]=1; vPut(id,s); st.s=s.s; b.classList.toggle("on",!!s.s[i]); b.textContent=s.s[i]?"★":"☆"; });
+  $("body").querySelectorAll(".vwrow").forEach(r=>r.onclick=()=>{ const x=r.querySelector(".vex"); x.hidden=!x.hidden; r.classList.toggle("open",!x.hidden); });
+}
+async function vPart(id,p){ sec("vocab"); $("body").scrollTop=0; stopAll(); const D=await vGet(id), st=vSt(id), F=vF(id);
+  const ids=p==="s"?Object.keys(st.s).map(Number).sort((a,b)=>a-b):[...Array(10)].map((_,j)=>p*10+j);
+  setTitle(p==="s"?`⭐ Từ đã đánh dấu`:`Phần ${p+1} · ${D.parts[p][0]}`,()=>vField(id)); $("speed").hidden=false; $("speed").textContent=`속도 ${(rate%1?String(rate):rate.toFixed(1))}×`;
+  $("body").innerHTML=`${p==="s"?"":`<p class="tip" style="margin-top:0">${esc(D.parts[p][1])} · Bấm vào từ để xem câu ví dụ. Bấm ☆ để đánh dấu từ khó.</p>`}${ids.map(i=>vRow(D.w[i],i,st)).join("")||`<p class="tip">Chưa có từ nào.</p>`}`;
+  vBindRows(id,st);
+  foot(ids.length?`<button class="btn sec" id="vcard">🃏 Thẻ lật</button><button class="btn pri" id="vquiz">✏️ Kiểm tra</button>`:"");
+  if(ids.length){ $("vcard").onclick=()=>vCards(id,p,ids); $("vquiz").onclick=()=>vQuiz(id,p,ids); }
+}
+// thẻ lật: mặt trước tiếng Hàn (tự đọc), bấm để lật xem nghĩa
+function vCards(id,p,ids){ const D=VDATA[id]; const st0=vSt(id); let order=[...ids.filter(i=>!st0.k[i]),...ids.filter(i=>st0.k[i])], n=0, got=0;
+  const show=()=>{ sec("vocab"); mascotMode("study"); stopAll(); const st=vSt(id);
+    if(n>=order.length){ setTitle("Thẻ lật · xong",()=>vPart(id,p)); $("body").innerHTML=`<section class="hero" style="text-align:center"><div class="eyebrow">ĐÃ NHỚ · 외웠어요</div><div class="big">${got}<small> / ${order.length}</small></div></section>
+        <div class="fb ok"><b>Giỏi lắm! 🎉</b>Làm bài kiểm tra để chắc chắn đã nhớ nhé.<span class="vn">Từ "chưa nhớ" sẽ hiện trước ở lần sau.</span></div>`;
+      foot(`<button class="btn sec" id="vb">Danh sách</button><button class="btn pri" id="vq">✏️ Kiểm tra</button>`); $("vb").onclick=()=>vPart(id,p); $("vq").onclick=()=>vQuiz(id,p,ids); return; }
+    const i=order[n], w=D.w[i];
+    setTitle(`Thẻ lật · ${n+1} / ${order.length}`,()=>vPart(id,p));
+    $("body").innerHTML=`<div class="prog"><span>${n+1} / ${order.length}</span><div class="bar"><i style="width:${n/order.length*100}%"></i></div></div>
+      <button class="vflip" id="vfl"><div class="vfront"><b>${esc(w[0])}</b>${w[1]?`<small>${esc(w[1])}</small>`:""}${vLv(w[5])}<span class="vhint">Bấm để lật · 눌러서 뒤집기</span></div>
+        <div class="vback" hidden><b class="vbm">${esc(w[2])}</b><p>${esc(w[3])}</p><p class="vn">${esc(w[4])}</p></div></button>
+      <button class="vspk big" id="vsp" aria-label="nghe">${SPK} Nghe lại</button>`;
+    $("vfl").onclick=()=>{ const b=$("vfl").querySelector(".vback"), f=$("vfl").querySelector(".vfront"); const open=b.hidden; b.hidden=!open; f.hidden=open; if(open) vSay(w[3]); };
+    $("vsp").onclick=()=>vSay(w[0]);
+    foot(`<button class="btn sec" id="vno">Chưa nhớ</button><button class="btn pri" id="vyes">Đã nhớ ✓</button>`);
+    $("vno").onclick=()=>{ n++; show(); };
+    $("vyes").onclick=()=>{ const s=vSt(id); s.k[i]=1; vPut(id,s); got++; n++; show(); };
+    setTimeout(()=>{ if($("vfl")) vSay(w[0]); },300); };
+  show();
+}
+// kiểm tra: 10 câu, xen kẽ Hàn → Việt và Việt → Hàn; đúng thì tính "đã nhớ"
+function vQuiz(id,p,ids){ const D=VDATA[id]; const qs=shuffle(ids).slice(0,10).map((i,j)=>{ const rev=j%2===1;
+    const pool=shuffle(D.w.map((_,x)=>x).filter(x=>x!==i&&D.w[x][2]!==D.w[i][2])).slice(0,3);
+    return {i,rev,opts:shuffle([i,...pool])}; });
+  let n=0, ok=0; const wrong=[];
+  const show=()=>{ sec("vocab"); mascotMode("study"); stopAll();
+    if(n>=qs.length){ const s=vSt(id); if(p!=="s") s.q[p]=Math.max(s.q[p]||0,ok); vPut(id,s);
+      setTitle("Kiểm tra · kết quả",()=>vPart(id,p));
+      $("body").innerHTML=`<section class="hero" style="text-align:center"><div class="eyebrow">ĐÚNG · 맞았어요</div><div class="big">${ok}<small> / ${qs.length}</small></div></section>
+        ${wrong.length?`<div class="sec"><b>Từ làm sai · 틀린 단어</b></div>${wrong.map(i=>vRow(D.w[i],i,vSt(id))).join("")}`:`<div class="fb ok"><b>Đúng hết! 🎉 Tuyệt vời!</b></div>`}`;
+      vBindRows(id,vSt(id));
+      foot(`<button class="btn sec" id="vb">Danh sách</button><button class="btn pri" id="vr">Làm lại</button>`); $("vb").onclick=()=>vPart(id,p); $("vr").onclick=()=>vQuiz(id,p,ids); return; }
+    const Q=qs[n], w=D.w[Q.i];
+    setTitle(`Kiểm tra · ${n+1} / ${qs.length}`,()=>{ if(confirm("Dừng bài kiểm tra?")) vPart(id,p); });
+    $("body").innerHTML=`<div class="prog"><span>${n+1} / ${qs.length}</span><div class="bar"><i style="width:${n/qs.length*100}%"></i></div></div>
+      <div class="instr">${Q.rev?"Chọn từ tiếng Hàn đúng · 알맞은 한국어를 고르세요":"Chọn nghĩa đúng · 알맞은 뜻을 고르세요"}</div>
+      <div class="vq ${Q.rev?"rev":""}">${Q.rev?esc(w[2]):`<b>${esc(w[0])}</b>${w[1]?`<small>${esc(w[1])}</small>`:""}<button class="vspk" id="vsp" aria-label="nghe">${SPK}</button>`}</div>
+      <div class="choices" id="chs">${Q.opts.map((x,pos)=>`<button class="ch" data-x="${x}"><span class="k">${circ[pos]}</span><span>${esc(Q.rev?D.w[x][0]:D.w[x][2])}</span></button>`).join("")}</div>`;
+    if($("vsp")){ $("vsp").onclick=()=>vSay(w[0]); setTimeout(()=>{ if($("vsp")) vSay(w[0]); },300); }
+    $("chs").querySelectorAll(".ch").forEach(b=>b.onclick=()=>{ const good=+b.dataset.x===Q.i;
+      $("chs").querySelectorAll(".ch").forEach(c=>{ c.disabled=true; if(+c.dataset.x===Q.i) c.classList.add("ok"); });
+      if(good){ ok++; const s=vSt(id); s.k[Q.i]=1; vPut(id,s); } else { b.classList.add("no"); wrong.push(Q.i); }
+      if(Q.rev) vSay(w[0]);
+      setTimeout(()=>{ n++; show(); },good?700:1500); });
+    foot(""); };
+  show();
+}
 function start(){ sec(); mascotMode("home",CAT_INTRO);
   stopAll(); setTitle("",null); $("speed").hidden=true;
   $("body").innerHTML=`
@@ -3089,20 +3247,17 @@ function start(){ sec(); mascotMode("home",CAT_INTRO);
    <section class="mlogo"><img src="logo.png" alt=""><div><b>TOPIK 연습</b><div class="eyebrow">어떤 시험을 준비해요? · BẠN ÔN THI GÌ?</div></div><button class="contact mailbtn" id="smail" aria-label="의견함 · Hòm thư góp ý" title="의견함 · Hòm thư góp ý">${MAIL}</button><a class="contact" href="https://www.facebook.com/profile.php?id=61594346458669" target="_blank" rel="noopener" aria-label="선생님께 문의하기 · Liên hệ giáo viên" title="선생님께 문의하기 · Liên hệ giáo viên"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.8-.8L3 21l1.9-5.2A8.4 8.4 0 0 1 12 3.1a8.4 8.4 0 0 1 9 8.4z"/></svg></a></section>
    ${isTeacher()?`<button class="all" id="tview" style="margin-bottom:12px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg><span><b>학생 기록 보기</b><span>선생님 전용 · 학생별 진도와 잠금 해제</span></span><span class="fbnew tbadge" hidden>${MAIL}<span class="fbc">0</span></span></button>`:""}
    <div class="cscene ${CAT_INTRO?"intro":""}" id="lvls">
-    <button class="ccat brown" id="t1" aria-label="TOPIK I"><span class="cbub">Ấn vào! 👆<small>눌러 보세요</small></span><img src="cat-brown.webp?v=2" alt=""><span class="clab">TOPIK I</span>${catSparks("brown")}</button>
+    <button class="ccat brown" id="t1" aria-label="Từ vựng"><span class="cbub">Ấn vào! 👆<small>눌러 보세요</small></span><img src="cat-brown.webp?v=2" alt=""><span class="clab">TỪ VỰNG · 어휘</span>${catSparks("brown")}</button>
     <button class="ccat blue" id="t2" aria-label="TOPIK II"><span class="cbub">Ấn vào! 👆<small>눌러 보세요</small></span><img src="cat-blue.webp?v=2" alt=""><span class="clab">TOPIK II</span>${catSparks("blue")}</button>
    </div>
-   <div id="t1card"></div>
    <section class="board" id="board" hidden></section>
    <button class="msctog" id="msctog">🤖 ${MSC.off()?"Bật nhân vật · 캐릭터 켜기":"Tắt nhân vật · 캐릭터 끄기"}</button>
    <p class="note" style="margin-top:18px">버전 ${APP_VERSION}</p>`;
   CAT_INTRO=false;
-  // 고양이를 누르면: 파란 고양이 → TOPIK II, 갈색 고양이 → TOPIK I (아직 준비 중이라 카드로 알려 줘요)
+  // 고양이를 누르면: 파란 고양이 → TOPIK II, 갈색 고양이 → 실용 어휘 (Từ vựng)
   const hop=(id,fn)=>{ const c=$(id); if(matchMedia("(prefers-reduced-motion: reduce)").matches) return fn(); c.classList.remove("hop"); void c.offsetWidth; c.classList.add("hop"); setTimeout(fn,420); };
   $("t2").onclick=()=>hop("t2",topik2);
-  $("t1").onclick=()=>hop("t1",()=>{ const el=$("t1card"); if(!el) return;
-    el.innerHTML=`<div class="t1pop">${lvlBtn({badge:"I",ko:"TOPIK I",vn:"TOPIK I · Sơ cấp",mm:"1급 · 2급 · Thầy đang chuẩn bị nhé!",c:"brown"})}</div>`;
-    el.scrollIntoView({behavior:"smooth",block:"nearest"}); });
+  $("t1").onclick=()=>hop("t1",vHome);
   bindUserBar(); if($("tview")) $("tview").onclick=()=>teacher();
   if($("smail")) $("smail").onclick=()=>isTeacher()?inbox():mailbox();
   if(isTeacher()){ fbWatch(); fbPaint(); }

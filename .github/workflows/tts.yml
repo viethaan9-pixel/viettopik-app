@@ -2,7 +2,7 @@ name: Make listening audio (Google TTS)
 on:
   push:
     branches: [main]
-    paths: [index.html, tools/tts.mjs, .github/workflows/tts.yml]
+    paths: [index.html, voca/**, tools/tts.mjs, .github/workflows/tts.yml]
   workflow_dispatch:
 permissions:
   contents: write
