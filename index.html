@@ -248,6 +248,8 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .w54sc{display:flex;align-items:baseline;gap:6px;margin:10px 0 4px;padding:10px 12px;border-radius:12px;background:var(--surface);border:1px solid var(--line)}.w54sc strong{font-size:30px;font-weight:800;color:var(--c-write)}.w54sc small{font-size:14px;color:var(--muted)}.w54sc span{margin-left:auto;font-size:11.5px;color:var(--muted);text-align:right;line-height:1.4}
 .w54q{margin:8px 0 0;padding-left:18px}.w54q li{margin:4px 0;font-weight:600}.w54q .vn{display:block;font-weight:400}
 mark.sp{background:#FFD7D7;color:#B3261E;border-radius:3px;text-decoration:underline wavy #E5484D}
+.mswitch.m3{grid-template-columns:repeat(3,1fr);gap:6px}.mswitch.m3 button{padding:9px 2px}.mswitch.m3 button b{font-size:13.5px;white-space:nowrap}
+.tess{margin-top:6px;border:1px solid var(--line);border-radius:10px;padding:6px 10px;background:var(--bg)}.tess summary{cursor:pointer;font-size:13px}.tess summary b{display:inline;font-size:13px}.tess .w53mine{margin-top:6px;font-size:14px;line-height:1.7}
 .mswitch.m4{grid-template-columns:repeat(4,1fr);gap:6px}.mswitch.m4 button{padding:9px 2px}.mswitch.m4 button b{font-size:13.5px;white-space:nowrap}.mswitch.m4 button span{font-size:10.5px}
 .ptq .opt{display:block;width:100%;text-align:left}
 .tstats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:2px 0 12px}
@@ -609,7 +611,7 @@ function lsKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ co
 function lsSnapshot(){ const p={}; lsKeys().forEach(k=>{ try{ p[k]=localStorage.getItem(k); }catch(e){} }); return p; }
 function lsClear(){ lsKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
 let UNLOCK_ALL=false, GUEST=false;
-const APP_VERSION="4/11c Mở cấp: đề T3→4 · T4→5 · T5→6";
+const APP_VERSION="4/11d Thầy xem học sinh theo 3 mục";
 const TEACHER_ID="viethaan9";
 /* ---------- data ---------- */
 // type: next(이어질 말) · act(이어서 할 행동) · same(내용과 같은 것) · main(중심 생각)
@@ -3179,7 +3181,7 @@ const VREADY=[13,14,1,2,3,4,5,6,7,8,9,10,11,12];
 const VDATA={};
 const vKey=id=>"tpk-voc"+id;
 const vSt=id=>{ try{ return Object.assign({k:{},s:{},q:{}},JSON.parse(lsGet(vKey(id))||"{}")); }catch(e){ return {k:{},s:{},q:{}}; } };
-const vPut=(id,o)=>lsSet(vKey(id),JSON.stringify(o));
+const vPut=(id,o)=>{ o.t=Date.now(); lsSet(vKey(id),JSON.stringify(o)); };
 const vF=id=>VFIELDS.find(f=>f.id===id);
 async function vGet(id){ if(VDATA[id]) return VDATA[id];
   const r=await fetch(`voca/${id}.json`,{cache:"no-cache"}); if(!r.ok) throw new Error(r.status); return VDATA[id]=await r.json(); }
@@ -3504,7 +3506,7 @@ function gjHtml(text,caret,minRows,max){ max=max||W53_MAX;
   return {html:h,cells:L.cells,lines:L.rows.filter(x=>x.length).length};
 }
 function w53Load(){ try{ return JSON.parse(localStorage.getItem("tpk-w53v2")||"null")||{a:{},c:{}}; }catch(e){ return {a:{},c:{}}; } }
-function w53Save(o){ try{ localStorage.setItem("tpk-w53v2",JSON.stringify(o)); }catch(e){} }
+function w53Save(o){ try{ o.t=Date.now(); localStorage.setItem("tpk-w53v2",JSON.stringify(o)); }catch(e){} }
 const nf=v=>v>=1000?Number(v).toLocaleString("ko-KR"):String(v);
 function chartSvg(c){
   const W=330, fg="var(--ink)", mu="var(--muted)", ac="var(--accent)", ln="var(--line)";
@@ -3636,7 +3638,7 @@ const W54_MIN=600, W54_MAX=700;
 const W54_CONN=["첫째","둘째","셋째","우선","먼저","또한","그리고","게다가","더 나아가","뿐만 아니라","반면","그러나","하지만","그런데도","예를 들어","특히","따라서","그러므로","그래서","이처럼","이와 같이","결론적으로","요컨대","마지막으로","무엇보다","즉"];
 const W54_END=/이처럼|이와 같이|이와 같은|따라서|그러므로|결론적으로|요컨대|이렇게 한다면|이렇게 된다면/;
 function w54Load(){ try{ return JSON.parse(localStorage.getItem("tpk-w54")||"null")||{a:{},c:{}}; }catch(e){ return {a:{},c:{}}; } }
-function w54Save(o){ try{ localStorage.setItem("tpk-w54",JSON.stringify(o)); }catch(e){} }
+function w54Save(o){ try{ o.t=Date.now(); localStorage.setItem("tpk-w54",JSON.stringify(o)); }catch(e){} }
 // chép đề: tỉ lệ cụm 6 chữ của đề xuất hiện trong bài
 function copyRate(src,text){ const z=x=>x.normalize("NFC").replace(/\s+/g,""), a=z(src), b=z(text); if(b.length<30) return 0;
   const g=new Set(); for(let i=0;i+6<=a.length;i++) g.add(a.slice(i,i+6));
@@ -5308,7 +5310,31 @@ function inbox(live){ const back=()=>teacher();
   // opening the inbox marks the letters as read
   L.filter(m=>!m.read).forEach(m=>CLOUD.markRead(m.fid).catch(()=>{}));
 }
-let TW=null, TW_N=null, TW_BOARD=false;
+let TW=null, TW_N=null, TW_BOARD=false, TW_LAST=[], TW_TAB=(()=>{ try{ return localStorage.getItem("tpk-ttab")||"exam"; }catch(e){ return "exam"; } })();
+const tJ=v=>{ try{ return JSON.parse(v||"null"); }catch(e){ return null; } };
+const tAgo=t=>{ if(!t) return ""; const m=Math.round((Date.now()-t)/6e4); return m<1?"vừa xong":m<60?m+" phút trước":m<1440?Math.round(m/60)+" giờ trước":Math.round(m/1440)+" ngày trước"; };
+// 1 · Từ vựng: số từ đã nhớ theo từng lĩnh vực + điểm kiểm tra các phần
+function tVocab(p){ let tot=0, last=0; const rows=VFIELDS.map(f=>{ const o=tJ(p["tpk-voc"+f.id]); if(!o) return null;
+    const k=Object.keys(o.k||{}).length, q=Object.values(o.q||{}), qd=q.length, q10=q.filter(x=>x>=10).length; tot+=k; last=Math.max(last,o.t||0);
+    if(!k&&!qd) return null;
+    return `<span class="pc ${k>=100?"full":k?"part":""}"><i>${f.e} ${esc(f.vn)}</i>${k}/100<em>Kiểm tra ${qd}/10 phần${q10?` · 💯${q10}`:""}</em></span>`; }).filter(Boolean);
+  return {tot,last,html:rows.length?`<div class="prow">${rows.join("")}</div>`:""}; }
+// 2 · Viết: 51·52 theo Ngày + bài 53 · 54 (thầy bấm để đọc bài)
+function tWrite(p){ const W=progCells(p)[2].filter(([,,x])=>x.n), a=tJ(p["tpk-w53v2"])||{a:{},c:{}}, b=tJ(p["tpk-w54"])||{a:{},c:{}};
+  const essays=(D,o,max)=>D.map((q,i)=>{ const txt=String((o.a||{})[i]||"").trim(), c=(o.c||{})[i]; if(!txt) return "";
+      const sp=spellCheck(txt);
+      return `<details class="tess" data-k="${esc(p.__u||"")}${max}-${i}"><summary><b>${max===30?"53":"54"}-${i+1}</b> ${esc(q.topic)} · ${w53Len(txt)}자 ${c&&c.s!=null?`· <strong>${c.s}/${max}</strong>`:c?"":"· (chưa chấm)"}${c&&c.ok?" ✅":""}${sp.length?` · ⚠️ chính tả ${sp.length}`:""}</summary><div class="w53mine">${spellMark(txt,sp)}</div></details>`; }).join("");
+  const e53=essays(W53,a,30), e54=essays(W54,b,50), s53=Object.values(a.c||{}).filter(c=>c.s!=null), s54=Object.values(b.c||{}).filter(c=>c.s!=null);
+  const avg=l=>l.length?Math.round(l.reduce((x,c)=>x+c.s,0)/l.length):"-";
+  const any=W.length||e53||e54;
+  return {any,last:Math.max(a.t||0,b.t||0),score:(s53.length+s54.length),html:any?`
+    ${W.length?`<div class="prow"><span class="pl">51·52</span>${W.map(([,d,x])=>`<span class="pc ${x.n>=x.total?"full":"part"}"><i>Ngày ${d}</i>${x.n}/${x.total}<em>✓${x.ok}</em></span>`).join("")}</div>`:""}
+    <div class="asnd">✍️ 53번 ${Object.keys(a.c||{}).length}/${W53.length} bài · TB ${avg(s53)}/30 &nbsp;|&nbsp; 54번 ${Object.keys(b.c||{}).length}/${W54.length} bài · TB ${avg(s54)}/50</div>${e53}${e54}`:""}; }
+// 3 · Giải đề: thi lên cấp + nghe · đọc theo Ngày + 모의고사
+function tExam(p){ const t=(k,lb)=>{ const o=tJ(p[k]); return o&&o.ok!=null?`${lb} ${o.ok}/10${o.pass||(k==="tpk-ptest"&&o.ok>=5)?" ✅":""}`:""; };
+  const tests=[t("tpk-ptest","Thi lên T4"),t("tpk-t56","Thi lên T5"),t("tpk-t6","Thi lên T6")].filter(Boolean).join(" · ");
+  const [L,R]=progCells(p); const any=tests||L.some(r=>r[2].n)||R.some(r=>r[2].n)||p[MK_KEY];
+  return {any,tests}; }
 async function teacher(given){
   const live=Array.isArray(given);
   if(live&&$("title").textContent!=="학생 기록"){ if(TW){ TW(); TW=null; } return; }   // teacher left this screen
@@ -5319,7 +5345,7 @@ async function teacher(given){
     if(CLOUD.watch){ TW=CLOUD.watch(l=>teacher(l),e=>{ $("body").innerHTML=`<div class="fb no">학생 기록을 못 불러왔어요. (${esc(e.code||e.message||e)})</div>`; }); return; }
   }
   let list=[]; if(live) list=given; else { try{ list=await CLOUD.list(); }catch(e){ $("body").innerHTML=`<div class="fb no">학생 기록을 못 불러왔어요. Firestore 보안 규칙을 확인해 주세요. (${esc(e.code||e.message||e)})</div>`; return; } }
-  const keepY=$("body").scrollTop;
+  TW_LAST=list; const keepY=$("body").scrollTop, openD=new Set([...document.querySelectorAll("details.tess[open]")].map(d=>d.dataset.k));
   const ms=t=>{ try{ return t&&t.toMillis?t.toMillis():0; }catch(e){ return 0; } };
   const seen=u=>Math.max(ms(u.lastSeen),ms(u.updated));   // last visit (login) or last answer, whichever is later
   list=list.filter(u=>u.id!==TEACHER_ID).sort((a,b)=>seen(b)-seen(a));
@@ -5334,21 +5360,30 @@ async function teacher(given){
   $("body").innerHTML=`<button class="fbnew mailfab" id="tmail" ${fbUnread()?"":"hidden"}>${MAIL}<span class="fbc">${fbUnread()}</span><b>새 편지 · Thư mới</b></button>
    <button class="maillink" id="tmail2">${MAIL} 의견함 열기 · 받은 편지 ${FBX.list.length}통</button>
    ${added?`<div class="fb ok" style="margin:0 0 10px"><b>🎉 새 학생 ${added}명 가입!</b>인원수가 자동으로 늘어났어요.</div>`:""}<div class="tstats"><div><b>${list.length}</b><span>가입한 학생 · 실시간</span></div><div><b>${cToday}</b><span>오늘 접속</span></div><div><b>${cWeek}</b><span>7일 접속</span></div><div><b>${cNew}</b><span>7일 새 가입</span></div></div>
-   <p class="tip" style="margin-top:0">버전 ${APP_VERSION} · 최근 접속한 학생이 위에 있어요 · 칸 안의 숫자는 「푼 문제 / 전체」, 아래는 맞힌 개수예요.</p>`+(list.length?list.map((u,ri)=>{
+   <div class="mswitch m3 ttab">${[["vocab","📚","Từ vựng"],["write","✍️","Luyện viết"],["exam","📝","Giải đề"]].map(([k,e,l])=>`<button data-tt="${k}" aria-pressed="${TW_TAB===k}"><b>${e} ${l}</b><span>${k==="vocab"?list.filter(u=>tVocab(u.p||{}).tot).length:k==="write"?list.filter(u=>tWrite(u.p||{}).any).length:list.filter(u=>tExam(u.p||{}).any).length} học sinh</span></button>`).join("")}</div>
+   <p class="tip" style="margin-top:0">버전 ${APP_VERSION} · ${TW_TAB==="vocab"?"Số từ đã nhớ / 100 mỗi lĩnh vực, dưới là số phần đã làm kiểm tra. Xếp theo số từ.":TW_TAB==="write"?"51·52 theo Ngày · bài 53·54: bấm vào để đọc bài em viết (chữ đỏ = lỗi chính tả). Xếp theo lần viết gần nhất.":"최근 접속한 학생이 위에 있어요 · 칸 안의 숫자는 「푼 문제 / 전체」, 아래는 맞힌 개수예요."}</p>`+(()=>{
+    if(TW_TAB==="exam") return "";
+    const rows=list.map(u=>{ const p=Object.assign({__u:u.uid},u.p||{}), r=TW_TAB==="vocab"?tVocab(p):tWrite(p); return {u,r,on:TW_TAB==="vocab"?r.tot>0:r.any}; });
+    const act=rows.filter(x=>x.on).sort((a,b)=>TW_TAB==="vocab"?b.r.tot-a.r.tot:(b.r.last-a.r.last)||(seen(b.u)-seen(a.u))), idle=rows.filter(x=>!x.on);
+    return (act.length?act.map(({u,r},ri)=>`<div class="tcard stu"><div class="sh"><div><b><span class="rk">${ri+1}</span>${esc(u.name||"-")} <span class="ago ${now-seen(u)<864e5?"on":""}">${ago(u)}</span></b><small>${esc(u.id||"")}${TW_TAB==="vocab"?` · <strong>${r.tot}/1.400 từ</strong>`:""}${r.last?` · học lần cuối ${tAgo(r.last)}`:""}</small></div></div>${r.html}</div>`).join(""):`<div class="tcard">Chưa có học sinh nào ${TW_TAB==="vocab"?"học từ vựng":"luyện viết"}.</div>`)+
+      (idle.length?`<div class="tcard"><b class="nb">Chưa ${TW_TAB==="vocab"?"học từ vựng":"luyện viết"} (${idle.length})</b><div class="tip" style="margin-top:4px">${idle.map(x=>esc(x.u.name||x.u.id)).join(" · ")}</div></div>`:""); })()+(TW_TAB!=="exam"?"":list.length?list.map((u,ri)=>{
     const p=u.p||{};
     return `<div class="tcard stu"><div class="sh"><div><b><span class="rk">${ri+1}</span>${esc(u.name||"-")} <span class="ago ${now-seen(u)<864e5?"on":""}">${ago(u)}</span></b><small>${esc(u.id||"")} · 마지막 접속 ${when(seen(u)?{toDate:()=>new Date(seen(u))}:null)} · 가입 ${when(u.created)} · ${p["tpk-track"]==="4"?"TOPIK 4부터 (시험 통과)":p["tpk-track"]==="3"?"TOPIK 3부터":"시작 전"}${(t=>{try{const o=JSON.parse(t);return o?" · 시험 "+o.ok+"/10":""}catch(e){return ""}})(p["tpk-ptest"])}</small></div>
       <button class="lockbtn ${u.unlockAll?"on":""}" data-uid="${esc(u.uid)}" data-v="${u.unlockAll?0:1}">${u.unlockAll?"🔓 전부 열림":"🔒 잠금 해제"}</button></div>
       ${(()=>{ let a=null; try{ a=JSON.parse(p["tpk-audiolog"]||"null"); }catch(e){} if(!a) return ""; const bad=(a.net||0)+(a.blocked||0)+(a.nodevice||0); const tot=bad+(a.ok||0)+(a.device||0);
         const last=(a.last||[])[0]; const why={net:"인터넷",blocked:"자동 재생 막힘",nodevice:"폰에 한국어 목소리 없음",device:"폰 목소리로 대신"};
         return `<div class="asnd ${bad?"bad":""}">🔊 듣기 소리 · 문장 ${tot}개 중 녹음 ${a.ok||0} · 폰 목소리 ${a.device||0}${bad?` · ⚠️ 인터넷 문제 ${a.net||0} · 자동 재생 막힘 ${a.blocked||0} · 소리 없음 ${a.nodevice||0}`:""}${last?` <small>(마지막 문제: ${why[last.k]||last.k}${last.net?` · ${last.net}`:""} · ${new Date(last.at).toLocaleString("ko-KR",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"})})</small>`:""}</div>`; })()}
+      ${tExam(p).tests?`<div class="asnd">🔓 ${tExam(p).tests}</div>`:""}
       ${mkTeacherLine(u)}
-      ${progCells(p).map(row=>`<div class="prow"><span class="pl">${row[0][0]}</span>${row.map(([,d,s])=>`<span class="pc ${s.n>=s.total?"full":s.n?"part":""}"><i>Ngày ${d}</i>${s.n}/${s.total}<em>✓${s.ok}${s.star!=null?` ⭐${s.star}`:""}</em></span>`).join("")}</div>`).join("")}
+      ${progCells(p).slice(0,2).map(row=>`<div class="prow"><span class="pl">${row[0][0]}</span>${row.map(([,d,s])=>`<span class="pc ${s.n>=s.total?"full":s.n?"part":""}"><i>Ngày ${d}</i>${s.n}/${s.total}<em>✓${s.ok}${s.star!=null?` ⭐${s.star}`:""}</em></span>`).join("")}</div>`).join("")}
     </div>`;}).join(""):`<div class="tcard">아직 가입한 학생이 없어요.</div>`);
   $("body").querySelectorAll(".lockbtn").forEach(b=>b.onclick=async()=>{
     const v=b.dataset.v==="1"; b.disabled=true;
     try{ await CLOUD.setUnlock(b.dataset.uid,v); if(!TW) teacher(); }catch(e){ b.disabled=false; alert("바꾸지 못했어요: "+(e.code||e.message)); }
   });
   $("tmail").onclick=()=>inbox(); $("tmail2").onclick=()=>inbox();
+  $("body").querySelectorAll("[data-tt]").forEach(b=>b.onclick=()=>{ TW_TAB=b.dataset.tt; try{ localStorage.setItem("tpk-ttab",TW_TAB); }catch(e){} teacher(TW_LAST); $("body").scrollTop=0; });
+  document.querySelectorAll("details.tess").forEach(d=>{ if(openD.has(d.dataset.k)) d.open=true; });
   if(live) $("body").scrollTop=keepY;
 }
 
