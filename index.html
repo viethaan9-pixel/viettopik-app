@@ -609,7 +609,7 @@ function lsKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ co
 function lsSnapshot(){ const p={}; lsKeys().forEach(k=>{ try{ p[k]=localStorage.getItem(k); }catch(e){} }); return p; }
 function lsClear(){ lsKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
 let UNLOCK_ALL=false, GUEST=false;
-const APP_VERSION="4/11b Khóa TOPIK 4: thi đúng 5/10 mới mở";
+const APP_VERSION="4/11c Mở cấp: đề T3→4 · T4→5 · T5→6";
 const TEACHER_ID="viethaan9";
 /* ---------- data ---------- */
 // type: next(이어질 말) · act(이어서 할 행동) · same(내용과 같은 것) · main(중심 생각)
@@ -2817,8 +2817,8 @@ function menu(){ sec();
   const rng=a=>a.length?`Ngày ${a[0]}~${a[a.length-1]}`:"";
   $("body").innerHTML=`
    <div class="mswitch m4">${["3","4","5","6"].map(v=>{ const op=lvOpen(v);
-     return `<button data-mode="${v}" aria-pressed="${m===v}" class="${op?"":"lk"}"><b>TOPIK ${v}</b><span>${op?LVINFO[v][0]:"🔒 5/10"}</span></button>`; }).join("")}</div>
-   <div class="tip" style="margin:-4px 0 10px">${m==="6"?"Cấp cao nhất · A+ → S+":`🔒 Muốn lên TOPIK ${+m+1}: thi 10 câu của TOPIK ${m}, đúng <b>≥ 5</b> là mở. Câu thi đổi mới mỗi lần.`}</div>
+     return `<button data-mode="${v}" aria-pressed="${m===v}" class="${op?"":"lk"}"><b>TOPIK ${v}</b><span>${op?LVINFO[v][0]:`🔒 đề T${+v-1}`}</span></button>`; }).join("")}</div>
+   <div class="tip" style="margin:-4px 0 10px">🔒 Mở cấp: <b>T3→T4</b> thi đề TOPIK 3 · <b>T4→T5</b> thi đề TOPIK 4 · <b>T5→T6</b> thi đề TOPIK 5. Mỗi đề 10 câu, đúng <b>≥ 5</b> là mở, câu hỏi đổi mới mỗi lần.</div>
    ${hi?`<div class="tcard" style="margin-top:0"><div class="vn">${m==="5"?"Cấp 5 · bài thầy soạn khó dần mỗi ngày.":"Cấp 6 · bài khó nhất (A+ → S → S+)."} Làm xong <b>nghe hoặc đọc</b> của Ngày trước (và làm lại câu sai) thì mở Ngày sau.</div></div>`:""}
    <div class="menu">
     <button class="mcard" data-m="listen"><span class="ic">${IC.listen}</span><b>듣기</b>${hi?`<span class="ds">${rng(ld)}</span>`:""}</button>
@@ -2867,11 +2867,12 @@ const TESTS={}; ["t4","t5","t6"].forEach(id=>{ const P=PLV[id];
 let TC=TESTS.t4;
 let T6={i:0,ok:0,ans:[]};
 function testIntro(id){ sec(); stopAll();
+  const want=id;
   if(id==="t6"&&!t56Open()) id="t5";       // phải mở lần lượt 4 → 5 → 6
   if(id==="t5"&&!t4Open()) id="t4";
-  const P=PLV[id], last=testInfo(P.key);
+  const P=PLV[id], last=testInfo(P.key), skip=want!==id?PLV[want].to:null;
   setTitle(`TOPIK ${P.to} 시험 · Thi lên TOPIK ${P.to}`,menu); $("speed").hidden=true;
-  $("body").innerHTML=`<div class="tcard" style="margin-top:4px"><h3>TOPIK ${P.to} 시험 · 10문제</h3><div class="vn">Bài thi lên TOPIK ${P.to} · 10 câu</div>
+  $("body").innerHTML=`${skip?`<div class="fb no" style="margin:4px 0 10px"><strong>TOPIK ${skip} còn khóa vì em chưa mở TOPIK ${P.to}.</strong><span class="vn">Phải mở lần lượt: thi đề TOPIK ${P.from} để mở TOPIK ${P.to} trước, rồi mới thi lên TOPIK ${skip}.</span></div>`:""}<div class="tcard" style="margin-top:4px"><h3>TOPIK ${P.to} 시험 · 10문제</h3><div class="vn">Bài thi lên TOPIK ${P.to} · 10 câu</div>
     <ul><li>TOPIK ${P.from}의 어려운 문제에서 <b>듣기 5 · 읽기 5</b>를 골라요.</li><li><b>5문제 이상</b> 맞히면 TOPIK ${P.to}이(가) 열려요.</li>
     <li>🔄 시험을 볼 때마다 <b>문제가 새로 바뀌어요</b>.</li><li>듣기는 두 번까지 들을 수 있어요. 답을 고르면 바로 다음 문제로 넘어가요.</li>
     ${id==="t6"?`<li>시험을 안 봐도 TOPIK 5 Ngày 35까지 끝내면 TOPIK 6이 열려요.</li>`:""}</ul>
