@@ -56,19 +56,23 @@ async function synth(sp, text) {
     });
     if (r.ok) return Buffer.from((await r.json()).audioContent, "base64");
     const msg = await r.text();
-    if (a >= 4 || (r.status !== 429 && r.status < 500)) throw new Error(`TTS ${r.status}: ${msg.slice(0, 300)}`);
-    await new Promise((s) => setTimeout(s, 2000 * a));
+    if (a >= 7 || (r.status !== 429 && r.status < 500)) throw new Error(`TTS ${r.status}: ${msg.slice(0, 300)}`);
+    await new Promise((s) => setTimeout(s, r.status === 429 ? 15000 * a : 2000 * a));   // quota per minute: wait it out
   }
 }
-let done = 0;
+let done = 0, failed = 0;
 const queue = [...todo];
-await Promise.all(Array.from({ length: 4 }, async () => {
+await Promise.all(Array.from({ length: 2 }, async () => {
   for (let it; (it = queue.shift()); ) {
     const [k, { sp, text }] = it;
-    fs.writeFileSync(`audio/${k}.mp3`, await synth(sp, text));
+    try { fs.writeFileSync(`audio/${k}.mp3`, await synth(sp, text)); }
+    catch (e) { failed++; console.log("skip (next run will retry):", text.slice(0, 30), String(e.message).slice(0, 80)); continue; }
     if (++done % 50 === 0) console.log(`made ${done}/${todo.length}`);
+    await new Promise((s) => setTimeout(s, 120));
   }
 }));
 for (const k of have) if (!want.has(k)) fs.unlinkSync(`audio/${k}.mp3`);   // old lines no longer used
-fs.writeFileSync("audio/index.json", JSON.stringify({ voices: TTSV, keys: [...want.keys()].sort() }));
-console.log(`done: made ${done}`);
+// list only files that really exist, so the app never asks for a missing mp3
+fs.writeFileSync("audio/index.json", JSON.stringify({ voices: TTSV, keys: [...want.keys()].filter((k) => fs.existsSync(`audio/${k}.mp3`)).sort() }));
+console.log(`done: made ${done}, failed ${failed}`);
+if (failed) console.log("::warning::some lines failed (quota) — run the workflow again later");
