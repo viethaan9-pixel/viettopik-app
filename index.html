@@ -616,7 +616,7 @@ function lsKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ co
 function lsSnapshot(){ const p={}; lsKeys().forEach(k=>{ try{ p[k]=localStorage.getItem(k); }catch(e){} }); return p; }
 function lsClear(){ lsKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
 let UNLOCK_ALL=false, GUEST=false;
-const APP_VERSION="11/3 Thông báo góp ý";
+const APP_VERSION="11/3 Mèo đồng hành (1 con)";
 const TEACHER_ID="viethaan9";
 /* ---------- data ---------- */
 // type: next(이어질 말) · act(이어서 할 행동) · same(내용과 같은 것) · main(중심 생각)
@@ -1821,10 +1821,10 @@ const $=id=>document.getElementById(id);
 /* 마스코트 고양이 (2D SVG): 로그인하면 걸어 나와 손 흔들며 인사, 문제 풀 때는 동그랗게 누워서 응원. 말풍선은 베트남어만 */
 // 2D cat mascot (SVG). kind: "blue" | "brown". pose: "wave" (sitting, waving paw) | "curl" (curled up, cheering)
 const CATPAL={
- blue:{fur:"#B7C6E8",furD:"#8EA3D6",belly:"#E7EDFA",line:"#4B5A80",tail:"#8EA3D6",ear:"#F3B8C8"},
+ blue:{fur:"#BCCAEA",furD:"#93A7D8",belly:"#EEF2FB",line:"#6A7BA6",tail:"#93A7D8",ear:"#F5C2D0"},
  brown:{fur:"#EFE4D6",furD:"#B98A68",belly:"#FBF6EE",line:"#6B4E3A",tail:"#9C6B4E",ear:"#F3B8C8"}
 };
-function catSVG(kind,pose){ const c=CATPAL[kind]||CATPAL.blue, L=`stroke="${c.line}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"`;
+function catSVG(kind,pose){ const c=CATPAL[kind]||CATPAL.blue, L=`stroke="${c.line}" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"`;
   const face=(x,y,closed)=>`
     <ellipse cx="${x-11}" cy="${y+6}" rx="5" ry="3" fill="#F6A9B8" opacity=".55"/><ellipse cx="${x+11}" cy="${y+6}" rx="5" ry="3" fill="#F6A9B8" opacity=".55"/>
     ${closed?`<path d="M${x-13} ${y-1} q4 -5 8 0 M${x+5} ${y-1} q4 -5 8 0" fill="none" ${L}/>`
@@ -1866,7 +1866,7 @@ function catSVG(kind,pose){ const c=CATPAL[kind]||CATPAL.blue, L=`stroke="${c.li
 }
 
 window.MSC={want:"off",hello:false,cb:null,
-  kind:()=>{ try{ const v=localStorage.getItem("vt-mascot"); if(v) return v; return localStorage.getItem("vt-mascot-off")==="1"?"off":"blue"; }catch(e){ return "blue"; } },
+  kind:()=>{ try{ const v=localStorage.getItem("vt-mascot"); if(v==="off"||localStorage.getItem("vt-mascot-off")==="1") return "off"; return "blue"; }catch(e){ return "blue"; } },
   off:()=>MSC.kind()==="off"};
 let MSC_Q=false, MSC_LOADED=false;
 function mscApply(){ if(MSC_Q) return; MSC_Q=true; queueMicrotask(()=>{ MSC_Q=false; MSC.cb&&MSC.cb(); }); }
@@ -3374,7 +3374,7 @@ function start(){ sec(); const CAT_FIRST=CAT_INTRO; mascotMode("home",CAT_INTRO)
     <button class="ccat blue" id="t2" aria-label="TOPIK II"><span class="cbub">Ấn vào! 👆<small>눌러 보세요</small></span><img src="cat-blue.webp?v=2" alt=""><span class="clab">TOPIK II</span>${catSparks("blue")}</button>
    </div>
    <section class="board" id="board" hidden></section>
-   <div class="msctog" role="group" aria-label="Chọn mèo"><span>🐾 Mèo đồng hành</span>${[["blue","Mèo xanh"],["brown","Mèo vàng"],["off","Tắt"]].map(([k,t])=>`<button data-mk="${k}" aria-pressed="${MSC.kind()===k}">${t}</button>`).join("")}</div>
+   <div class="msctog" role="group" aria-label="Chọn mèo"><span>🐾 Mèo đồng hành</span>${[["blue","Bật"],["off","Tắt"]].map(([k,t])=>`<button data-mk="${k}" aria-pressed="${MSC.kind()===k}">${t}</button>`).join("")}</div>
    <p class="note" style="margin-top:18px">버전 ${APP_VERSION}</p>`;
   CAT_INTRO=false;
   // 고양이를 누르면: 파란 고양이 → TOPIK II, 갈색 고양이 → 실용 어휘 (Từ vựng)
