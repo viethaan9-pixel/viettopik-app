@@ -7,6 +7,7 @@
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
+<script type="importmap">{"imports":{"three":"./vendor/three.module.min.js"}}</script>
 <meta name="apple-mobile-web-app-title" content="TOPIK II">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -410,6 +411,17 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .bar{background:color-mix(in srgb,var(--undone) 55%,var(--line))}
 .day.soon{opacity:1;background:var(--line);border-color:var(--undone)}
 .day.soon b,.day.soon span{color:var(--muted)}
+/* 3D 마스코트 */
+.msc{position:fixed;z-index:30;right:max(4px,calc((100vw - 560px)/2 + 4px));bottom:calc(10px + env(safe-area-inset-bottom,0px));width:132px;height:156px;pointer-events:none}
+.msc canvas{display:block;width:100%;height:100%;pointer-events:auto;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.msc.study{bottom:calc(78px + env(safe-area-inset-bottom,0px));width:100px;height:118px}
+.msc.study canvas{pointer-events:none}
+.mbub{position:absolute;right:62%;bottom:84%;width:max-content;max-width:190px;padding:8px 12px;border-radius:16px 16px 4px 16px;background:var(--surface);border:2px solid var(--accent);color:var(--ink);font-size:13.5px;font-weight:800;line-height:1.35;box-shadow:0 6px 16px -8px rgba(0,0,0,.35);font-family:var(--f-vn)}
+.mbub.pop{animation:mpop .35s cubic-bezier(.3,1.6,.5,1)}
+@keyframes mpop{from{transform:scale(.4);opacity:0;transform-origin:100% 100%}to{transform:scale(1);opacity:1}}
+html[data-msc="study"] .mid{padding-bottom:110px}
+html[data-msc="home"] .mid{padding-bottom:150px}
+.msctog{display:block;margin:14px auto 0;padding:7px 14px;border-radius:99px;border:1.5px solid var(--line);background:var(--surface);font-size:12.5px;font-weight:700;color:var(--muted)}
 /* 열공 랭킹 */
 .board{margin-top:14px;padding:14px 16px;border-radius:var(--r);background:var(--surface);border:1.5px solid var(--mark);box-shadow:0 6px 18px -12px rgba(0,0,0,.3)}
 .board .bh{display:flex;align-items:center;gap:10px}
@@ -517,7 +529,7 @@ function lsKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ co
 function lsSnapshot(){ const p={}; lsKeys().forEach(k=>{ try{ p[k]=localStorage.getItem(k); }catch(e){} }); return p; }
 function lsClear(){ lsKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
 let UNLOCK_ALL=false, GUEST=false;
-const APP_VERSION="11/3 열공 랭킹 TOP 5";
+const APP_VERSION="11/3 3D 캐릭터 (인사 · 응원)";
 const TEACHER_ID="viethaan9";
 /* ---------- data ---------- */
 // type: next(이어질 말) · act(이어서 할 행동) · same(내용과 같은 것) · main(중심 생각)
@@ -1719,7 +1731,14 @@ const SETS=SETS0, sets=()=>DAYS[DAY].sets||SETS0;
 
 /* ---------- state ---------- */
 const $=id=>document.getElementById(id);
-const sec=n=>{ if(n) document.documentElement.dataset.sec=n; else delete document.documentElement.dataset.sec; };
+/* 3D 마스코트: mascot/mascot.js가 나중에 불러와져서 MSC.cb로 화면 상태를 받아요 */
+window.MSC={want:"off",hello:false,cb:null,off:()=>{ try{ return localStorage.getItem("vt-mascot-off")==="1"; }catch(e){ return false; } }};
+let MSC_Q=false, MSC_LOADED=false;
+function mscApply(){ if(MSC_Q) return; MSC_Q=true; queueMicrotask(()=>{ MSC_Q=false; MSC.cb&&MSC.cb(); }); }
+function mscLoad(){ if(MSC_LOADED||MSC.off()) return; try{ const c=document.createElement("canvas"); if(!(c.getContext("webgl2")||c.getContext("webgl"))) return; }catch(e){ return; }
+  MSC_LOADED=true; import("./mascot/mascot.js").catch(e=>{ console.warn(e); MSC_LOADED=false; }); }
+function mascotMode(m,hello){ MSC.want=m; if(hello) MSC.hello=true; if(m!=="off") mscLoad(); mscApply(); }
+const sec=n=>{ if(n) document.documentElement.dataset.sec=n; else delete document.documentElement.dataset.sec; MSC.want="off"; mscApply(); };
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
 const circ=["①","②","③","④"];
@@ -2044,7 +2063,7 @@ let run=[],ri=0,step=0,ord=null,answered=null,runRes={},RV=false;
 function startRun(ids,rv){ run=ids; ri=0; runRes={}; RV=!!rv; openQ(); }
 function openQ(){ step=0; answered=null; ord=null; renderQ(); }
 function curQ(){ return Q()[run[ri]]; }
-function renderQ(){ sec("listen");
+function renderQ(){ sec("listen"); mascotMode("study");
   stopAll();
   const qi=run[ri], q=curQ(), T=TYPES[q.t];
   setTitle(`${DAYS[DAY].title} · ${qi+1}번`,true); $("speed").hidden=false;
@@ -2675,7 +2694,7 @@ function placeIntro(back){ sec(); stopAll(); setTitle("TOPIK 4 시험 · Thi x�
   foot(`<button class="btn pri" id="ptgo">시험 시작 · Bắt đầu</button>`);
   $("ptgo").onclick=()=>{ PT={i:0,ok:0,back,ans:[]}; placeQ(); };
 }
-function placeQ(){ sec(); stopAll(); const [k,d,n]=PLACE[PT.i], last=PT.i===PLACE.length-1;
+function placeQ(){ sec(); mascotMode("study"); stopAll(); const [k,d,n]=PLACE[PT.i], last=PT.i===PLACE.length-1;
   setTitle(`TOPIK 4 시험 · ${PT.i+1} / ${PLACE.length}`,()=>{ if(confirm("시험을 그만할까요? · Dừng bài kiểm tra?")) PT.back(); }); $("speed").hidden=k!=="L";
   const prog=`<div class="prog"><span>${PT.i+1} / ${PLACE.length}</span><div class="bar"><i style="width:${PT.i/PLACE.length*100}%"></i></div></div>`;
   let q,head,body,opts;
@@ -2746,7 +2765,7 @@ function t6Intro(){ sec(); stopAll(); setTitle("6급 시험 · Thi lên cấp 6"
   foot(`<button class="btn pri" id="t6go">시험 시작 · Bắt đầu</button>`);
   $("t6go").onclick=()=>{ TC=TESTS.t6; T6={i:0,ok:0,ans:[]}; t56Q(); };
 }
-function t56Q(){ sec(); stopAll(); const [k,d,n]=TC.list[T6.i], last=T6.i===TC.list.length-1;
+function t56Q(){ sec(); mascotMode("study"); stopAll(); const [k,d,n]=TC.list[T6.i], last=T6.i===TC.list.length-1;
   setTitle(`${TC.title} · ${T6.i+1} / ${TC.list.length}`,()=>{ if(confirm("시험을 그만할까요? · Dừng bài kiểm tra?")) TC.back(); }); $("speed").hidden=k!=="L";
   const prog=`<div class="prog"><span>${T6.i+1} / ${TC.list.length}</span><div class="bar"><i style="width:${T6.i/TC.list.length*100}%"></i></div></div>`;
   const next=ok=>{ stopAll(); T6.ans.push(ok); if(ok) T6.ok++; if(last) t56Result(); else { T6.i++; t56Q(); $("body").scrollTop=0; } };
@@ -2906,7 +2925,7 @@ function mkSubmit(r,k,auto){ stopAll(); const s=mkGet(r), st=s[k]; if(!st||st.en
 }
 const mkTL=q=>String((TYPES[q.t]||{}).ko||q.t).replace(/^남자(의|가) ?/,"");
 function mkInstrL(q){ const T=TYPES[q.t]||{}; return q.pr?esc(q.pr):(q.sp==="F"?String(T.q||"").replace("남자","여자"):T.q||""); }
-function mkExam(r,k){ sec(); stopAll(); const S=MK_SEC[k]; setTitle(`모의고사 ${r}회 ${S.ko}`,()=>{ stopAll(); mockRound(r); }); $("speed").hidden=k!=="L";
+function mkExam(r,k){ sec(); mascotMode("study"); stopAll(); const S=MK_SEC[k]; setTitle(`모의고사 ${r}회 ${S.ko}`,()=>{ stopAll(); mockRound(r); }); $("speed").hidden=k!=="L";
   const pages=mkBuild()[r-1][k], s=mkGet(r), st=s[k]; if(!st||st.end) return mockResult(r,k);
   const pg=Math.min(st.pg||0,pages.length-1), grp=pages[pg];
   const nAns=()=>k==="W"?pages.reduce((a,g)=>a+((st.ans[g[0].n]||["",""]).filter(v=>String(v).trim()).length),0):Object.keys(st.ans).length;
@@ -3039,7 +3058,7 @@ function catSlot(kind,btn){
   const sp=[[-46,-34],[40,-40],[-58,4],[54,0],[-20,-56],[22,-58]].map(([x,y],i)=>`<i class="spark" style="--sx:${x}px;--sy:${y}px;--sc:${col};animation-delay:${(kind==="brown"?.75:1.25)+i*.03}s"></i>`).join("");
   return `<div class="lvlw ${kind}"><div class="lcat ${kind}"><img src="cat-${kind}.webp?v=2" alt="">${sp}</div>${btn}</div>`;
 }
-function start(){ sec();
+function start(){ sec(); mascotMode("home",CAT_INTRO);
   stopAll(); setTitle("",null); $("speed").hidden=true;
   $("body").innerHTML=`
    ${userBar()}
@@ -3050,6 +3069,7 @@ function start(){ sec();
    ${catSlot("blue",lvlBtn({id:"t2",badge:"II",ko:"TOPIK II",vn:"TOPIK II · Trung - cao cấp",mm:"3급 ~ 6급 (듣기 · 쓰기 · 읽기)",c:"listen"}))}
    </div>
    <section class="board" id="board" hidden></section>
+   <button class="msctog" id="msctog">🤖 ${MSC.off()?"Bật nhân vật · 캐릭터 켜기":"Tắt nhân vật · 캐릭터 끄기"}</button>
    <p class="note" style="margin-top:18px">버전 ${APP_VERSION}</p>`;
   CAT_INTRO=false;
   $("t2").onclick=()=>{ const c=document.querySelector(".lcat.blue"); if(!c||matchMedia("(prefers-reduced-motion: reduce)").matches) return topik2();
@@ -3058,6 +3078,7 @@ function start(){ sec();
   if($("smail")) $("smail").onclick=()=>isTeacher()?inbox():mailbox();
   if(isTeacher()){ fbWatch(); fbPaint(); }
   boardPaint();
+  $("msctog").onclick=()=>{ try{ if(MSC.off()) localStorage.removeItem("vt-mascot-off"); else localStorage.setItem("vt-mascot-off","1"); }catch(e){} start(); };
   foot("");
 }
 /* ---------- 쓰기 53번 (그래프 설명 200~300자) · free in-browser checker ---------- */
@@ -3286,7 +3307,7 @@ function w53Home(){ sec("write"); stopAll(); setTitle("⭐ 쓰기 53번",menu); 
   $("body").querySelectorAll(".grp").forEach(b=>b.onclick=()=>w53Q(+b.dataset.i));
   foot("");
 }
-function w53Q(i){ sec("write"); stopAll(); const q=W53[i], st=w53Load();
+function w53Q(i){ sec("write"); mascotMode("study"); stopAll(); const q=W53[i], st=w53Load();
   setTitle(`⭐ 53번 · ${i+1} (${q.lv})`,w53Home); $("speed").hidden=true;
   $("body").innerHTML=`<div class="instr">다음을 참고하여 '${esc(q.topic)}'에 대한 글을 200~300자로 쓰십시오. 단, 글의 제목을 쓰지 마십시오.<span class="vn">Dựa vào nội dung dưới đây, viết đoạn văn 200~300 chữ về '${esc(q.vn)}'. Không viết tiêu đề.</span></div>
    <div class="pass w53p"><div class="pb">${(q.charts||[]).map(c=>`<div class="w53c"><b>${esc(c.title)}</b>${chartSvg(c)}</div>`).join("")}
@@ -3388,7 +3409,7 @@ function wProg(){ return `${W.rv?`<div class="rvtag">🔁 다시 풀기 · Làm 
 // Ngày 1~3: the base word is shown in brackets (review). Ngày 4~: no brackets, "힌트 보기" reveals it; solving without the hint earns ⭐.
 const NOBRACKET_FROM=4;
 const isFree=()=>WDAY>=NOBRACKET_FROM;
-function renderN3(){ sec("write");
+function renderN3(){ sec("write"); mascotMode("study");
   const k=W.ids[W.i], q=NQ()[k], last=W.i===W.ids.length-1, free=isFree();
   if(q.k) return render51(k,q,last);
   const rv=W.rv, showB=!free||rv;   // 다시 풀기: the (bracket) word is always shown
@@ -4679,7 +4700,7 @@ function rBox(q){
   if(q.k==="o") return `<div class="pass"><div class="pb">${q.x.map(l=>`<p class="ol">${esc(l)}</p>`).join("")}</div></div>`;
   return `<div class="pass"><div class="pb"><p>${ul(q.x).replace(/\( \)/g,'<span class="mk">(　　)</span>')}</p></div></div>`;
 }
-function renderR(){ sec("read");
+function renderR(){ sec("read"); mascotMode("study");
   const k=R.ids[R.i], q=RQ()[k], I=RI[q.i];
   const moreR=()=>R.i===R.ids.length-1&&!R.rv?restOf(R.ids,RQ().length,i=>RS.res[i]!=null&&i!==k):[];
   if(!RS.fix) RS.fix={}; if(!RS.pos) RS.pos={};
