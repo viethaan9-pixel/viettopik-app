@@ -248,6 +248,8 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .w54sc{display:flex;align-items:baseline;gap:6px;margin:10px 0 4px;padding:10px 12px;border-radius:12px;background:var(--surface);border:1px solid var(--line)}.w54sc strong{font-size:30px;font-weight:800;color:var(--c-write)}.w54sc small{font-size:14px;color:var(--muted)}.w54sc span{margin-left:auto;font-size:11.5px;color:var(--muted);text-align:right;line-height:1.4}
 .w54q{margin:8px 0 0;padding-left:18px}.w54q li{margin:4px 0;font-weight:600}.w54q .vn{display:block;font-weight:400}
 mark.sp{background:#FFD7D7;color:#B3261E;border-radius:3px;text-decoration:underline wavy #E5484D}
+.wrbar{display:flex;align-items:center;gap:8px;margin:0 0 10px;padding:8px 10px;border-radius:12px;background:var(--c-write-soft);font-family:var(--f-vn);font-size:13px}.wrbar span{flex:1}.wrbar .btn{height:34px;padding:0 10px;font-size:12.5px;width:auto;flex:none}
+.wrold{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 10px}.wrold .btn{height:42px;font-size:13px}
 .mswitch.m3{grid-template-columns:repeat(3,1fr);gap:6px}.mswitch.m3 button{padding:9px 2px}.mswitch.m3 button b{font-size:13.5px;white-space:nowrap}
 .tess{margin-top:6px;border:1px solid var(--line);border-radius:10px;padding:6px 10px;background:var(--bg)}.tess summary{cursor:pointer;font-size:13px}.tess summary b{display:inline;font-size:13px}.tess .w53mine{margin-top:6px;font-size:14px;line-height:1.7}
 .mswitch.m4{grid-template-columns:repeat(4,1fr);gap:6px}.mswitch.m4 button{padding:9px 2px}.mswitch.m4 button b{font-size:13.5px;white-space:nowrap}.mswitch.m4 button span{font-size:10.5px}
@@ -611,7 +613,7 @@ function lsKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ co
 function lsSnapshot(){ const p={}; lsKeys().forEach(k=>{ try{ p[k]=localStorage.getItem(k); }catch(e){} }); return p; }
 function lsClear(){ lsKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
 let UNLOCK_ALL=false, GUEST=false;
-const APP_VERSION="4/11d Thầy xem học sinh theo 3 mục";
+const APP_VERSION="4/11e Viết 53·54: đề ngẫu nhiên, ưu tiên đề chưa viết";
 const TEACHER_ID="viethaan9";
 /* ---------- data ---------- */
 // type: next(이어질 말) · act(이어서 할 행동) · same(내용과 같은 것) · main(중심 생각)
@@ -3537,13 +3539,14 @@ function w53Home(){ sec("write"); stopAll(); setTitle("⭐ 쓰기 53번",writeHu
   $("body").innerHTML=`<div class="tcard" style="margin-top:4px"><h3>53번 · 그래프 보고 글쓰기</h3><div class="vn">Câu 53 · Nhìn biểu đồ viết đoạn văn 200~300 chữ</div>
     <ul><li>그래프·표의 내용을 <b>200~300자</b>로 정리해요. 띄어쓰기도 1자로 세요.</li><li>모든 문장은 <b>「-다」체</b>로 끝내요. (했다 · 나타났다 · 예상된다)</li><li>내 생각은 쓰지 않아요. 그래프에 있는 내용만 써요.</li><li>순서: 조사 소개 → 결과(변화·순위) → 원인 또는 전망</li></ul>
     <div class="vn" style="margin-top:6px">Viết 200~300 chữ (tính cả dấu cách), đuôi 「-다」, không viết ý kiến riêng. Thứ tự: giới thiệu → kết quả → nguyên nhân / dự báo.</div></div>
-   ${W53.map((q,i)=>{ const c=st.c[i]; const head=(i===0||W53[i-1].lv!==q.lv)?`<div class="sec"><b>${q.lv} · ${{"기초":"Cơ bản","중급":"Trung cấp","실전":"Thực chiến"}[q.lv]}</b>${i===0?`<span class="eyebrow">${W53.length}문제</span>`:""}</div>`:""; return `${head}<button class="grp" data-i="${i}"><span class="n">${i+1}</span><span class="t"><b>${esc(q.topic)}</b><span class="vn">${esc(q.vn)}</span></span><span class="w53st">${c?`<em class="gr gr-${q.g.replace("+","p")}">${q.g}</em> ${c.ok?"✅":"✏️"} ${c.s!=null?c.s+"<small>/30</small> · ":""}${c.n}자`:`<em class="gr gr-${q.g.replace("+","p")}">${q.g}</em>`}</span></button>`; }).join("")}`;
+   ${W53.map((q,i)=>{ if(!wTouched(st,i)) return ""; const c=st.c[i]; const head=!W53.slice(0,i).some((x,k)=>x.lv===q.lv&&wTouched(st,k))?`<div class="sec"><b>${q.lv} · ${{"기초":"Cơ bản","중급":"Trung cấp","실전":"Thực chiến"}[q.lv]}</b></div>`:""; return `${head}<button class="grp" data-i="${i}"><span class="n">${i+1}</span><span class="t"><b>${esc(q.topic)}</b><span class="vn">${esc(q.vn)}</span></span><span class="w53st">${c?`<em class="gr gr-${q.g.replace("+","p")}">${q.g}</em> ${c.ok?"✅":"✏️"} ${c.s!=null?c.s+"<small>/30</small> · ":""}${c.n}자`:`<em class="gr gr-${q.g.replace("+","p")}">${q.g}</em>`}</span></button>`; }).join("")}`;
+  if(!$("body").querySelector(".grp")) $("body").insertAdjacentHTML("beforeend",`<div class="tcard">Em chưa viết bài 53 nào. Bấm 🎲 để bốc đề đầu tiên!</div>`);
   $("body").querySelectorAll(".grp").forEach(b=>b.onclick=()=>w53Q(+b.dataset.i));
-  foot("");
+  foot(`<button class="btn pri" id="wrgo">🎲 Đề ngẫu nhiên mới</button>`); $("wrgo").onclick=()=>wRand(53);
 }
 function w53Q(i){ sec("write"); mascotMode("study"); stopAll(); const q=W53[i], st=w53Load();
-  setTitle(`⭐ 53번 · ${i+1} (${q.lv})`,w53Home); $("speed").hidden=true;
-  $("body").innerHTML=`<div class="instr">다음을 참고하여 '${esc(q.topic)}'에 대한 글을 200~300자로 쓰십시오. 단, 글의 제목을 쓰지 마십시오.<span class="vn">Dựa vào nội dung dưới đây, viết đoạn văn 200~300 chữ về '${esc(q.vn)}'. Không viết tiêu đề.</span></div>
+  setTitle(`⭐ 53번 · ${q.lv}`,writeHub); $("speed").hidden=true;
+  $("body").innerHTML=`${wRandBar(53,i)}<div class="instr">다음을 참고하여 '${esc(q.topic)}'에 대한 글을 200~300자로 쓰십시오. 단, 글의 제목을 쓰지 마십시오.<span class="vn">Dựa vào nội dung dưới đây, viết đoạn văn 200~300 chữ về '${esc(q.vn)}'. Không viết tiêu đề.</span></div>
    <div class="pass w53p"><div class="pb">${(q.charts||[]).map(c=>`<div class="w53c"><b>${esc(c.title)}</b>${chartSvg(c)}</div>`).join("")}
     <table class="w53tb">${q.table.map(([h,ls])=>`<tr><th>${esc(h)}</th><td>${ls.map(esc).join("<br>")}</td></tr>`).join("")}</table></div></div>
    ${q.frame?`<details class="w53fr" ${q.lv==="기초"?"open":""}><summary>📝 쓰기 틀 · Khung câu</summary><ol>${q.frame.map(l=>`<li>${esc(l)}</li>`).join("")}</ol></details>`:""}
@@ -3554,7 +3557,7 @@ function w53Q(i){ sec("write"); mascotMode("study"); stopAll(); const q=W53[i], 
    <div class="tip gjtip" id="gjtip">위 원고지에 글이 칸칸이 들어가요. 문단을 바꾸려면 줄바꿈(Enter)을 하세요. 숫자는 두 자씩 한 칸이에요.<span class="vn" style="display:block">Chữ sẽ tự vào từng ô. Xuống dòng (Enter) để sang đoạn mới. Số: 2 chữ số 1 ô.</span></div>
    <div class="w53bar"><div class="bar"><i id="w53bi"></i></div><span id="w53n">0 / 300자</span></div>
    <div id="w53r"></div><div id="w53m"></div>`;
-  const ta=$("w53t"); ta.value=(st.a[i]||"");
+  const ta=$("w53t"); ta.value=(st.a[i]||""); if($("wrnext")) $("wrnext").onclick=()=>wRand(53,i);
   let gjMode=(()=>{ try{ return localStorage.getItem("tpk-gj")!=="0"; }catch(e){ return true; } })();
   const gjDraw=()=>{ if(!gjMode) return; const g=gjHtml(ta.value,document.activeElement===ta?ta.selectionEnd:null,15); $("gj").innerHTML=g.html; $("gjinfo")&&($("gjinfo").textContent=`원고지 ${g.lines}줄`); };
   const gjSet=on=>{ gjMode=on; try{ localStorage.setItem("tpk-gj",on?"1":"0"); }catch(e){}
@@ -3662,27 +3665,44 @@ function w54Check(q,text){
   let sc=Math.max(0,c1)+c2+Math.max(0,c3); if(n<W54_MIN) sc*=n/W54_MIN; if(n>W54_MAX) sc-=3;
   return {n,len:n>=W54_MIN&&n<=W54_MAX,notDa,polite,spoken,me,paras:paras.length,conn,end,items,cp,sp,
     score:Math.max(0,Math.round(sc)),part:[Math.round(Math.max(0,c1)),Math.round(c2),Math.round(Math.max(0,c3))]}; }
+// đề ngẫu nhiên: còn bài viết dở (chưa chấm) thì mở lại bài đó · không thì bốc đề chưa từng viết · viết hết rồi thì bốc lại bất kỳ
+const wTouched=(st,i)=>!!String((st.a||{})[i]||"").trim()||!!(st.c||{})[i];
+function wPick(kind,skip){ const D=kind===53?W53:W54, st=kind===53?w53Load():w54Load();
+  const draft=D.map((_,i)=>i).filter(i=>String((st.a||{})[i]||"").trim()&&!(st.c||{})[i]&&i!==skip);
+  if(draft.length&&skip==null) return {i:draft[0],why:"draft"};
+  const fresh=D.map((_,i)=>i).filter(i=>!wTouched(st,i)&&i!==skip);
+  if(fresh.length) return {i:fresh[Math.floor(Math.random()*fresh.length)],why:"new",left:fresh.length};
+  const all=D.map((_,i)=>i).filter(i=>i!==skip); return {i:all[Math.floor(Math.random()*all.length)],why:"all"}; }
+function wRand(kind,skip){ const r=wPick(kind,skip); WR_WHY=r; (kind===53?w53Q:w54Q)(r.i); }
+let WR_WHY=null;
+// dòng nhỏ trên đầu bài: vì sao ra đề này + nút đổi đề
+function wRandBar(kind,i){ const r=WR_WHY; WR_WHY=null; if(!r||r.i!==i) return "";
+  const D=kind===53?W53:W54, st=kind===53?w53Load():w54Load(), left=D.filter((_,k)=>!wTouched(st,k)).length;
+  return `<div class="wrbar"><span>🎲 ${r.why==="draft"?"Bài em đang viết dở — viết tiếp nhé!":r.why==="all"?"Em đã viết hết các đề! Đề ngẫu nhiên để luyện lại.":`Đề ngẫu nhiên · còn ${left} đề em chưa viết`}</span><button class="btn sec" id="wrnext">🔀 Đổi đề</button></div>`; }
 function writeHub(){ sec("write"); stopAll(); setTitle("✍️ 쓰기 53 · 54번",topik2); $("speed").hidden=true;
-  const a=w53Load(), b=w54Load(), d53=Object.values(a.c).filter(x=>x.ok).length, d54=Object.keys(b.c).length;
-  $("body").innerHTML=`<div class="eyebrow" style="margin:2px 0 12px">MỤC 2 · VIẾT 53 · 54 · CHẤM TỰ ĐỘNG</div>
-   ${lvlBtn({id:"h53",badge:"53",ko:"53번 · 그래프 글쓰기",vn:"Nhìn biểu đồ viết 200~300 chữ",mm:`${W53.length}문제 · 통과 ${d53} · 자동 검사 + 맞춤법`,c:"write"})}
-   ${lvlBtn({id:"h54",badge:"54",ko:"54번 · 주제 글쓰기",vn:"Viết bài nghị luận 600~700 chữ",mm:`${W54.length}문제 · 써 본 글 ${d54} · 개요 · 표현 · 모범 답안 · 예상 점수`,c:"read"})}
-   <div class="tip">Máy chấm theo <b>quy tắc</b>: số chữ, đuôi 「-다」, văn nói, đủ ý 3 câu hỏi, đoạn văn và từ nối, chép đề, ~100 lỗi chính tả hay gặp. Điểm chỉ để tham khảo — hãy so với bài mẫu.</div>`;
-  $("h53").onclick=w53Home; $("h54").onclick=w54Home; foot("");
+  const a=w53Load(), b=w54Load(), n53=W53.filter((_,i)=>wTouched(a,i)).length, n54=W54.filter((_,i)=>wTouched(b,i)).length;
+  $("body").innerHTML=`<div class="eyebrow" style="margin:2px 0 12px">MỤC 2 · VIẾT 53 · 54 · ĐỀ NGẪU NHIÊN · CHẤM TỰ ĐỘNG</div>
+   ${lvlBtn({id:"h53",badge:"53",ko:"53번 · 그래프 글쓰기",vn:"🎲 Bấm là ra đề ngẫu nhiên · 200~300 chữ",mm:`Đã viết ${n53}/${W53.length} đề · đề mới chưa viết sẽ ra trước`,c:"write"})}
+   ${lvlBtn({id:"h54",badge:"54",ko:"54번 · 주제 글쓰기",vn:"🎲 Bấm là ra đề ngẫu nhiên · 600~700 chữ",mm:`Đã viết ${n54}/${W54.length} đề · đề mới chưa viết sẽ ra trước`,c:"read"})}
+   <div class="wrold"><button class="btn sec" id="o53">📂 Bài 53 đã viết (${n53})</button><button class="btn sec" id="o54">📂 Bài 54 đã viết (${n54})</button></div>
+   <div class="tip">Máy chấm theo <b>quy tắc</b>: số chữ, đuôi 「-다」, văn nói, đủ ý, đoạn văn và từ nối, chép đề, ~100 lỗi chính tả hay gặp. Điểm chỉ để tham khảo — hãy so với bài mẫu.</div>`;
+  $("h53").onclick=()=>wRand(53); $("h54").onclick=()=>wRand(54);
+  $("o53").onclick=w53Home; $("o54").onclick=w54Home; foot("");
 }
 function w54Home(){ sec("write"); stopAll(); setTitle("⭐ 쓰기 54번",writeHub); $("speed").hidden=true;
   const st=w54Load();
   $("body").innerHTML=`<div class="tcard" style="margin-top:4px"><h3>54번 · 주제에 대해 글쓰기</h3><div class="vn">Câu 54 · Viết bài 600~700 chữ về một chủ đề (50 điểm)</div>
     <ul><li><b>600~700자</b>, 모든 문장은 <b>「-다」체</b>. 띄어쓰기도 1자로 세요.</li><li>문제의 <b>세 가지 질문</b>에 모두 답해요. 질문 하나 = 한 문단.</li><li>문단: 서론 → 본론 → 결론. 「첫째·또한·그러나·따라서·이처럼」 같은 연결어를 써요.</li><li>「저는」 대신 「나는」. 문제의 문장을 그대로 옮겨 쓰지 마세요.</li></ul>
     <div class="vn" style="margin-top:6px">Trả lời đủ 3 câu hỏi (mỗi câu 1 đoạn), đuôi 「-다」, dùng từ nối, không chép lại đề. Viết 「나는」 thay cho 「저는」.</div></div>
-   ${W54.map((q,i)=>{ const c=st.c[i]; const head=(i===0||W54[i-1].lv!==q.lv)?`<div class="sec"><b>${q.lv} · ${{"기초":"Cơ bản","중급":"Trung cấp","실전":"Thực chiến"}[q.lv]}</b>${i===0?`<span class="eyebrow">${W54.length}문제</span>`:""}</div>`:"";
+   ${W54.map((q,i)=>{ if(!wTouched(st,i)) return ""; const c=st.c[i]; const head=!W54.slice(0,i).some((x,k)=>x.lv===q.lv&&wTouched(st,k))?`<div class="sec"><b>${q.lv} · ${{"기초":"Cơ bản","중급":"Trung cấp","실전":"Thực chiến"}[q.lv]}</b></div>`:"";
      return `${head}<button class="grp" data-i="${i}"><span class="n">${i+1}</span><span class="t"><b>${esc(q.topic)}</b><span class="vn">${esc(q.vn)}</span></span><span class="w53st">${c?`${c.s}<small>/50</small> · ${c.n}자`:""}</span></button>`; }).join("")}`;
+  if(!$("body").querySelector(".grp")) $("body").insertAdjacentHTML("beforeend",`<div class="tcard">Em chưa viết bài 54 nào. Bấm 🎲 để bốc đề đầu tiên!</div>`);
   $("body").querySelectorAll(".grp").forEach(b=>b.onclick=()=>w54Q(+b.dataset.i));
-  foot("");
+  foot(`<button class="btn pri" id="wrgo">🎲 Đề ngẫu nhiên mới</button>`); $("wrgo").onclick=()=>wRand(54);
 }
 function w54Q(i){ sec("write"); mascotMode("study"); stopAll(); const q=W54[i], st=w54Load();
-  setTitle(`⭐ 54번 · ${i+1} (${q.lv})`,w54Home); $("speed").hidden=true;
-  $("body").innerHTML=`<div class="instr">다음을 주제로 하여 자신의 생각을 600~700자로 글을 쓰십시오. 단, 문제를 그대로 옮겨 쓰지 마십시오.<span class="vn">Viết bài 600~700 chữ nêu suy nghĩ của em về chủ đề dưới đây. Không chép lại đề.</span></div>
+  setTitle(`⭐ 54번 · ${q.lv}`,writeHub); $("speed").hidden=true;
+  $("body").innerHTML=`${wRandBar(54,i)}<div class="instr">다음을 주제로 하여 자신의 생각을 600~700자로 글을 쓰십시오. 단, 문제를 그대로 옮겨 쓰지 마십시오.<span class="vn">Viết bài 600~700 chữ nêu suy nghĩ của em về chủ đề dưới đây. Không chép lại đề.</span></div>
    <div class="pass w53p"><div class="pb"><p>${esc(q.intro)}</p><ul class="w54q">${q.qs.map(x=>`<li>${esc(x.q)}<span class="vn">${esc(x.v)}</span></li>`).join("")}</ul></div></div>
    <details class="w53fr" ${q.lv==="기초"?"open":""}><summary>📝 개요 · Dàn ý 3 đoạn</summary><ol>${q.ol.map(([k,v])=>`<li>${esc(k)}<span class="vn" style="display:block">${esc(v)}</span></li>`).join("")}</ol></details>
    <details class="w53fr"><summary>💬 표현 · Mẫu câu</summary><ul>${q.expr.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></details>
@@ -3692,7 +3712,7 @@ function w54Q(i){ sec("write"); mascotMode("study"); stopAll(); const q=W54[i], 
    <div class="tip gjtip" id="gjtip">문단을 바꾸려면 줄바꿈(Enter)을 하세요. 세 문단으로 쓰세요.<span class="vn" style="display:block">Xuống dòng (Enter) để sang đoạn mới — viết 3 đoạn.</span></div>
    <div class="w53bar"><div class="bar"><i id="w53bi"></i></div><span id="w53n">0 / 700자</span></div>
    <div id="w53r"></div><div id="w53m"></div>`;
-  const ta=$("w53t"); ta.value=(st.a[i]||"");
+  const ta=$("w53t"); ta.value=(st.a[i]||""); if($("wrnext")) $("wrnext").onclick=()=>wRand(54,i);
   let gjMode=(()=>{ try{ return localStorage.getItem("tpk-gj")!=="0"; }catch(e){ return true; } })();
   const gjDraw=()=>{ if(!gjMode) return; $("gj").innerHTML=gjHtml(ta.value,document.activeElement===ta?ta.selectionEnd:null,35,W54_MAX).html; };
   const gjSet=on=>{ gjMode=on; try{ localStorage.setItem("tpk-gj",on?"1":"0"); }catch(e){}
