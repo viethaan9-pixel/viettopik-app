@@ -609,7 +609,7 @@ function lsKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ co
 function lsSnapshot(){ const p={}; lsKeys().forEach(k=>{ try{ p[k]=localStorage.getItem(k); }catch(e){} }); return p; }
 function lsClear(){ lsKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
 let UNLOCK_ALL=false, GUEST=false;
-const APP_VERSION="4/11 Bố cục mới 3 mục · Viết 54 · Chấm tự động";
+const APP_VERSION="4/11b Khóa TOPIK 4: thi đúng 5/10 mới mở";
 const TEACHER_ID="viethaan9";
 /* ---------- data ---------- */
 // type: next(이어질 말) · act(이어서 할 행동) · same(내용과 같은 것) · main(중심 생각)
@@ -1987,7 +1987,7 @@ const lsSet=(k,v)=>{ try{ localStorage.setItem(k,v); }catch(e){} };
 const TRACK=()=>lsGet("tpk-track");
 const MODE=()=>lsGet("tpk-mode")||"3";
 const is56=()=>{ const m=MODE(); return m==="5"||m==="6"||m==="56"; };
-const t4Open=()=>freeAll()||TRACK()==="4"||dayState(T4_FROM)==="open"||(()=>{ try{ const o=JSON.parse(localStorage.getItem("tpk-ptest")||"null")||{}; return !!o.pass||o.ok>=5; }catch(e){ return false; } })();
+const t4Open=()=>freeAll()||(()=>{ try{ const o=JSON.parse(localStorage.getItem("tpk-ptest")||"null")||{}; return !!o.pass||o.ok>=5; }catch(e){ return false; } })();
 function setMode(m){ lsSet("tpk-mode",m); const inR=d=>m==="6"?d>=T6_FROM:m==="5"?d>=T56_FROM&&d<T6_FROM:m==="4"?d>=T4_FROM&&d<T56_FROM:d<T4_FROM, first=m==="6"?T6_FROM:m==="5"?T56_FROM:m==="4"?T4_FROM:1;
   if(!inR(DAY)){ DAY=DAYS[first]?first:DAY; load(); } if(!inR(RDAY)){ RDAY=READ[first]?first:RDAY; rload(); } if(!inR(WDAY)){ WDAY=WDAYS[first]?first:WDAY; wload(); } }
 const LOCK='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:4px"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
@@ -2010,7 +2010,7 @@ function subjDone(d){ // [available subjects, finished subjects] for Ngày d
 }
 const prevOk=d=>{ if(d<=1) return true; const [n,k]=subjDone(d-1); return k>=(d>T56_FROM?1:Math.min(2,n)); };   // 5·6급: 듣기·읽기 중 하나
 const freeAll=()=>UNLOCK_ALL||isTeacher();
-function dayState(d){ if(d<=1||freeAll()) return "open"; if(d===T4_FROM&&TRACK()==="4") return "open"; if(d===T56_FROM&&t56Open()) return "open"; if(d===T6_FROM&&t6Info()&&t6Info().pass) return "open"; return prevOk(d)||started(d)?"open":"prev"; }
+function dayState(d){ if(d<=1||freeAll()) return "open"; if(d===T4_FROM&&t4Open()) return "open"; if(d===T56_FROM&&t56Open()) return "open"; if(d===T6_FROM&&t6Info()&&t6Info().pass) return "open"; return prevOk(d)||started(d)?"open":"prev"; }
 function dayTabs(o){
   const M=MODE(), lo=M==="6"?T6_FROM:M==="5"?T56_FROM:M==="4"?T4_FROM:1, hi=M==="6"?999:M==="5"?T6_FROM-1:M==="4"?T56_FROM-1:T4_FROM-1;
   const ks=Object.keys(o.days).map(Number).filter(d=>d>=lo&&d<=hi).sort((a,b)=>a-b);
