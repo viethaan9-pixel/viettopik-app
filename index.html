@@ -629,7 +629,7 @@ function lsKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ co
 function lsSnapshot(){ const p={}; lsKeys().forEach(k=>{ try{ p[k]=localStorage.getItem(k); }catch(e){} }); return p; }
 function lsClear(){ lsKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
 let UNLOCK_ALL=false, GUEST=false;
-const APP_VERSION="5/11b Thầy trả lời góp ý của học sinh";
+const APP_VERSION="5/11c Thông báo cập nhật mới";
 const TEACHER_ID="viethaan9";
 /* ---------- data ---------- */
 // type: next(이어질 말) · act(이어서 할 행동) · same(내용과 같은 것) · main(중심 생각)
@@ -2173,23 +2173,25 @@ function restOf(run,n,done){ const cur=run[run.length-1]||0;
 /* resume prompt: a Ngày left half-done asks "N번부터 이어서 풀까요?" when the student comes back */
 const RESUME_SEEN=new Set();
 /* 한 번만 뜨는 공지: 앱 의견 받기 (의견함으로 저장). 계정마다 한 번 (tpk-notice-fb1, 클라우드 동기화) */
-const NOTICE_KEY="tpk-notice-fb1", UPD_KEY="tpk-notice-upd1";
+const NOTICE_KEY="tpk-notice-fb1", UPD_KEY="tpk-notice-upd2";
 // thông báo cập nhật lớn · 1 lần cho mỗi tài khoản (hiện trước, thông báo góp ý để lần sau)
 function updNotice(){
   const m=document.createElement("div"); m.className="rsm";
-  m.innerHTML=`<div class="rsm-card ntc upd" role="dialog" aria-modal="true"><div class="rsm-ic">🚀</div>
-    <b>SIÊU CẬP NHẬT · App mới toanh!</b>
-    <p class="ntx">Thầy đã thức trắng đêm “đại tu” cả app cho các em đây 😤🔥</p>
+  const first=!lsGet("tpk-notice-upd1");   // ai chưa xem bản 4/11 thì thêm 1 dòng tóm tắt
+  m.innerHTML=`<div class="rsm-card ntc upd" role="dialog" aria-modal="true"><div class="rsm-ic">📣</div>
+    <b>CẬP NHẬT MỚI · Thầy nghe các em góp ý rồi đây!</b>
+    <p class="ntx">Em vừa góp ý là thầy sửa liền trong ngày 😎⚡</p>
     <ul class="updl">
-     <li>🗂️ <strong>TOPIK II chia 3 mục</strong>: ① TOPIK 3·4·5·6 chung một chỗ · ② Viết 53·54 · ③ Thi thử 모의고사</li>
-     <li>🔓 <strong>Lên cấp siêu công bằng</strong>: đúng <strong>5/10</strong> là mở cấp tiếp (3→4→5→6). Câu thi <strong>tự đổi mới</strong> mỗi lần — không học thuộc đáp án được đâu nha 😏</li>
-     <li>✍️ <strong>Câu 54 ra mắt</strong>: 10 đề, dàn ý, mẫu câu, bài mẫu, 원고지 600~700 chữ</li>
-     <li>🤖 <strong>Máy chấm 53·54</strong>: tính điểm ước tính, bắt văn nói, đuôi 「-다」, đủ ý, từ nối… và soi <strong>~100 lỗi chính tả</strong> hay gặp (되요 ❌ 돼요 ✅)</li>
-     <li>📚 <strong>1.400 từ vựng</strong> thực dụng, có cả <strong>알바</strong> &amp; 알바 프로 · 🐱 mèo xanh cổ vũ · 🏆 TOP 5 chăm chỉ · 📝 3 đề thi thử chấm điểm ngay</li></ul>
-    <p class="ntx sm">Vào học thử ngay rồi kể thầy nghe nhé! Lỗi gì cứ gửi ✉️ góp ý cho thầy.</p>
-    <div class="rsm-b"><button class="btn pri" id="updok">Quẩy thôi! 💪</button></div></div>`;
+     <li>👀 <strong>Viết 53·54 không phải kéo lên kéo xuống nữa</strong>: đề bài được <strong>ghim ngay trên ô viết</strong>, vừa nhìn đề vừa gõ. Máy tính thì chia 2 cột. 원고지 chuyển xuống dưới</li>
+     <li>🎲 <strong>Đề viết bốc ngẫu nhiên</strong>: bấm 53 hay 54 là ra đề, <strong>đề chưa viết ra trước</strong>, bài viết dở thì mở lại cho viết tiếp</li>
+     <li>📝 <strong>Thêm 20 đề mới</strong>: câu 53 nay có <strong>25 đề</strong>, câu 54 có <strong>20 đề</strong>, đề nào cũng có bài mẫu</li>
+     <li>💌 <strong>Thầy trả lời góp ý</strong>: thầy trả lời là em nhận được thông báo, nút ✉️ có <strong>chấm đỏ</strong>. Xem lại thư cũ trong hòm thư</li>
+     <li>🔒 <strong>TOPIK 4 khóa chặt hơn</strong>: phải thi đúng <strong>5/10</strong> mới mở · 🤖 máy chấm hết bắt nhầm văn nói (자극적이거나, 좀처럼)</li>
+     ${first?`<li>🗂️ Nhắc lại bản trước: TOPIK II chia 3 mục (Luyện cấp 3·4·5·6 · Viết 53·54 · Thi thử), 1.400 từ vựng, mèo cổ vũ, TOP 5 chăm chỉ</li>`:""}</ul>
+    <p class="ntx sm">Cứ gửi ✉️ góp ý tiếp nhé — thầy đọc hết và trả lời từng em!</p>
+    <div class="rsm-b"><button class="btn pri" id="updok">Thử ngay! 🚀</button></div></div>`;
   document.body.appendChild(m);
-  m.querySelector("#updok").onclick=()=>{ lsSet(UPD_KEY,String(Date.now())); try{ sessionStorage.setItem("tpk-upd-now","1"); }catch(e){} m.remove(); };
+  m.querySelector("#updok").onclick=()=>{ lsSet(UPD_KEY,String(Date.now())); lsSet("tpk-notice-upd1","1"); try{ sessionStorage.setItem("tpk-upd-now","1"); }catch(e){} m.remove(); };
 }
 async function noticeAsk(){
   if(GUEST||!window.CLOUD||!CLOUD.user||isTeacher()||document.querySelector(".rsm")) return;
