@@ -27,15 +27,22 @@ service cloud.firestore {
                     && request.resource.data.name is string && request.resource.data.name.size() <= 40
                     && request.resource.data.pts is int && request.resource.data.pts >= 0 && request.resource.data.pts <= 2000000);
     }
-    // feedback mailbox: a signed-in student may send a short letter; only the teacher can read it
+    // feedback mailbox: a signed-in student may send a short letter; the teacher reads and replies.
+    // a student can read only their own letters (to see the reply) and only mark the reply as seen
     match /feedback/{id} {
       allow create: if request.auth != null
                     && request.resource.data.uid == request.auth.uid
                     && request.resource.data.text is string
                     && request.resource.data.text.size() > 0
                     && request.resource.data.text.size() <= 400
-                    && request.resource.data.read == false;
-      allow read, update, delete: if isTeacher();
+                    && request.resource.data.read == false
+                    && !('reply' in request.resource.data);
+      allow read: if isTeacher() || (request.auth != null && resource.data.uid == request.auth.uid);
+      allow update: if isTeacher()
+                    || (request.auth != null && resource.data.uid == request.auth.uid
+                        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['replySeen'])
+                        && request.resource.data.replySeen == true);
+      allow delete: if isTeacher();
     }
   }
 }

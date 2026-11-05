@@ -268,6 +268,11 @@ mark.sp{background:#FFD7D7;color:#B3261E;border-radius:3px;text-decoration:under
 .mailfab[hidden]{display:none}
 .mailfab b{font-size:15px}.mailfab .fbc{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:#D2557A;color:#fff;font-size:12px;font-weight:800}
 @keyframes mailbob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+
+.rply{margin-top:10px;padding:10px 12px;border-radius:12px;background:var(--c-listen-soft);border-left:4px solid var(--c-listen)}.rply p{margin:6px 0 0;white-space:pre-wrap;word-break:break-word;font-family:var(--f-vn);font-size:14.5px;line-height:1.6;color:var(--ink)}.rply .nb{font-size:12.5px;font-weight:700;color:var(--c-listen)}
+.rply .btn{height:32px;width:auto;padding:0 10px;font-size:12px;margin-top:8px}
+.rpbox{margin-top:10px;display:flex;flex-direction:column;gap:6px}.rpbox[hidden]{display:none}.rpbox textarea{font-family:var(--f-vn);font-size:14px}.rpbox .btn{height:38px;font-size:13.5px}
+.mailbtn{position:relative}.rdot{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;padding:0 4px;border-radius:9px;background:#E5484D;color:#fff;font-size:11px;font-style:normal;font-weight:800;line-height:18px;text-align:center}
 .maillink{display:flex;align-items:center;gap:8px;width:100%;padding:8px 12px;margin:0 0 10px;border-radius:12px;border:1px dashed var(--line);background:transparent;color:var(--muted);font:inherit;font-size:13px}
 .maillink svg{width:16px;height:16px}
 .tbadge{margin-left:auto;display:inline-flex;align-items:center;gap:4px;color:#D2557A;animation:mailbob 1.6s ease-in-out infinite}.tbadge[hidden]{display:none}
@@ -624,7 +629,7 @@ function lsKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ co
 function lsSnapshot(){ const p={}; lsKeys().forEach(k=>{ try{ p[k]=localStorage.getItem(k); }catch(e){} }); return p; }
 function lsClear(){ lsKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
 let UNLOCK_ALL=false, GUEST=false;
-const APP_VERSION="5/11 Viết 53·54: đề và ô viết nằm cạnh nhau";
+const APP_VERSION="5/11b Thầy trả lời góp ý của học sinh";
 const TEACHER_ID="viethaan9";
 /* ---------- data ---------- */
 // type: next(이어질 말) · act(이어서 할 행동) · same(내용과 같은 것) · main(중심 생각)
@@ -2186,8 +2191,10 @@ function updNotice(){
   document.body.appendChild(m);
   m.querySelector("#updok").onclick=()=>{ lsSet(UPD_KEY,String(Date.now())); try{ sessionStorage.setItem("tpk-upd-now","1"); }catch(e){} m.remove(); };
 }
-function noticeAsk(){
+async function noticeAsk(){
   if(GUEST||!window.CLOUD||!CLOUD.user||isTeacher()||document.querySelector(".rsm")) return;
+  if(await replyAsk()) return;
+  if(document.querySelector(".rsm")||!document.querySelector(".cscene")) return;
   if(!lsGet(UPD_KEY)) return updNotice();
   if(lsGet(NOTICE_KEY)||(()=>{ try{ return sessionStorage.getItem("tpk-upd-now"); }catch(e){ return null; } })()) return;
   const seen=()=>lsSet(NOTICE_KEY,String(Date.now()));
@@ -5327,6 +5334,30 @@ function progCells(p){
 }
 
 /* ---------- feedback mailbox (hòm thư góp ý) ---------- */
+// học sinh: thư đã gửi + lời thầy trả lời (mở ra là tính "đã xem")
+async function myLetters(){ const box=$("mylet"); if(!box||!CLOUD.myFeedback) return;
+  let L=[]; try{ L=await CLOUD.myFeedback(); }catch(e){ return; }
+  if(!$("mylet")) return;
+  const when=t=>{ try{ const d=t&&t.toDate?t.toDate():null; return d?`${d.getDate()}/${d.getMonth()+1} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`:""; }catch(e){ return ""; } };
+  box.innerHTML=L.length?`<div class="sec"><b>Thư em đã gửi · ${L.length}</b></div>`+L.map(m=>`<div class="tcard letter ${m.reply&&!m.replySeen?"unread":""}"><div class="lh"><b>Em</b><small>${when(m.created)}</small>${m.reply&&!m.replySeen?`<em class="newtag">MỚI</em>`:""}</div><p>${esc(m.text||"")}</p>
+    ${m.reply?`<div class="rply"><span class="nb">💬 Thầy trả lời · ${when(m.replyAt)}</span><p>${esc(m.reply)}</p></div>`:`<div class="tip" style="margin-top:6px">⏳ Thầy chưa trả lời</div>`}</div>`).join(""):"";
+  L.filter(m=>m.reply&&!m.replySeen).forEach(m=>CLOUD.seenReply(m.fid).catch(()=>{}));
+  replyDot(0); }
+// chấm đỏ trên nút ✉️ ở màn hình đầu khi có thư trả lời chưa xem
+function replyDot(n){ const b=$("smail"); if(!b) return; let d=b.querySelector(".rdot"); if(!n){ if(d) d.remove(); return; } if(!d){ d=document.createElement("i"); d.className="rdot"; b.appendChild(d); } d.textContent=n; }
+async function replyAsk(){ if(GUEST||!window.CLOUD||!CLOUD.user||isTeacher()||!CLOUD.myFeedback) return false;
+  let L=[]; try{ L=await CLOUD.myFeedback(); }catch(e){ return false; }
+  const nw=L.filter(m=>m.reply&&!m.replySeen); replyDot(nw.length);
+  if(!nw.length||document.querySelector(".rsm")||!document.querySelector(".cscene")) return false;
+  const m=document.createElement("div"); m.className="rsm";
+  m.innerHTML=`<div class="rsm-card ntc upd" role="dialog" aria-modal="true"><div class="rsm-ic">💌</div><b>Thầy đã trả lời góp ý của em!</b>
+    ${nw.slice(0,3).map(x=>`<div class="rply" style="text-align:left"><span class="nb" style="color:var(--muted);font-size:12.5px">Em viết: “${esc(String(x.text||"").slice(0,80))}${String(x.text||"").length>80?"…":""}”</span><p>${esc(x.reply)}</p></div>`).join("")}
+    ${nw.length>3?`<p class="ntx sm">Còn ${nw.length-3} thư nữa trong hòm thư ✉️</p>`:""}
+    <div class="rsm-b"><button class="btn sec" id="rpall">Xem hòm thư</button><button class="btn pri" id="rpok">Cảm ơn thầy! 🙏</button></div></div>`;
+  document.body.appendChild(m);
+  const done=()=>{ nw.forEach(x=>CLOUD.seenReply(x.fid).catch(()=>{})); replyDot(0); m.remove(); };
+  m.querySelector("#rpok").onclick=done; m.querySelector("#rpall").onclick=()=>{ done(); mailbox(); };
+  return true; }
 const MAIL='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3.5 6.5 12 13l8.5-6.5"/></svg>';
 const FB_MAX=200;
 const fbLen=t=>Array.from(String(t).normalize("NFC")).length;
@@ -5337,13 +5368,15 @@ function mailbox(){ sec(); stopAll(); setTitle("의견함 · Hòm thư góp ý",
   $("body").innerHTML=`<div class="tcard mailcard" style="margin-top:4px"><div class="mailic">${MAIL}</div><h3>선생님께 한마디 · Gửi thầy vài lời</h3>
      <p class="tip">수업 소감, 바라는 점, 어려운 점을 자유롭게 써 주세요. 선생님만 읽어요. 베트남어(성조 포함)로 써도 돼요.<span class="vn" style="display:block">Cảm nghĩ, mong muốn hay khó khăn khi học — viết thoải mái nhé. Chỉ thầy đọc được. Viết tiếng Việt có dấu cũng được.</span></p>
      <textarea id="fbt" class="inp" rows="6" lang="vi" placeholder="여기에 쓰세요 · Viết ở đây (tối đa ${FB_MAX} chữ)"></textarea>
-     <div class="fbcnt"><span id="fbn">0</span> / ${FB_MAX}</div><div id="fbmsg"></div></div>`;
+     <div class="fbcnt"><span id="fbn">0</span> / ${FB_MAX}</div><div id="fbmsg"></div></div>
+   <div id="mylet"></div>`;
+  myLetters();
   const ta=$("fbt"), n=$("fbn");
   const upd=()=>{ let v=ta.value; if(fbLen(v)>FB_MAX){ v=Array.from(v.normalize("NFC")).slice(0,FB_MAX).join(""); ta.value=v; } n.textContent=fbLen(v); n.parentNode.classList.toggle("full",fbLen(v)>=FB_MAX); $("fbsend").disabled=!v.trim(); };
   ta.addEventListener("input",upd); ta.addEventListener("compositionend",upd);
   foot(`<button class="btn pri" id="fbsend" disabled>보내기 · Gửi</button>`);
   $("fbsend").onclick=async()=>{ const v=ta.value.normalize("NFC").trim(); if(!v) return; const b=$("fbsend"); b.disabled=true; b.textContent="보내는 중… · Đang gửi…";
-    try{ await CLOUD.sendFeedback(v); ta.value=""; upd(); $("fbmsg").innerHTML=`<div class="fb ok" style="margin-top:10px"><b>보냈어요! 고마워요 💌</b><span class="vn">Đã gửi! Cảm ơn bạn nhé.</span></div>`; }
+    try{ await CLOUD.sendFeedback(v); ta.value=""; upd(); setTimeout(myLetters,600); $("fbmsg").innerHTML=`<div class="fb ok" style="margin-top:10px"><b>보냈어요! 고마워요 💌</b><span class="vn">Đã gửi! Cảm ơn bạn nhé.</span></div>`; }
     catch(e){ $("fbmsg").innerHTML=`<div class="fb no" style="margin-top:10px">보내지 못했어요. (${esc(e.code||e.message||e)})<span class="vn">Gửi không được, thử lại sau nhé.</span></div>`; }
     b.textContent="보내기 · Gửi"; b.disabled=!ta.value.trim(); };
   ta.focus();
@@ -5352,7 +5385,7 @@ function mailbox(){ sec(); stopAll(); setTitle("의견함 · Hòm thư góp ý",
 const FBX={list:[],unsub:null};
 const fbUnread=()=>FBX.list.filter(m=>!m.read).length;
 function fbWatch(){ if(FBX.unsub||!isTeacher()||!CLOUD.watchFeedback) return;
-  FBX.unsub=CLOUD.watchFeedback(l=>{ FBX.list=l; fbPaint(); if($("title").textContent==="의견함 · 받은 편지") inbox(true); },e=>console.warn(e)); }
+  FBX.unsub=CLOUD.watchFeedback(l=>{ FBX.list=l; fbPaint(); if($("title").textContent==="의견함 · 받은 편지"&&!(document.activeElement&&document.activeElement.closest&&document.activeElement.closest(".rpbox"))) inbox(true); },e=>console.warn(e)); }
 function fbPaint(){ const n=fbUnread();
   document.querySelectorAll(".fbnew").forEach(el=>{ el.hidden=!n; const c=el.querySelector(".fbc"); if(c) c.textContent=n; }); }
 function inbox(live){ const back=()=>teacher();
@@ -5360,7 +5393,13 @@ function inbox(live){ const back=()=>teacher();
   const when=t=>{ try{ const d=t&&t.toDate?t.toDate():null; return d?`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`:"방금"; }catch(e){ return "-"; } };
   const L=FBX.list;
   $("body").innerHTML=`<p class="tip" style="margin-top:0">받은 편지 ${L.length}통 · 새 편지 ${fbUnread()}통 · 열어 보면 「읽음」으로 바뀌어요.</p>`+
-    (L.length?L.map(m=>`<div class="tcard letter ${m.read?"":"unread"}"><div class="lh"><span class="mailic sm">${MAIL}</span><b>${esc(m.name||m.id||"-")}</b><small>${esc(m.id||"")} · ${when(m.created)}</small>${m.read?"":`<em class="newtag">NEW</em>`}</div><p>${esc(m.text||"")}</p></div>`).join(""):`<div class="tcard">아직 받은 편지가 없어요.</div>`);
+    (L.length?L.map(m=>`<div class="tcard letter ${m.read?"":"unread"}"><div class="lh"><span class="mailic sm">${MAIL}</span><b>${esc(m.name||m.id||"-")}</b><small>${esc(m.id||"")} · ${when(m.created)}</small>${m.read?"":`<em class="newtag">NEW</em>`}</div><p>${esc(m.text||"")}</p>
+      ${m.reply?`<div class="rply"><span class="nb">💬 Thầy đã trả lời · ${when(m.replyAt)} ${m.replySeen?"· 👀 em đã xem":"· chưa xem"}</span><p>${esc(m.reply)}</p><button class="btn sec rpedit" data-f="${esc(m.fid)}">Sửa trả lời</button></div>`:""}
+      <div class="rpbox" data-f="${esc(m.fid)}" ${m.reply?"hidden":""}><textarea class="inp" rows="2" lang="vi" maxlength="600" placeholder="Trả lời em ${esc(m.name||m.id||"")}…">${esc(m.reply||"")}</textarea><button class="btn pri rpsend">Gửi trả lời 💌</button></div></div>`).join(""):`<div class="tcard">아직 받은 편지가 없어요.</div>`);
+  $("body").querySelectorAll(".rpedit").forEach(b=>b.onclick=()=>{ const box=$("body").querySelector(`.rpbox[data-f="${b.dataset.f}"]`); box.hidden=false; box.querySelector("textarea").focus(); });
+  $("body").querySelectorAll(".rpbox").forEach(box=>{ const ta=box.querySelector("textarea"), btn=box.querySelector(".rpsend");
+    btn.onclick=async()=>{ const v=ta.value.normalize("NFC").trim(); if(!v){ ta.focus(); return; } btn.disabled=true; btn.textContent="Đang gửi…";
+      try{ await CLOUD.reply(box.dataset.f,v); btn.textContent="Đã gửi ✓"; }catch(e){ btn.disabled=false; btn.textContent="Gửi trả lời 💌"; alert("Gửi không được: "+(e.code||e.message)); } }; });
   // opening the inbox marks the letters as read
   L.filter(m=>!m.read).forEach(m=>CLOUD.markRead(m.fid).catch(()=>{}));
 }
@@ -5500,6 +5539,11 @@ const C=window.CLOUD={
   sendFeedback(text){ return addDoc(collection(db,"feedback"),{uid:C.user.uid,id:C.user.id,name:C.user.name||C.user.id,text,read:false,created:serverTimestamp()}); },
   watchFeedback(cb,err){ return onSnapshot(query(collection(db,"feedback"),orderBy("created","desc"),limit(300)),s=>cb(s.docs.map(d=>({fid:d.id,...d.data()}))),err); },
   markRead(fid){ return setDoc(doc(db,"feedback",fid),{read:true},{merge:true}); },
+  // thầy trả lời góp ý · học sinh xem thư của mình và đánh dấu đã xem
+  reply(fid,text){ return setDoc(doc(db,"feedback",fid),{reply:text,replyAt:serverTimestamp(),replySeen:false},{merge:true}); },
+  async myFeedback(){ if(!C.user) return []; const s=await getDocs(query(collection(db,"feedback"),where("uid","==",C.user.uid)));
+    return s.docs.map(d=>({fid:d.id,...d.data()})).sort((a,b)=>((b.created&&b.created.toMillis?b.created.toMillis():0)-(a.created&&a.created.toMillis?a.created.toMillis():0))); },
+  seenReply(fid){ return setDoc(doc(db,"feedback",fid),{replySeen:true},{merge:true}); },
   setUnlock(uid,v){ return setDoc(doc(db,"users",uid),{unlockAll:!!v},{merge:true}); }
 };
 addEventListener("visibilitychange",()=>{ if(document.visibilityState==="hidden"&&timer) C.flush().catch(()=>{}); });
