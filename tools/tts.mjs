@@ -37,6 +37,8 @@ if (fs.existsSync("voca")) for (const f of fs.readdirSync("voca").filter((f) => 
   const v = JSON.parse(fs.readFileSync("voca/" + f, "utf8"));
   (v.w || []).forEach((w) => { add("F", w[0]); if (w[3]) add("F", w[3]); });
 }
+// lời dẫn cho đề thi in giấy (tools/paper-lines.json)
+if (fs.existsSync("tools/paper-lines.json")) JSON.parse(fs.readFileSync("tools/paper-lines.json", "utf8")).lines.forEach(([s, x]) => add(s, x));
 [["M", "수미야, 오늘 면접 있지? 면접 잘 봐."], ["F", "어쩌지? 벌써부터 너무 떨려서 아무 생각이 안 나."], ["M", "준비 많이 했으니까 잘할 수 있을 거야."], ["F", "안녕하세요. 오늘 면접 잘 보세요."], ["M", "안녕하세요. 오늘 면접 잘 보세요."]].forEach(([s, t]) => add(s, t));
 
 fs.mkdirSync("audio", { recursive: true });
