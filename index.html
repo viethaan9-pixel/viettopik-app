@@ -269,6 +269,11 @@ mark.sp{background:#FFD7D7;color:#B3261E;border-radius:3px;text-decoration:under
 .mailfab b{font-size:15px}.mailfab .fbc{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:#D2557A;color:#fff;font-size:12px;font-weight:800}
 @keyframes mailbob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
 
+.q5pick{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0 4px}.q5pick button{border:2px solid var(--line);background:var(--surface);border-radius:16px;padding:10px 0 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;font:inherit;color:var(--ink);transition:transform .12s}
+.q5pick button b{font-size:28px;line-height:1;font-weight:800;color:var(--accent)}.q5pick button span{font-size:10.5px;color:var(--muted)}.q5pick button:active{transform:scale(.94)}
+.q5pick button:nth-child(1) b{color:var(--c-listen)}.q5pick button:nth-child(2) b{color:var(--c-read)}.q5pick button:nth-child(3) b{color:var(--c-write)}.q5pick button:nth-child(4) b{color:#E5484D}
+.q5btn{display:flex;align-items:center;gap:10px;width:100%;margin:4px 0 12px;padding:12px 14px;border-radius:16px;border:2px dashed var(--accent);background:var(--surface);color:var(--ink);font:inherit;cursor:pointer;text-align:left}.q5btn>span:first-child{font-size:26px}.q5btn b{flex:1;font-size:15px}.q5btn small{display:block;font-weight:400;font-size:12px;color:var(--muted)}.q5btn .go{font-size:22px;color:var(--muted)}
+.q5t{margin-left:8px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--accent)}.q5t.hurry{color:#E5484D;animation:q5b 1s infinite}@keyframes q5b{50%{opacity:.4}}
 .rply{margin-top:10px;padding:10px 12px;border-radius:12px;background:var(--c-listen-soft);border-left:4px solid var(--c-listen)}.rply p{margin:6px 0 0;white-space:pre-wrap;word-break:break-word;font-family:var(--f-vn);font-size:14.5px;line-height:1.6;color:var(--ink)}.rply .nb{font-size:12.5px;font-weight:700;color:var(--c-listen)}
 .rply .btn{height:32px;width:auto;padding:0 10px;font-size:12px;margin-top:8px}
 .rpbox{margin-top:10px;display:flex;flex-direction:column;gap:6px}.rpbox[hidden]{display:none}.rpbox textarea{font-family:var(--f-vn);font-size:14px}.rpbox .btn{height:38px;font-size:13.5px}
@@ -629,7 +634,7 @@ function lsKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ co
 function lsSnapshot(){ const p={}; lsKeys().forEach(k=>{ try{ p[k]=localStorage.getItem(k); }catch(e){} }); return p; }
 function lsClear(){ lsKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
 let UNLOCK_ALL=false, GUEST=false;
-const APP_VERSION="5/11c Thông báo cập nhật mới";
+const APP_VERSION="12/11 ⏱ 5분 테스트";
 const TEACHER_ID="viethaan9";
 /* ---------- data ---------- */
 // type: next(이어질 말) · act(이어서 할 행동) · same(내용과 같은 것) · main(중심 생각)
@@ -2193,10 +2198,48 @@ function updNotice(){
   document.body.appendChild(m);
   m.querySelector("#updok").onclick=()=>{ lsSet(UPD_KEY,String(Date.now())); lsSet("tpk-notice-upd1","1"); try{ sessionStorage.setItem("tpk-upd-now","1"); }catch(e){} m.remove(); };
 }
+
+/* ---------- ⏱ 5분 테스트: chọn TOPIK 3·4·5·6 → 5 câu ngẫu nhiên đúng độ khó cấp đó (2 nghe · 3 đọc), có đồng hồ 5 phút ---------- */
+const Q5_LV={"3":[1,10],"4":[11,25],"5":[26,35],"6":[36,50]};
+const Q5_MSG=[["Khởi động thôi! 💪","Chưa sao đâu, làm thêm vài Ngày rồi thử lại nhé."],["Khởi động thôi! 💪","Chưa sao đâu, làm thêm vài Ngày rồi thử lại nhé."],["Cố lên! 🌱","Nền tảng có rồi, luyện thêm chút nữa là ổn."],["Khá lắm! 👍","Hơn một nửa rồi — cấp này em theo được."],["Xuất sắc! 🔥","Chỉ sai 1 câu. Gần chinh phục cấp này rồi!"],["Thiên tài! 👑🐱","5/5 — cấp này quá dễ với em. Thử cấp cao hơn không?"]];
+let Q5=null;
+function q5Ask(){ if(document.querySelector(".rsm")) return; try{ if(sessionStorage.getItem("tpk-q5ask")) return; sessionStorage.setItem("tpk-q5ask","1"); }catch(e){}
+  const m=document.createElement("div"); m.className="rsm";
+  m.innerHTML=`<div class="rsm-card q5card" role="dialog" aria-modal="true"><div class="rsm-ic">⏱️</div>
+    <b>5분 테스트 해 볼까요?</b><p class="ntx">Thử sức 5 phút nhé! Chọn cấp TOPIK — 5 câu ngẫu nhiên đúng độ khó cấp đó.</p>
+    <div class="q5pick">${["3","4","5","6"].map(v=>`<button data-q5="${v}"><b>${v}</b><span>TOPIK ${v}</span></button>`).join("")}</div>
+    <div class="rsm-b"><button class="btn sec" id="q5no">Để sau</button></div></div>`;
+  document.body.appendChild(m);
+  m.querySelectorAll("[data-q5]").forEach(b=>b.onclick=()=>{ m.remove(); q5Start(b.dataset.q5); });
+  m.querySelector("#q5no").onclick=()=>m.remove(); }
+function q5Pick(){ sec(); stopAll(); setTitle("⏱ 5분 테스트",start); $("speed").hidden=true;
+  $("body").innerHTML=`<div class="tcard" style="margin-top:4px;text-align:center"><h3>5분 테스트 · Thử sức 5 phút</h3><div class="vn">Chọn cấp → 5 câu (2 nghe · 3 đọc) ngẫu nhiên, mỗi lần một đề mới. Hết 5 phút là nộp bài.</div>
+   <div class="q5pick" style="margin-top:14px">${["3","4","5","6"].map(v=>`<button data-q5="${v}"><b>${v}</b><span>TOPIK ${v}</span></button>`).join("")}</div></div>`;
+  $("body").querySelectorAll("[data-q5]").forEach(b=>b.onclick=()=>q5Start(b.dataset.q5)); foot(""); }
+function q5Start(v){ const rng=Q5_LV[v], pick=(k,n)=>{ const seen=new Set(), r=[]; for(const it of shuffle(testPool(k,rng))){ if(seen.has(it[3])) continue; seen.add(it[3]); r.push(it.slice(0,3)); if(r.length===n) break; } return r; };
+  const L=pick("L",2), R=pick("R",3), list=[R[0],L[0],R[1],L[1],R[2]].filter(Boolean);
+  Q5={v,at:Date.now(),end:Date.now()+5*60e3};
+  TC={id:"q5",need:3,key:"tpk-q5",title:`⏱ TOPIK ${v} · 5분`,list,back:()=>{ Q5=null; start(); },result:q5Result,timer:true,done:()=>start()};
+  T6={i:0,ok:0,ans:[]}; t56Q(); q5Tick(); }
+function q5Tick(){ clearInterval(q5Tick.h); q5Tick.h=setInterval(()=>{ if(!Q5||TC.id!=="q5"){ clearInterval(q5Tick.h); return; }
+    const left=Math.max(0,Q5.end-Date.now()), el=$("q5t"); if(el){ el.textContent=`⏱ ${Math.floor(left/60e3)}:${String(Math.floor(left/1e3)%60).padStart(2,"0")}`; el.classList.toggle("hurry",left<60e3); }
+    if(!left&&$("chs")||!left&&$("t6a")){ clearInterval(q5Tick.h); stopAll(); while(T6.ans.length<TC.list.length) T6.ans.push(false); Q5.timeout=true; t56Result(); } },250); }
+function q5Result(){ clearInterval(q5Tick.h); sec(); stopAll(); const v=Q5?Q5.v:"3", ok=T6.ok, n=TC.list.length, used=Q5?Math.min(300,Math.round((Date.now()-Q5.at)/1e3)):0, M=Q5_MSG[Math.min(5,ok)];
+  setTitle(`⏱ TOPIK ${v} · 결과`,start); $("speed").hidden=true;
+  let best={}; try{ best=JSON.parse(localStorage.getItem("tpk-q5")||"{}")||{}; }catch(e){}
+  const nb=!best[v]||ok>best[v].ok||(ok===best[v].ok&&used<best[v].t); if(nb){ best[v]={ok,t:used,at:Date.now()}; lsSet("tpk-q5",JSON.stringify(best)); }
+  $("body").innerHTML=`<section class="hero" style="text-align:center"><div class="eyebrow">TOPIK ${v} · 5분 테스트</div><div class="big">${ok}<small> / ${n}</small></div>
+    <div style="margin-top:8px;font-size:24px">${T6.ans.map(x=>x?"🟢":"⚪").join("")}</div>
+    <div class="eyebrow" style="margin-top:8px">${Q5&&Q5.timeout?"⏰ Hết giờ!":`⏱ ${Math.floor(used/60)}:${String(used%60).padStart(2,"0")}`}${nb&&ok?" · 🏅 Kỷ lục mới!":best[v]?` · Kỷ lục: ${best[v].ok}/5`:""}</div></section>
+    <div class="fb ${ok>=3?"ok":"no"}" style="margin-top:12px"><strong>${M[0]}</strong><span class="vn" style="display:block">${M[1]}</span></div>`;
+  foot(`<button class="btn sec" id="q5again">🔄 Đề mới</button>${ok===5&&v!=="6"?`<button class="btn pri" id="q5up">TOPIK ${+v+1} 도전! 🚀</button>`:`<button class="btn pri" id="q5home">확인 · OK</button>`}`);
+  $("q5again").onclick=()=>q5Start(v); if($("q5up")) $("q5up").onclick=()=>q5Start(String(+v+1)); if($("q5home")) $("q5home").onclick=()=>{ Q5=null; start(); };
+}
 async function noticeAsk(){
   if(GUEST||!window.CLOUD||!CLOUD.user||isTeacher()||document.querySelector(".rsm")) return;
   if(await replyAsk()) return;
   if(document.querySelector(".rsm")||!document.querySelector(".cscene")) return;
+  return q5Ask();   // bỏ thông báo cập nhật / xin góp ý → mỗi lần mở app mời làm 5분 테스트
   if(!lsGet(UPD_KEY)) return updNotice();
   if(lsGet(NOTICE_KEY)||(()=>{ try{ return sessionStorage.getItem("tpk-upd-now"); }catch(e){ return null; } })()) return;
   const seen=()=>lsSet(NOTICE_KEY,String(Date.now()));
@@ -2908,7 +2951,7 @@ function testIntro(id){ sec(); stopAll();
 const placeIntro=()=>testIntro("t4"), t56Intro=()=>testIntro("t5"), t6Intro=()=>testIntro("t6");
 function t56Q(){ sec(); mascotMode("study"); stopAll(); const [k,d,n]=TC.list[T6.i], last=T6.i===TC.list.length-1;
   setTitle(`${TC.title} · ${T6.i+1} / ${TC.list.length}`,()=>{ if(confirm("시험을 그만할까요? · Dừng bài kiểm tra?")) TC.back(); }); $("speed").hidden=k!=="L";
-  const prog=`<div class="prog"><span>${T6.i+1} / ${TC.list.length}</span><div class="bar"><i style="width:${T6.i/TC.list.length*100}%"></i></div></div>`;
+  const prog=`<div class="prog"><span>${T6.i+1} / ${TC.list.length}</span><div class="bar"><i style="width:${T6.i/TC.list.length*100}%"></i></div>${TC.timer?`<span class="q5t" id="q5t">⏱ 5:00</span>`:""}</div>`;
   const next=ok=>{ stopAll(); T6.ans.push(ok); if(ok) T6.ok++; if(last) t56Result(); else { T6.i++; t56Q(); $("body").scrollTop=0; } };
   foot(`<button class="btn sec" id="t6give">포기 · Bỏ cuộc</button>`);
   $("t6give").onclick=()=>{ if(!confirm("시험을 포기할까요? · Bỏ cuộc?")) return; stopAll(); while(T6.ans.length<TC.list.length) T6.ans.push(false); T6.gaveUp=true; t56Result(); };
@@ -2940,7 +2983,7 @@ function t56Q(){ sec(); mascotMode("study"); stopAll(); const [k,d,n]=TC.list[T6
     setTimeout(()=>{ if($("pbtn")===pb&&left===2) pb.click(); },400); }
   $("chs").querySelectorAll(".ch").forEach(b=>b.onclick=()=>next(+b.dataset.i===q.a));
 }
-function t56Result(){ sec(); stopAll(); const pass=T6.ok>=TC.need; setTitle(TC.title+" 결과",null); $("speed").hidden=true;
+function t56Result(){ if(TC.result) return TC.result(); sec(); stopAll(); const pass=T6.ok>=TC.need; setTitle(TC.title+" 결과",null); $("speed").hidden=true;
   const prev=testInfo(TC.key); lsSet(TC.key,JSON.stringify({ok:T6.ok,at:Date.now(),pass:pass||!!(prev&&(prev.pass||(TC.key==="tpk-ptest"&&prev.ok>=5)))}));
   const M=pass?TC.ok:TC.no;
   $("body").innerHTML=`<section class="hero" style="text-align:center"><div class="eyebrow">맞힌 문제 · CÂU ĐÚNG</div><div class="big">${T6.ok}<small> / ${TC.list.length}</small></div>
@@ -3314,6 +3357,7 @@ function start(){ sec(); const CAT_FIRST=CAT_INTRO; mascotMode("home",CAT_INTRO)
     <button class="ccat brown" id="t1" aria-label="Từ vựng"><span class="cbub">Ấn vào! 👆<small>눌러 보세요</small></span><img src="cat-brown.webp?v=2" alt=""><span class="clab">TỪ VỰNG · 어휘</span>${catSparks("brown")}</button>
     <button class="ccat blue" id="t2" aria-label="TOPIK II"><span class="cbub">Ấn vào! 👆<small>눌러 보세요</small></span><img src="cat-blue.webp?v=2" alt=""><span class="clab">TOPIK II</span>${catSparks("blue")}</button>
    </div>
+   <button class="q5btn" id="q5go"><span>⏱️</span><b>5분 테스트<small>Thử sức 5 phút · TOPIK 3·4·5·6</small></b><span class="go">›</span></button>
    <section class="board" id="board" hidden></section>
    <div class="msctog" role="group" aria-label="Chọn mèo"><span>🐾 Mèo đồng hành</span>${[["blue","Bật"],["off","Tắt"]].map(([k,t])=>`<button data-mk="${k}" aria-pressed="${MSC.kind()===k}">${t}</button>`).join("")}</div>
    <p class="note" style="margin-top:18px">버전 ${APP_VERSION}</p>`;
@@ -3322,7 +3366,7 @@ function start(){ sec(); const CAT_FIRST=CAT_INTRO; mascotMode("home",CAT_INTRO)
   const hop=(id,fn)=>{ const c=$(id); if(matchMedia("(prefers-reduced-motion: reduce)").matches) return fn(); c.classList.remove("hop"); void c.offsetWidth; c.classList.add("hop"); setTimeout(fn,420); };
   $("t2").onclick=()=>hop("t2",topik2);
   $("t1").onclick=()=>hop("t1",vHome);
-  bindUserBar(); if($("tview")) $("tview").onclick=()=>teacher();
+  bindUserBar(); if($("tview")) $("tview").onclick=()=>teacher(); $("q5go").onclick=q5Pick;
   if($("smail")) $("smail").onclick=()=>isTeacher()?inbox():mailbox();
   if(isTeacher()){ fbWatch(); fbPaint(); }
   boardPaint();
