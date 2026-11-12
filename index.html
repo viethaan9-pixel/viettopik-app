@@ -634,7 +634,7 @@ function lsKeys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ co
 function lsSnapshot(){ const p={}; lsKeys().forEach(k=>{ try{ p[k]=localStorage.getItem(k); }catch(e){} }); return p; }
 function lsClear(){ lsKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
 let UNLOCK_ALL=false, GUEST=false;
-const APP_VERSION="12/11 ⏱ 5분 테스트";
+const APP_VERSION="12/11b ⏱ 5분 테스트: nghe 1 · đọc 3 · viết 51";
 const TEACHER_ID="viethaan9";
 /* ---------- data ---------- */
 // type: next(이어질 말) · act(이어서 할 행동) · same(내용과 같은 것) · main(중심 생각)
@@ -2213,12 +2213,15 @@ function q5Ask(){ if(document.querySelector(".rsm")) return; try{ if(sessionStor
   m.querySelectorAll("[data-q5]").forEach(b=>b.onclick=()=>{ m.remove(); q5Start(b.dataset.q5); });
   m.querySelector("#q5no").onclick=()=>m.remove(); }
 function q5Pick(){ sec(); stopAll(); setTitle("⏱ 5분 테스트",start); $("speed").hidden=true;
-  $("body").innerHTML=`<div class="tcard" style="margin-top:4px;text-align:center"><h3>5분 테스트 · Thử sức 5 phút</h3><div class="vn">Chọn cấp → 5 câu (2 nghe · 3 đọc) ngẫu nhiên, mỗi lần một đề mới. Hết 5 phút là nộp bài.</div>
+  $("body").innerHTML=`<div class="tcard" style="margin-top:4px;text-align:center"><h3>5분 테스트 · Thử sức 5 phút</h3><div class="vn">Chọn cấp → 5 câu (1 nghe · 3 đọc · 1 viết 51) ngẫu nhiên, mỗi lần một đề mới. Hết 5 phút là nộp bài.</div>
    <div class="q5pick" style="margin-top:14px">${["3","4","5","6"].map(v=>`<button data-q5="${v}"><b>${v}</b><span>TOPIK ${v}</span></button>`).join("")}</div></div>`;
   $("body").querySelectorAll("[data-q5]").forEach(b=>b.onclick=()=>q5Start(b.dataset.q5)); foot(""); }
 function q5Start(v){ const rng=Q5_LV[v], pick=(k,n)=>{ const seen=new Set(), r=[]; for(const it of shuffle(testPool(k,rng))){ if(seen.has(it[3])) continue; seen.add(it[3]); r.push(it.slice(0,3)); if(r.length===n) break; } return r; };
-  const L=pick("L",2), R=pick("R",3), list=[R[0],L[0],R[1],L[1],R[2]].filter(Boolean);
-  Q5={v,at:Date.now(),end:Date.now()+5*60e3};
+  const L=pick("L",1), R=pick("R",4);
+  // viết: TOPIK 3 = bài luyện điền từ (쓰기 연습 Ngày 1~10) · TOPIK 4~6 = câu 51 dạng thật (㉠㉡)
+  const W=[]; Object.entries(WDAYS).forEach(([d,arr])=>arr.forEach((q,i)=>{ if(v==="3"?(!q.k&&+d<=10):q.k==="51") W.push(["W",+d,i+1]); }));
+  const list=[R[0],L[0],R[1],R[2],shuffle(W)[0]].filter(Boolean);
+  Q5={v,at:Date.now(),end:Date.now()+5*60e3,spare:R[3]};
   TC={id:"q5",need:3,key:"tpk-q5",title:`⏱ TOPIK ${v} · 5분`,list,back:()=>{ Q5=null; start(); },result:q5Result,timer:true,done:()=>start()};
   T6={i:0,ok:0,ans:[]}; t56Q(); q5Tick(); }
 function q5Tick(){ clearInterval(q5Tick.h); q5Tick.h=setInterval(()=>{ if(!Q5||TC.id!=="q5"){ clearInterval(q5Tick.h); return; }
@@ -2955,6 +2958,17 @@ function t56Q(){ sec(); mascotMode("study"); stopAll(); const [k,d,n]=TC.list[T6
   const next=ok=>{ stopAll(); T6.ans.push(ok); if(ok) T6.ok++; if(last) t56Result(); else { T6.i++; t56Q(); $("body").scrollTop=0; } };
   foot(`<button class="btn sec" id="t6give">포기 · Bỏ cuộc</button>`);
   $("t6give").onclick=()=>{ if(!confirm("시험을 포기할까요? · Bỏ cuộc?")) return; stopAll(); while(T6.ans.length<TC.list.length) T6.ans.push(false); T6.gaveUp=true; t56Result(); };
+  if(k==="W"&&!WDAYS[d][n-1].k){ const q=WDAYS[d][n-1];   // bài luyện điền từ (TOPIK 3)
+    $("body").innerHTML=`${prog}<div class="qhead"><span class="qno">${String(T6.i+1).padStart(2,"0")}</span><span class="chip">쓰기 · 51번 연습</span></div>
+      <div class="instr">보기의 말을 알맞게 바꿔서 ( ? )에 쓰십시오.<span class="vn">Chia từ gốc cho đúng rồi điền vào ( ? ).</span></div>
+      <div class="pass"><div class="pb"><p>${esc(q.s).replace("___",'<span class="mk2">( &nbsp; ? &nbsp; )</span>')}</p></div></div>
+      <div class="tip" style="margin:6px 0">보기 · Từ gốc: <b class="nb" style="display:inline">${esc(q.b)}</b></div>
+      <div class="blank2"><b>✍️</b><input class="inp" id="t6a" lang="ko" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" placeholder="여기에 쓰세요 · Viết vào đây"></div>`;
+    foot(`<button class="btn sec" id="t6give">포기 · Bỏ cuộc</button><button class="btn pri" id="t6ok">${last?"제출 · Nộp bài":"다음 · Tiếp"}</button>`);
+    $("t6give").onclick=()=>{ if(!confirm("시험을 포기할까요? · Bỏ cuộc?")) return; while(T6.ans.length<TC.list.length) T6.ans.push(false); T6.gaveUp=true; t56Result(); };
+    const go=()=>{ const a=$("t6a").value.trim(); if(!a){ $("t6a").focus(); return; } next(ansOk(a,q.a)); };
+    $("t6ok").onclick=go; $("t6a").onkeydown=e=>{ if(e.key==="Enter"&&!e.isComposing){ e.preventDefault(); go(); } };
+    return; }
   if(k==="W"){ const q=WDAYS[d][n-1], is51=q.k==="51";
     const mk=t=>esc(t).replace(/\( ?㉠ ?\)/g,'<span class="mk2">( ㉠ )</span>').replace(/\( ?㉡ ?\)/g,'<span class="mk2">( ㉡ )</span>');
     $("body").innerHTML=`${prog}<div class="qhead"><span class="qno">${String(T6.i+1).padStart(2,"0")}</span><span class="chip">쓰기 · ${is51?"51번":"52번"}</span></div>
@@ -2978,6 +2992,10 @@ function t56Q(){ sec(); mascotMode("study"); stopAll(); const [k,d,n]=TC.list[T6
     body=rBox(q); }
   const ro=(k==="R"&&q.k==="ins")?[0,1,2,3]:shuffle([0,1,2,3]);
   $("body").innerHTML=`${prog}${head}${body}<div class="choices" id="chs">${ro.map((j,pos)=>`<button class="ch" data-i="${j}"><span class="k">${circ[pos]}</span><span>${esc(q.o[j])}</span></button>`).join("")}</div>`;
+  if(k==="L"&&TC.id==="q5"&&Q5&&Q5.spare){   // không nghe được (đang ở chỗ đông người…) → đổi sang 1 câu đọc
+    foot(`<button class="btn sec" id="t6give">포기 · Bỏ cuộc</button><button class="btn sec" id="q5pass">🎧 듣기 패스 → 읽기</button>`);
+    $("t6give").onclick=()=>{ if(!confirm("시험을 포기할까요? · Bỏ cuộc?")) return; stopAll(); while(T6.ans.length<TC.list.length) T6.ans.push(false); T6.gaveUp=true; t56Result(); };
+    $("q5pass").onclick=()=>{ stopAll(); TC.list[T6.i]=Q5.spare; Q5.spare=null; t56Q(); }; }
   if(k==="L"){ let left=2; const pb=$("pbtn");
     pb.onclick=()=>{ if(playing){ stopAll(); return; } if(left<=0) return; left--; $("plays").textContent=left?"한 번 더 들을 수 있어요 · Còn 1 lần nghe":"다 들었어요 · Đã hết lượt nghe"; playLines(q.l).then(()=>{ if(!left) pb.disabled=true; }); };
     setTimeout(()=>{ if($("pbtn")===pb&&left===2) pb.click(); },400); }
